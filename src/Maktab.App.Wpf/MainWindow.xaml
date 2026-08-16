@@ -3,21 +3,117 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Maktab.App.Wpf"
         mc:Ignorable="d"
         Title="Afghan School Management System"
-        Height="540"
-        Width="960"
+        Height="680"
+        Width="1120"
         WindowStartupLocation="CenterScreen"
         Language="fa-IR">
-    <Grid>
-        <StackPanel Margin="24">
-            <TextBlock FontSize="28"
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+            <TextBlock FontSize="26"
                        FontWeight="SemiBold"
                        Text="Afghan School Management System" />
-            <TextBlock Margin="0,8,0,0"
-                       FontSize="16"
-                       Text="v1.0 MVP foundation initialized" />
+            <TextBlock Margin="0,6,0,0"
+                       FontSize="14"
+                       Text="Phase 2: Class & Subject setup (SQLite transactional CRUD)" />
         </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Padding="12" BorderThickness="1" BorderBrush="#D0D0D0" CornerRadius="8">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock FontSize="18" FontWeight="SemiBold" Text="Classes" />
+
+                    <StackPanel Grid.Row="1" Margin="0,10,0,12">
+                        <TextBlock Text="Grade Name" />
+                        <TextBox x:Name="GradeNameTextBox" Margin="0,4,0,10" Height="30" MaxLength="50" />
+
+                        <TextBlock Text="Number of Subjects" />
+                        <TextBox x:Name="NumberOfSubjectsTextBox" Margin="0,4,0,10" Height="30" MaxLength="3" />
+
+                        <UniformGrid Columns="4" Rows="1">
+                            <Button Margin="0,0,8,0" Height="34" Content="Add" Click="AddClassButton_Click" />
+                            <Button Margin="0,0,8,0" Height="34" Content="Update" Click="UpdateClassButton_Click" />
+                            <Button Margin="0,0,8,0" Height="34" Content="Delete" Click="DeleteClassButton_Click" />
+                            <Button Height="34" Content="Clear" Click="ClearClassButton_Click" />
+                        </UniformGrid>
+                    </StackPanel>
+
+                    <DataGrid x:Name="ClassesDataGrid"
+                              Grid.Row="2"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              IsReadOnly="True"
+                              SelectionMode="Single"
+                              SelectionChanged="ClassesDataGrid_SelectionChanged">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID" Binding="{Binding ClassId}" Width="80" />
+                            <DataGridTextColumn Header="Grade" Binding="{Binding GradeName}" Width="*" />
+                            <DataGridTextColumn Header="Subjects" Binding="{Binding NumberOfSubjects}" Width="120" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="2" Padding="12" BorderThickness="1" BorderBrush="#D0D0D0" CornerRadius="8">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock FontSize="18" FontWeight="SemiBold" Text="Subjects" />
+
+                    <StackPanel Grid.Row="1" Margin="0,10,0,12">
+                        <TextBlock Text="Selected Class" />
+                        <TextBlock x:Name="SelectedClassTextBlock"
+                                   Margin="0,4,0,10"
+                                   FontWeight="SemiBold"
+                                   Text="Select a class from the left list" />
+
+                        <TextBlock Text="Subject Name" />
+                        <TextBox x:Name="SubjectNameTextBox" Margin="0,4,0,10" Height="30" MaxLength="80" />
+
+                        <UniformGrid Columns="4" Rows="1">
+                            <Button Margin="0,0,8,0" Height="34" Content="Add" Click="AddSubjectButton_Click" />
+                            <Button Margin="0,0,8,0" Height="34" Content="Update" Click="UpdateSubjectButton_Click" />
+                            <Button Margin="0,0,8,0" Height="34" Content="Delete" Click="DeleteSubjectButton_Click" />
+                            <Button Height="34" Content="Clear" Click="ClearSubjectButton_Click" />
+                        </UniformGrid>
+                    </StackPanel>
+
+                    <DataGrid x:Name="SubjectsDataGrid"
+                              Grid.Row="2"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              IsReadOnly="True"
+                              SelectionMode="Single"
+                              SelectionChanged="SubjectsDataGrid_SelectionChanged">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID" Binding="{Binding SubjectId}" Width="80" />
+                            <DataGridTextColumn Header="Subject" Binding="{Binding SubjectName}" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </Window>
