@@ -1,0 +1,45 @@
+using Maktab.Domain.Enums;
+using Maktab.Domain.Rules;
+
+namespace Maktab.Tests;
+
+public class UnitTest1
+{
+    [Fact]
+    public void CalculateTotal_ReturnsExpectedValue()
+    {
+        var total = GradingPolicy.CalculateTotal(35m, 52m);
+
+        Assert.Equal(87m, total);
+    }
+
+    [Theory]
+    [InlineData(95, LetterGrade.A)]
+    [InlineData(84, LetterGrade.B)]
+    [InlineData(75, LetterGrade.C)]
+    [InlineData(63, LetterGrade.D)]
+    [InlineData(51, LetterGrade.E)]
+    [InlineData(39, LetterGrade.F)]
+    public void ResolveLetterGrade_ReturnsExpectedGrade(decimal percentage, LetterGrade expected)
+    {
+        var grade = GradingPolicy.ResolveLetterGrade(percentage);
+
+        Assert.Equal(expected, grade);
+    }
+
+    [Fact]
+    public void IsPromoted_WhenRulesSatisfied_ReturnsTrue()
+    {
+        var promoted = PromotionPolicy.IsPromoted(failedSubjects: 2, absenceDays: 10);
+
+        Assert.True(promoted);
+    }
+
+    [Fact]
+    public void IsPromoted_WhenAbsenceOverLimit_ReturnsFalse()
+    {
+        var promoted = PromotionPolicy.IsPromoted(failedSubjects: 1, absenceDays: 31);
+
+        Assert.False(promoted);
+    }
+}

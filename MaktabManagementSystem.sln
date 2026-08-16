@@ -1,0 +1,57 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4F348A22-1AEF-463D-8F5A-67890084FB07}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Maktab.App.Wpf", "src\Maktab.App.Wpf\Maktab.App.Wpf.csproj", "{D613301F-DEE3-4A5D-BB42-42928ECDB346}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Maktab.Domain", "src\Maktab.Domain\Maktab.Domain.csproj", "{EE9D8527-A4F2-4DCC-AEBF-D5436B1978FB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Maktab.Application", "src\Maktab.Application\Maktab.Application.csproj", "{BCD8F128-17F9-4E4E-93FE-0311C8816783}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Maktab.Infrastructure", "src\Maktab.Infrastructure\Maktab.Infrastructure.csproj", "{C274FA31-55DA-4417-ACEC-7A290BAC7718}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{74BFF0CA-38C3-4E55-B4F5-030113DA747F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Maktab.Tests", "tests\Maktab.Tests\Maktab.Tests.csproj", "{05DC25BE-ACDE-494C-9355-20DC9A53E205}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D613301F-DEE3-4A5D-BB42-42928ECDB346}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D613301F-DEE3-4A5D-BB42-42928ECDB346}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D613301F-DEE3-4A5D-BB42-42928ECDB346}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D613301F-DEE3-4A5D-BB42-42928ECDB346}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EE9D8527-A4F2-4DCC-AEBF-D5436B1978FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE9D8527-A4F2-4DCC-AEBF-D5436B1978FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE9D8527-A4F2-4DCC-AEBF-D5436B1978FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE9D8527-A4F2-4DCC-AEBF-D5436B1978FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BCD8F128-17F9-4E4E-93FE-0311C8816783}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BCD8F128-17F9-4E4E-93FE-0311C8816783}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BCD8F128-17F9-4E4E-93FE-0311C8816783}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BCD8F128-17F9-4E4E-93FE-0311C8816783}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C274FA31-55DA-4417-ACEC-7A290BAC7718}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C274FA31-55DA-4417-ACEC-7A290BAC7718}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C274FA31-55DA-4417-ACEC-7A290BAC7718}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C274FA31-55DA-4417-ACEC-7A290BAC7718}.Release|Any CPU.Build.0 = Release|Any CPU
+		{05DC25BE-ACDE-494C-9355-20DC9A53E205}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05DC25BE-ACDE-494C-9355-20DC9A53E205}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05DC25BE-ACDE-494C-9355-20DC9A53E205}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05DC25BE-ACDE-494C-9355-20DC9A53E205}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D613301F-DEE3-4A5D-BB42-42928ECDB346} = {4F348A22-1AEF-463D-8F5A-67890084FB07}
+		{EE9D8527-A4F2-4DCC-AEBF-D5436B1978FB} = {4F348A22-1AEF-463D-8F5A-67890084FB07}
+		{BCD8F128-17F9-4E4E-93FE-0311C8816783} = {4F348A22-1AEF-463D-8F5A-67890084FB07}
+		{C274FA31-55DA-4417-ACEC-7A290BAC7718} = {4F348A22-1AEF-463D-8F5A-67890084FB07}
+		{05DC25BE-ACDE-494C-9355-20DC9A53E205} = {74BFF0CA-38C3-4E55-B4F5-030113DA747F}
+	EndGlobalSection
+EndGlobal
