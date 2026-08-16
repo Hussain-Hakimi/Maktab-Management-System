@@ -12,6 +12,7 @@ public static class DependencyInjection
         services.AddSingleton<IConnectionStringProvider, ConnectionStringProvider>();
         services.AddSingleton<IDatabaseInitializer, SqliteDatabaseInitializer>();
         services.AddSingleton<IClassSubjectRepository, SqliteClassSubjectRepository>();
+        services.AddSingleton<IStudentRepository, SqliteStudentRepository>();
 
         return services;
     }
