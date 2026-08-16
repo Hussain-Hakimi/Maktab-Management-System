@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Maktab.Application.Abstractions;
+using Maktab.Infrastructure.Logging;
 using Maktab.Infrastructure.Persistence;
 using Maktab.Infrastructure.Reports;
 
@@ -12,6 +13,8 @@ public static class DependencyInjection
         services.AddSingleton(AppFolders.CreateDefault());
         services.AddSingleton<IConnectionStringProvider, ConnectionStringProvider>();
         services.AddSingleton<IDatabaseInitializer, SqliteDatabaseInitializer>();
+        services.AddSingleton<IAppLogger, FileAppLogger>();
+        services.AddSingleton<IBackupService, SqliteBackupService>();
         services.AddSingleton<IClassSubjectRepository, SqliteClassSubjectRepository>();
         services.AddSingleton<IStudentRepository, SqliteStudentRepository>();
         services.AddSingleton<IExamMarkRepository, SqliteExamMarkRepository>();
