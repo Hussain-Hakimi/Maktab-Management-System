@@ -1,0 +1,23 @@
+﻿<Window x:Class="Maktab.App.Wpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Maktab.App.Wpf"
+        mc:Ignorable="d"
+        Title="Afghan School Management System"
+        Height="540"
+        Width="960"
+        WindowStartupLocation="CenterScreen"
+        Language="fa-IR">
+    <Grid>
+        <StackPanel Margin="24">
+            <TextBlock FontSize="28"
+                       FontWeight="SemiBold"
+                       Text="Afghan School Management System" />
+            <TextBlock Margin="0,8,0,0"
+                       FontSize="16"
+                       Text="v1.0 MVP foundation initialized" />
+        </StackPanel>
+    </Grid>
+</Window>

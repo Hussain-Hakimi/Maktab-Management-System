@@ -1,0 +1,18 @@
+# Visual Studio / .NET build artifacts
+.vs/
+**/bin/
+**/obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Test and coverage outputs
+TestResults/
+*.coverage
+*.coveragexml
+
+# Runtime app data generated locally
+AppData/
