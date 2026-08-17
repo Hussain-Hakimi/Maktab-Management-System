@@ -20,7 +20,5 @@ public sealed class StudentExamMarkDto
     public decimal MidtermScore { get; set; }
     public decimal FinalScore { get; set; }
     public decimal TotalScore { get; set; }
-    public decimal Percentage { get; set; }
-    public LetterGrade Grade { get; set; }
     public bool IsPass { get; set; }
 }

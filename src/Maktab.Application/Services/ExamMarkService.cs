@@ -33,8 +33,6 @@ public sealed class ExamMarkService(
             var final = mark?.FinalScore ?? 0m;
 
             var total = GradingPolicy.CalculateTotal(midterm, final);
-            var percentage = GradingPolicy.CalculatePercentage(total);
-            var grade = GradingPolicy.ResolveLetterGrade(percentage);
             var isPass = GradingPolicy.IsPass(total);
 
             result.Add(new StudentExamMarkDto
@@ -49,8 +47,6 @@ public sealed class ExamMarkService(
                 MidtermScore = midterm,
                 FinalScore = final,
                 TotalScore = total,
-                Percentage = percentage,
-                Grade = grade,
                 IsPass = isPass
             });
         }
@@ -79,8 +75,6 @@ public sealed class ExamMarkService(
             var final = mark?.FinalScore ?? 0m;
 
             var total = GradingPolicy.CalculateTotal(midterm, final);
-            var percentage = GradingPolicy.CalculatePercentage(total);
-            var grade = GradingPolicy.ResolveLetterGrade(percentage);
             var isPass = GradingPolicy.IsPass(total);
 
             result.Add(new StudentExamMarkDto
@@ -95,8 +89,6 @@ public sealed class ExamMarkService(
                 MidtermScore = midterm,
                 FinalScore = final,
                 TotalScore = total,
-                Percentage = percentage,
-                Grade = grade,
                 IsPass = isPass
             });
         }
