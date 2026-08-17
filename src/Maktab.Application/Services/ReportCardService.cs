@@ -92,7 +92,7 @@ public sealed class ReportCardService(
             RollNumber = student.RollNumber,
             ClassId = student.ClassId,
             ClassName = className,
-            AcademicYear = string.IsNullOrWhiteSpace(academicYear) ? "۱۴۰۳ - ۱۴۰۴" : academicYear.Trim(),
+            AcademicYear = string.IsNullOrWhiteSpace(academicYear) ? AcademicYearProvider.GetCurrentAcademicYear() : academicYear.Trim(),
             IssueDate = DateTime.Now.ToString("yyyy/MM/dd"),
             SubjectMarks = subjectReports,
             TotalObtainedScore = totalObtained,

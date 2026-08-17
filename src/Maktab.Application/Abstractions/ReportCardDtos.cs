@@ -20,7 +20,7 @@ public sealed class StudentReportCardDto
     public string RollNumber { get; set; } = string.Empty;
     public int ClassId { get; set; }
     public string ClassName { get; set; } = string.Empty;
-    public string AcademicYear { get; set; } = "۱۴۰۳ - ۱۴۰۴";
+    public string AcademicYear { get; set; } = string.Empty;
     public string IssueDate { get; set; } = string.Empty;
 
     public IReadOnlyList<SubjectMarkReportDto> SubjectMarks { get; set; } = [];
