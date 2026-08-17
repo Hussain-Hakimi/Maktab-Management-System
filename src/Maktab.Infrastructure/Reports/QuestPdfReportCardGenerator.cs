@@ -105,8 +105,6 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
                     columns.RelativeColumn(2);   // Midterm (40)
                     columns.RelativeColumn(2);   // Final (60)
                     columns.RelativeColumn(2);   // Total (100)
-                    columns.RelativeColumn(1.5f);// %
-                    columns.RelativeColumn(1.5f);// Grade
                     columns.RelativeColumn(2);   // Pass/Fail
                 });
 
@@ -118,8 +116,6 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
                     header.Cell().Background(Colors.Blue.Darken3).Padding(4).AlignCenter().Text("صنفی (۴۰)").FontColor(Colors.White).Bold();
                     header.Cell().Background(Colors.Blue.Darken3).Padding(4).AlignCenter().Text("سالانه (۶۰)").FontColor(Colors.White).Bold();
                     header.Cell().Background(Colors.Blue.Darken3).Padding(4).AlignCenter().Text("مجموع (۱۰۰)").FontColor(Colors.White).Bold();
-                    header.Cell().Background(Colors.Blue.Darken3).Padding(4).AlignCenter().Text("فیصد").FontColor(Colors.White).Bold();
-                    header.Cell().Background(Colors.Blue.Darken3).Padding(4).AlignCenter().Text("درجه").FontColor(Colors.White).Bold();
                     header.Cell().Background(Colors.Blue.Darken3).Padding(4).AlignCenter().Text("نتیجه").FontColor(Colors.White).Bold();
                 });
 
@@ -133,8 +129,6 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
                     table.Cell().Background(bg).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).AlignCenter().Text(mark.MidtermScore.ToString("0.##"));
                     table.Cell().Background(bg).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).AlignCenter().Text(mark.FinalScore.ToString("0.##"));
                     table.Cell().Background(bg).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).AlignCenter().Text(mark.TotalScore.ToString("0.##")).Bold();
-                    table.Cell().Background(bg).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).AlignCenter().Text($"{mark.Percentage:0.##}%");
-                    table.Cell().Background(bg).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).AlignCenter().Text(mark.Grade.ToString()).Bold();
 
                     var resultColor = mark.IsPass ? Colors.Green.Darken2 : Colors.Red.Darken2;
                     var resultText = mark.IsPass ? "کامیاب" : "ناکام";
@@ -148,7 +142,7 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
                 table.Cell().Background(Colors.Grey.Lighten3).Padding(6).AlignCenter().Text("-");
                 table.Cell().Background(Colors.Grey.Lighten3).Padding(6).AlignCenter().Text("-");
                 table.Cell().Background(Colors.Grey.Lighten3).Padding(6).AlignCenter().Text($"{reportCard.TotalObtainedScore:0.##} / {reportCard.TotalMaxScore:0.##}").Bold();
-                table.Cell().ColumnSpan(3).Background(Colors.Grey.Lighten3).Padding(6).AlignCenter().Text($"اوسط: {reportCard.AveragePercentage:0.##}%").Bold();
+                table.Cell().ColumnSpan(2).Background(Colors.Grey.Lighten3).Padding(6).AlignCenter().Text($"اوسط: {reportCard.AveragePercentage:0.##}% | رتبه: {reportCard.OverallGrade}").Bold();
             });
 
             col.Item().PaddingTop(12).Row(row =>
