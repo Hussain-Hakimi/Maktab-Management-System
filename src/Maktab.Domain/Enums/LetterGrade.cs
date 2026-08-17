@@ -6,6 +6,5 @@ public enum LetterGrade
     B,
     C,
     D,
-    E,
     F
 }

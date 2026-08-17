@@ -35,18 +35,17 @@ public static class GradingPolicy
         return total >= PassingMark;
     }
 
-    public static LetterGrade ResolveLetterGrade(decimal percentage)
+    public static LetterGrade ResolveLetterGrade(decimal average)
     {
-        if (percentage < 0m || percentage > 100m)
+        if (average < 0m || average > 100m)
         {
-            throw new ArgumentOutOfRangeException(nameof(percentage), "Percentage must be between 0 and 100.");
+            throw new ArgumentOutOfRangeException(nameof(average), "Average must be between 0 and 100.");
         }
 
-        if (percentage >= 90m) return LetterGrade.A;
-        if (percentage >= 80m) return LetterGrade.B;
-        if (percentage >= 70m) return LetterGrade.C;
-        if (percentage >= 60m) return LetterGrade.D;
-        if (percentage >= 50m) return LetterGrade.E;
+        if (average >= 90m) return LetterGrade.A;
+        if (average >= 85m) return LetterGrade.B;
+        if (average >= 75m) return LetterGrade.C;
+        if (average >= 65m) return LetterGrade.D;
         return LetterGrade.F;
     }
 
