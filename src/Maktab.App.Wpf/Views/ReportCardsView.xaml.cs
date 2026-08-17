@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Maktab.Application.Abstractions;
+using Maktab.Application.Services;
 using Maktab.Domain.Entities;
 using Maktab.Domain.Enums;
 using Maktab.Infrastructure.Persistence;
@@ -51,6 +52,7 @@ public partial class ReportCardsView : UserControl
 
         InitializeComponent();
 
+        AcademicYearTextBox.Text = AcademicYearProvider.GetCurrentAcademicYear();
         PreviewMarksDataGrid.ItemsSource = _previewMarks;
         Loaded += ReportCardsView_Loaded;
     }
@@ -145,7 +147,7 @@ public partial class ReportCardsView : UserControl
 
         try
         {
-            var year = AcademicYearTextBox.Text?.Trim() ?? "۱۴۰۳ - ۱۴۰۴";
+            var year = GetAcademicYear();
             var data = await _reportCardService.GetStudentReportCardDataAsync(studentId, year);
 
             StudentNameTextBlock.Text = $"نام شاگرد: {data.FirstName} {data.LastName}";
@@ -199,6 +201,12 @@ public partial class ReportCardsView : UserControl
         }
     }
 
+    private string GetAcademicYear()
+    {
+        var year = AcademicYearTextBox.Text?.Trim();
+        return string.IsNullOrWhiteSpace(year) ? AcademicYearProvider.GetCurrentAcademicYear() : year;
+    }
+
     private void ClearPreview()
     {
         StudentNameTextBlock.Text = "نام شاگرد: -";
@@ -223,7 +231,7 @@ public partial class ReportCardsView : UserControl
 
         try
         {
-            var year = AcademicYearTextBox.Text?.Trim() ?? "۱۴۰۳ - ۱۴۰۴";
+            var year = GetAcademicYear();
             var filePath = await _reportCardService.GenerateStudentReportCardPdfAsync(studentId, year, _appFolders.Reports);
 
             _lastGeneratedPdfPath = filePath;
@@ -258,7 +266,7 @@ public partial class ReportCardsView : UserControl
 
         try
         {
-            var year = AcademicYearTextBox.Text?.Trim() ?? "۱۴۰۳ - ۱۴۰۴";
+            var year = GetAcademicYear();
             var paths = await _reportCardService.GenerateClassReportCardsPdfAsync(classId, year, _appFolders.Reports);
 
             StatusTextBlock.Text = $"✅ تعداد {paths.Count} فایل کارنامه PDF برای این صنف صادر گردید.";
