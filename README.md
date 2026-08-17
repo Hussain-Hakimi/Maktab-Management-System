@@ -25,6 +25,7 @@ Built with **C# / .NET 8**, **WPF**, **SQLite**, and **QuestPDF**, with a Dari/P
 - [Dari / Persian RTL Interface](#-dari--persian-rtl-interface)
 - [Testing](#-testing)
 - [Build and Run](#️-build-and-run)
+- [Publish / Deployment](#-publish--deployment)
 - [Continuous Integration](#-continuous-integration)
 - [Development Roadmap](#️-development-roadmap)
 - [Offline-First Design](#-offline-first-design)
@@ -378,8 +379,10 @@ The project includes automated tests covering important application logic and se
 - Student management
 - Examination marks
 - Report cards
-- Backup functionality
+- Backup and restore (including a real backup → modify → restore round-trip)
 - Domain rules
+- Shamsi academic-year calculation
+- SQLite integration tests against a real temporary database (schema constraints, unique roll numbers, mark upserts, FK cascade/restrict)
 
 Tests are intended to prevent regressions as new features are added.
 
@@ -423,6 +426,18 @@ dotnet test
 
 Open the WPF project at `src/Maktab.App.Wpf/` and run it using Visual Studio or the .NET CLI.
 
+## 📦 Publish / Deployment
+
+To create a self-contained Windows installer folder (no .NET installation required on the school computer):
+
+```bash
+dotnet publish src/Maktab.App.Wpf/Maktab.App.Wpf.csproj -c Release -r win-x64 --self-contained true
+```
+
+The output is written to `src/Maktab.App.Wpf/bin/Release/net8.0-windows/win-x64/publish/`. Copy that folder to the target Windows computer and run `Maktab.App.Wpf.exe`.
+
+The application stores its database, backups, logs, and generated report cards in the `AppData` folder next to the executable, so keep the whole folder together when copying it.
+
 ## 🔁 Continuous Integration
 
 The project uses GitHub Actions (`.github/workflows/dotnet.yml`) to automatically:
@@ -453,20 +468,18 @@ Because the application is a Windows WPF application, the CI workflow uses a **W
 
 ### Version 1.0.1 — Stabilization
 
-The next priority is to make the existing MVP reliable before adding many new features.
+This release focused on making the existing MVP reliable before adding new features.
 
 Completed:
 - ✅ New grading rules verified throughout the application (domain, services, PDF, UI)
 - ✅ Grading and report-card tests updated
 - ✅ GitHub Actions CI added (`windows-latest` runner)
-
-Planned improvements:
-- Improve database/integration testing
-- Test backup and restore thoroughly
-- Improve deployment and publishing
-- Remove hardcoded academic-year assumptions
-- Improve error handling
-- Improve documentation
+- ✅ Database/integration tests added (real SQLite: CRUD, unique roll numbers, mark upserts, CHECK constraints, FK cascade/restrict)
+- ✅ Backup and restore round-trip tests added
+- ✅ Foreign-key enforcement fixed on every connection (`ForeignKeys = true` in the connection string)
+- ✅ Hardcoded academic year removed — the current Shamsi academic year is now detected automatically (e.g. «۱۴۰۵ - ۱۴۰۶»)
+- ✅ Global error handling added (UI, background threads, and unobserved tasks are logged; a friendly Dari message is shown)
+- ✅ Publish/deployment instructions documented (see [Publish / Deployment](#-publish--deployment))
 
 ### Version 1.1 — School Operations
 
@@ -546,7 +559,7 @@ The primary data remains on the local computer — particularly important for sc
 
 ## 📌 Current Status
 
-**Version:** 1.0 — Core Academic MVP
+**Version:** 1.0.1 — Stabilization Release
 
 The core MVP includes:
 
@@ -568,7 +581,7 @@ A / B / C / D / F
 Report Card
 ```
 
-`GradingPolicy.cs`, `PromotionPolicy.cs`, the report-card logic, the UI, and the tests are all in sync with the grading rules described in this document. The next development priority is **stabilization of V1.0**, followed by the V1.1 school-operation features.
+`GradingPolicy.cs`, `PromotionPolicy.cs`, the report-card logic, the UI, and the tests are all in sync with the grading rules described in this document. Version 1.0.1 completed the stabilization roadmap (integration tests, backup/restore tests, FK enforcement, automatic Shamsi academic year, global error handling, publish instructions). The next development priority is the **V1.1 school-operation features** (attendance, library, textbooks, fees).
 
 ---
 
