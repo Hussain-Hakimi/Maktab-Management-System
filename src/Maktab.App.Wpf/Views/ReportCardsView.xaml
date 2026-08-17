@@ -132,8 +132,6 @@
                             <DataGridTextColumn Header="چهارونیم‌ماهه (۴۰)" Binding="{Binding MidtermScore, StringFormat={}{0:0.##}}" Width="120" />
                             <DataGridTextColumn Header="سالانه (۶۰)" Binding="{Binding FinalScore, StringFormat={}{0:0.##}}" Width="100" />
                             <DataGridTextColumn Header="مجموع (۱۰۰)" Binding="{Binding TotalScore, StringFormat={}{0:0.##}}" FontWeight="Bold" Width="100" />
-                            <DataGridTextColumn Header="فیصد" Binding="{Binding Percentage, StringFormat={}{0:0.##}%}" Width="80" />
-                            <DataGridTextColumn Header="درجه" Binding="{Binding Grade}" FontWeight="Bold" Width="70" />
                             <DataGridTextColumn Header="نتیجه" Binding="{Binding IsPassText}" FontWeight="Bold" Width="80" />
                         </DataGrid.Columns>
                     </DataGrid>

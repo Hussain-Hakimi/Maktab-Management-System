@@ -36,7 +36,7 @@
                 <TextBlock Grid.Column="0" Text="فیلتر بر اساس صنف:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,8,0" />
                 <ComboBox x:Name="FilterClassComboBox" Grid.Column="1" Height="32" SelectionChanged="FilterClassComboBox_SelectionChanged" DisplayMemberPath="GradeName" SelectedValuePath="ClassId" />
 
-                <TextBlock Grid.Column="3" Text="جستجو (نام / نمره اساس):" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,8,0" />
+                <TextBlock Grid.Column="3" Text="جستجو (نام / شماره اساس):" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,8,0" />
                 <TextBox x:Name="SearchTextBox" Grid.Column="4" Height="32" VerticalContentAlignment="Center" TextChanged="SearchTextBox_TextChanged" Margin="0,0,10,0" />
 
                 <Button Grid.Column="5" Content="🔄 تازه‌سازی لیست" Height="32" Padding="12,0" Background="#3B82F6" Foreground="White" FontWeight="SemiBold" Click="RefreshButton_Click" />

@@ -114,7 +114,7 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
                 {
                     header.Cell().Background(Colors.Blue.Darken3).Padding(4).AlignCenter().Text("شماره").FontColor(Colors.White).Bold();
                     header.Cell().Background(Colors.Blue.Darken3).Padding(4).Text("مضمون").FontColor(Colors.White).Bold();
-                    header.Cell().Background(Colors.Blue.Darken3).Padding(4).AlignCenter().Text("صنفی (۴۰)").FontColor(Colors.White).Bold();
+                    header.Cell().Background(Colors.Blue.Darken3).Padding(4).AlignCenter().Text("چهارونیم‌ماهه (۴۰)").FontColor(Colors.White).Bold();
                     header.Cell().Background(Colors.Blue.Darken3).Padding(4).AlignCenter().Text("سالانه (۶۰)").FontColor(Colors.White).Bold();
                     header.Cell().Background(Colors.Blue.Darken3).Padding(4).AlignCenter().Text("مجموع (۱۰۰)").FontColor(Colors.White).Bold();
                     header.Cell().Background(Colors.Blue.Darken3).Padding(4).AlignCenter().Text("نتیجه").FontColor(Colors.White).Bold();
@@ -143,7 +143,7 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
                 table.Cell().Background(Colors.Grey.Lighten3).Padding(6).AlignCenter().Text("-");
                 table.Cell().Background(Colors.Grey.Lighten3).Padding(6).AlignCenter().Text("-");
                 table.Cell().Background(Colors.Grey.Lighten3).Padding(6).AlignCenter().Text($"{reportCard.TotalObtainedScore:0.##} / {reportCard.TotalMaxScore:0.##}").Bold();
-                table.Cell().ColumnSpan(2).Background(Colors.Grey.Lighten3).Padding(6).AlignCenter().Text($"اوسط: {reportCard.AveragePercentage:0.##}% | رتبه: {reportCard.OverallGrade}").Bold();
+                table.Cell().ColumnSpan(2).Background(Colors.Grey.Lighten3).Padding(6).AlignCenter().Text($"اوسط: {reportCard.AveragePercentage:0.##}% | رتبه: {ToDariGrade(reportCard.OverallGrade)} ({reportCard.OverallGrade})").Bold();
             });
 
             col.Item().PaddingTop(12).Row(row =>
@@ -225,4 +225,13 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
             });
         });
     }
+
+    private static string ToDariGrade(LetterGrade grade) => grade switch
+    {
+        LetterGrade.A => "الف",
+        LetterGrade.B => "ب",
+        LetterGrade.C => "ج",
+        LetterGrade.D => "د",
+        _ => "ه" // LetterGrade.F
+    };
 }

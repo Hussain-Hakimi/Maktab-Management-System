@@ -12,11 +12,10 @@ Built with **C# / .NET 8**, **WPF**, **SQLite**, and **QuestPDF**, with a Dari/P
 
 - [Project Goal](#-project-goal)
 - [Version 1.0 — Core Academic MVP](#-version-10--core-academic-mvp)
-- [Documentation/Code Sync Notice](#-documentationcode-sync-notice)
 - [Technology Stack](#️-technology-stack)
 - [Project Structure](#-project-structure)
 - [Grading and Examination System](#-grading-and-examination-system)
-- [Student Report Card / اطلاع‌نامه](#-student-report-card--اطلاع‌نامه)
+- [Student Report Card / اطلاع‌نامه](#-student-report-card--اطلاعنامه)
 - [Classes and Subjects](#-classes-and-subjects)
 - [Student Management](#-student-management)
 - [Mark Entry](#-mark-entry)
@@ -81,18 +80,6 @@ The following features are **planned for later versions** and are not part of th
 
 This keeps V1.0 focused on the essential academic workflow.
 
-## ⚠️ Documentation/Code Sync Notice
-
-This README reflects the **updated grading rules** described below (average-based A/B/C/D/F grouping, no per-subject percentage). At the time of writing, `GradingPolicy.cs` in the codebase still implements the **older** A/B/C/D/E/F, percentage-per-subject thresholds.
-
-**Do not treat this README as authoritative on its own.** It should be merged together with the corresponding updates to:
-
-- `GradingPolicy.cs` (grading thresholds)
-- Report-card generation logic (subject totals + overall average, no per-subject percentage)
-- Grading and report-card tests
-
-Until that code change lands, the actual application behavior may still match the old thresholds described in earlier versions of this document.
-
 ## 🏗️ Technology Stack
 
 | Component | Technology |
@@ -103,7 +90,7 @@ Until that code change lands, the actual application behavior may still match th
 | Database | SQLite |
 | PDF Generation | QuestPDF |
 | Architecture | Layered / Clean Architecture style |
-| Testing | .NET Test Framework |
+| Testing | xUnit |
 | Version Control | Git / GitHub |
 | CI | GitHub Actions |
 
@@ -122,13 +109,13 @@ Maktab-Management-System/
 │   │   └── Rules/
 │   │
 │   ├── Maktab.Application/
-│   │   ├── Abstractions/
-│   │   ├── DTOs/
+│   │   ├── Abstractions/    (interfaces + DTOs)
 │   │   └── Services/
 │   │
 │   ├── Maktab.Infrastructure/
+│   │   ├── Logging/
 │   │   ├── Persistence/
-│   │   └── ...
+│   │   └── Reports/
 │   │
 │   └── Maktab.App.Wpf/
 │       ├── Views/
@@ -238,7 +225,7 @@ ELSE:  # Average >= 65 AND Failed Subjects = 0
     Result = PROMOTED
 ```
 
-These rules must be applied consistently across mark calculation, report cards, tests, and future academic-year promotion functionality.
+These rules are implemented in `GradingPolicy.cs` and `PromotionPolicy.cs` and are applied consistently across mark calculation, report cards, tests, and future academic-year promotion functionality.
 
 ## 📄 Student Report Card / اطلاع‌نامه
 
@@ -394,7 +381,7 @@ The project includes automated tests covering important application logic and se
 - Backup functionality
 - Domain rules
 
-Tests are intended to prevent regressions as new features are added. As noted in [Documentation/Code Sync Notice](#-documentationcode-sync-notice), grading and report-card tests need to be updated alongside the new grading thresholds.
+Tests are intended to prevent regressions as new features are added.
 
 ## ⚙️ Build and Run
 
@@ -438,7 +425,7 @@ Open the WPF project at `src/Maktab.App.Wpf/` and run it using Visual Studio or 
 
 ## 🔁 Continuous Integration
 
-The project can use GitHub Actions to automatically:
+The project uses GitHub Actions (`.github/workflows/dotnet.yml`) to automatically:
 
 - Restore dependencies
 - Build the project
@@ -446,7 +433,7 @@ The project can use GitHub Actions to automatically:
 
 This helps detect broken builds and failing tests when changes are pushed or submitted through pull requests.
 
-Because the application is a Windows WPF application, the CI workflow should use a **Windows** GitHub-hosted runner (`windows-latest`).
+Because the application is a Windows WPF application, the CI workflow uses a **Windows** GitHub-hosted runner (`windows-latest`).
 
 ## 🗺️ Development Roadmap
 
@@ -468,17 +455,18 @@ Because the application is a Windows WPF application, the CI workflow should use
 
 The next priority is to make the existing MVP reliable before adding many new features.
 
+Completed:
+- ✅ New grading rules verified throughout the application (domain, services, PDF, UI)
+- ✅ Grading and report-card tests updated
+- ✅ GitHub Actions CI added (`windows-latest` runner)
+
 Planned improvements:
-- Verify the new grading rules throughout the application
-- Update grading tests
-- Verify report-card calculations
 - Improve database/integration testing
 - Test backup and restore thoroughly
 - Improve deployment and publishing
 - Remove hardcoded academic-year assumptions
 - Improve error handling
 - Improve documentation
-- Add GitHub Actions CI
 
 ### Version 1.1 — School Operations
 
@@ -580,7 +568,7 @@ A / B / C / D / F
 Report Card
 ```
 
-The next development priority is **stabilization of V1.0** (including syncing `GradingPolicy.cs` and report-card logic with the grading rules in this document), followed by the V1.1 school-operation features.
+`GradingPolicy.cs`, `PromotionPolicy.cs`, the report-card logic, the UI, and the tests are all in sync with the grading rules described in this document. The next development priority is **stabilization of V1.0**, followed by the V1.1 school-operation features.
 
 ---
 

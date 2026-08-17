@@ -28,7 +28,7 @@ public class UnitTest1
     }
 
     [Fact]
-    public void IsPromoted_WhenRulesSatisfied_ReturnsPromoted()
+    public void GetPromotionOutcome_WhenAveragePassesButSomeSubjectsFailed_ReturnsConditional()
     {
         var outcome = PromotionPolicy.GetPromotionOutcome(average: 70m, failedSubjects: 2, absenceDays: 10);
 
@@ -36,7 +36,7 @@ public class UnitTest1
     }
 
     [Fact]
-    public void IsPromoted_WhenAbsenceOverLimit_ReturnsRepeat()
+    public void GetPromotionOutcome_WhenAbsenceOverLimit_ReturnsRepeat()
     {
         var outcome = PromotionPolicy.GetPromotionOutcome(average: 80m, failedSubjects: 0, absenceDays: 31);
 
