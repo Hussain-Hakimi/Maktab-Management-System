@@ -211,14 +211,18 @@ If the student's average is 65 or higher, but the student has a total below 40 i
 **4. Repeat grade — more than 3 failed subjects**
 If the student has a total below 40 in **more than three subjects**, the student must **repeat the grade** — this applies even if the student's overall average is 65 or higher.
 
+**5. Attendance Limit**
+If a student has a total of **more than 30 days of absence** in an academic year, the student **cannot** pass and must **repeat the grade**, regardless of their average or subject results.
+
 **Summary of possible outcomes:**
 
-| Overall Average | Failed Subjects (Total < 40) | Result |
-|---|---|---|
-| ≥ 65 | 0 | ✅ **Promoted** |
-| ≥ 65 | 1 – 3 | 🟡 **Conditional (مشروط)** — cannot promote yet |
-| ≥ 65 | > 3 | 🔴 **Repeat Grade** |
-| < 65 | Any | 🔴 **Repeat Grade** |
+| Overall Average | Failed Subjects (Total < 40) | Absences (Days) | Result |
+|---|---|---|---|
+| ≥ 65 | 0 | ≤ 30 | ✅ **Promoted** |
+| ≥ 65 | 1 – 3 | ≤ 30 | 🟡 **Conditional (مشروط)** |
+| ≥ 65 | > 3 | Any | 🔴 **Repeat Grade** |
+| < 65 | Any | Any | 🔴 **Repeat Grade** |
+| Any | Any | > 30 | 🔴 **Repeat Grade** |
 
 ```
 IF (Failed Subjects > 3):
