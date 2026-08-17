@@ -220,7 +220,7 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
 
             col.Item().PaddingTop(15).Row(row =>
             {
-                row.RelativeItem().Text("سیستم مدیریت مکاتب افغانستان — نسخه ۱.۰ آفلاین").FontSize(8).FontColor(Colors.Grey.Darken1);
+                row.RelativeItem().Text("سیستم مدیریت مکاتب افغانستان — نسخه ۱.۰.۱ آفلاین").FontSize(8).FontColor(Colors.Grey.Darken1);
                 row.RelativeItem().AlignRight().Text("صفحه ۱ از ۱").FontSize(8).FontColor(Colors.Grey.Darken1);
             });
         });
