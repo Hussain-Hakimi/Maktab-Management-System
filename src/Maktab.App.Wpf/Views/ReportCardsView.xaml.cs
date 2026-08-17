@@ -22,8 +22,6 @@ public sealed class PreviewMarkItem
     public decimal MidtermScore { get; set; }
     public decimal FinalScore { get; set; }
     public decimal TotalScore { get; set; }
-    public decimal Percentage { get; set; }
-    public string Grade { get; set; } = string.Empty;
     public string IsPassText { get; set; } = string.Empty;
 }
 
@@ -158,22 +156,28 @@ public partial class ReportCardsView : UserControl
             AveragePercentageTextBlock.Text = $"اوسط فیصدی: {data.AveragePercentage:0.##}%";
             PassedFailedTextBlock.Text = $"کامیاب: {data.PassedSubjectsCount} | ناکام: {data.FailedSubjectsCount}";
 
-            if (data.IsPromoted)
+            switch (data.PromotionOutcome)
             {
-                PromotionBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(240, 253, 244));
-                PromotionBadgeBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(34, 197, 94));
-                PromotionStatusTitleTextBlock.Text = "وضعیت ارتقاء: ✅ ارتقاء به صنف بالا (کامیاب)";
-                PromotionStatusTitleTextBlock.Foreground = new SolidColorBrush(Color.FromRgb(22, 163, 74));
-                PromotionReasonTextBlock.Text = string.Empty;
+                case PromotionOutcome.Promoted:
+                    PromotionBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(240, 253, 244)); // Green
+                    PromotionBadgeBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(34, 197, 94));
+                    PromotionStatusTitleTextBlock.Text = "وضعیت ارتقاء: ✅ ارتقاء به صنف بالا (کامیاب)";
+                    PromotionStatusTitleTextBlock.Foreground = new SolidColorBrush(Color.FromRgb(22, 163, 74));
+                    break;
+                case PromotionOutcome.Conditional:
+                    PromotionBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(254, 252, 232)); // Yellow
+                    PromotionBadgeBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(234, 179, 8));
+                    PromotionStatusTitleTextBlock.Text = "وضعیت ارتقاء: 🟡 مشروط (نیاز به بازنگری)";
+                    PromotionStatusTitleTextBlock.Foreground = new SolidColorBrush(Color.FromRgb(202, 138, 4));
+                    break;
+                default: // Repeat
+                    PromotionBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(254, 242, 242)); // Red
+                    PromotionBadgeBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(239, 68, 68));
+                    PromotionStatusTitleTextBlock.Text = "وضعیت ارتقاء: ❌ تکرار صنف (ناکام)";
+                    PromotionStatusTitleTextBlock.Foreground = new SolidColorBrush(Color.FromRgb(220, 38, 38));
+                    break;
             }
-            else
-            {
-                PromotionBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(254, 242, 242));
-                PromotionBadgeBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(239, 68, 68));
-                PromotionStatusTitleTextBlock.Text = "وضعیت ارتقاء: ❌ تکرار صنف (مشروط / ناکام)";
-                PromotionStatusTitleTextBlock.Foreground = new SolidColorBrush(Color.FromRgb(220, 38, 38));
-                PromotionReasonTextBlock.Text = $"علت: {data.FailureReason}";
-            }
+            PromotionReasonTextBlock.Text = data.FailureReason != null ? $"علت: {data.FailureReason}" : string.Empty;
 
             _previewMarks.Clear();
             foreach (var m in data.SubjectMarks)
@@ -184,8 +188,6 @@ public partial class ReportCardsView : UserControl
                     MidtermScore = m.MidtermScore,
                     FinalScore = m.FinalScore,
                     TotalScore = m.TotalScore,
-                    Percentage = m.Percentage,
-                    Grade = m.Grade.ToString(),
                     IsPassText = m.IsPass ? "کامیاب" : "ناکام"
                 });
             }
