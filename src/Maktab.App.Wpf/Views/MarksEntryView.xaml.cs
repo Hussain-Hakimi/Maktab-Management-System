@@ -15,8 +15,6 @@ public sealed class EditableMarkRowItem : INotifyPropertyChanged
     private decimal _midtermScore;
     private decimal _finalScore;
     private decimal _totalScore;
-    private decimal _percentage;
-    private LetterGrade _grade;
     private bool _isPass;
 
     public int StudentId { get; set; }
@@ -67,32 +65,6 @@ public sealed class EditableMarkRowItem : INotifyPropertyChanged
         }
     }
 
-    public decimal Percentage
-    {
-        get => _percentage;
-        private set
-        {
-            if (_percentage != value)
-            {
-                _percentage = value;
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    public LetterGrade Grade
-    {
-        get => _grade;
-        private set
-        {
-            if (_grade != value)
-            {
-                _grade = value;
-                OnPropertyChanged();
-            }
-        }
-    }
-
     public bool IsPass
     {
         get => _isPass;
@@ -116,8 +88,6 @@ public sealed class EditableMarkRowItem : INotifyPropertyChanged
 
         var total = clampedMidterm + clampedFinal;
         TotalScore = total;
-        Percentage = total;
-        Grade = GradingPolicy.ResolveLetterGrade(total);
         IsPass = total >= GradingPolicy.PassingMark;
     }
 
