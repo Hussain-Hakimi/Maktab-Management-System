@@ -1,4 +1,5 @@
 using Maktab.Application.Abstractions;
+using Maktab.Domain.Enums;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
