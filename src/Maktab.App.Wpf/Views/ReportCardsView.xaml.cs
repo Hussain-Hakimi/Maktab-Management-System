@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using Maktab.Application.Abstractions;
 using Maktab.Domain.Entities;
+using Maktab.Domain.Enums;
 using Maktab.Infrastructure.Persistence;
 
 namespace Maktab.App.Wpf.Views;

@@ -28,18 +28,18 @@ public class UnitTest1
     }
 
     [Fact]
-    public void IsPromoted_WhenRulesSatisfied_ReturnsTrue()
+    public void IsPromoted_WhenRulesSatisfied_ReturnsPromoted()
     {
-        var promoted = PromotionPolicy.IsPromoted(failedSubjects: 2, absenceDays: 10);
+        var outcome = PromotionPolicy.GetPromotionOutcome(average: 70m, failedSubjects: 2, absenceDays: 10);
 
-        Assert.True(promoted);
+        Assert.Equal(PromotionOutcome.Conditional, outcome);
     }
 
     [Fact]
-    public void IsPromoted_WhenAbsenceOverLimit_ReturnsFalse()
+    public void IsPromoted_WhenAbsenceOverLimit_ReturnsRepeat()
     {
-        var promoted = PromotionPolicy.IsPromoted(failedSubjects: 1, absenceDays: 31);
+        var outcome = PromotionPolicy.GetPromotionOutcome(average: 80m, failedSubjects: 0, absenceDays: 31);
 
-        Assert.False(promoted);
+        Assert.Equal(PromotionOutcome.Repeat, outcome);
     }
 }

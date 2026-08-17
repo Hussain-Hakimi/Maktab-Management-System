@@ -82,7 +82,7 @@ public class ReportCardServiceTests
         Assert.Equal(77.5m, result.AveragePercentage);
         Assert.Equal(2, result.PassedSubjectsCount);
         Assert.Equal(0, result.FailedSubjectsCount);
-        Assert.True(result.IsPromoted);
+        Assert.Equal(PromotionOutcome.Promoted, result.PromotionOutcome);
         Assert.Null(result.FailureReason);
     }
 
@@ -116,7 +116,7 @@ public class ReportCardServiceTests
         var result = await service.GetStudentReportCardDataAsync(1, "۱۴۰۳");
 
         Assert.Equal(4, result.FailedSubjectsCount);
-        Assert.False(result.IsPromoted);
+        Assert.Equal(PromotionOutcome.Repeat, result.PromotionOutcome);
         Assert.NotNull(result.FailureReason);
     }
 
