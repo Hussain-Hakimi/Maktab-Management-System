@@ -1,23 +1,30 @@
+using Maktab.Domain.Enums;
+
 namespace Maktab.Domain.Rules;
 
 public static class PromotionPolicy
 {
     public const int MaxAllowedFailedSubjects = 3;
     public const int MaxAllowedAbsenceDays = 30;
+    public const decimal PassingAverage = 65m;
 
-    public static bool IsPromoted(int failedSubjects, int absenceDays)
+    public static PromotionOutcome GetPromotionOutcome(decimal average, int failedSubjects, int absenceDays)
     {
-        if (failedSubjects < 0)
+        if (absenceDays > MaxAllowedAbsenceDays)
         {
-            throw new ArgumentOutOfRangeException(nameof(failedSubjects));
+            return PromotionOutcome.Repeat;
         }
 
-        if (absenceDays < 0)
+        if (failedSubjects > MaxAllowedFailedSubjects || average < PassingAverage)
         {
-            throw new ArgumentOutOfRangeException(nameof(absenceDays));
+            return PromotionOutcome.Repeat;
         }
 
-        return failedSubjects <= MaxAllowedFailedSubjects
-            && absenceDays <= MaxAllowedAbsenceDays;
+        if (failedSubjects > 0)
+        {
+            return PromotionOutcome.Conditional;
+        }
+
+        return PromotionOutcome.Promoted;
     }
 }

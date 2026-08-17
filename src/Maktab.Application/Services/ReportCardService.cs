@@ -61,20 +61,25 @@ public sealed class ReportCardService(
         var overallGrade = GradingPolicy.ResolveLetterGrade(avgPercentage);
         var absenceDays = 0; // Baseline v1.0 attendance
 
-        var isPromoted = PromotionPolicy.IsPromoted(failedCount, absenceDays);
+        var outcome = PromotionPolicy.GetPromotionOutcome(avgPercentage, failedCount, absenceDays);
         string promoText;
         string? failureReason = null;
 
-        if (isPromoted)
+        switch (outcome)
         {
-            promoText = "ارتقاء نموده است (PROMOTED)";
-        }
-        else
-        {
-            promoText = "تکرار صنف (مشروط / ناکام)";
-            failureReason = failedCount > PromotionPolicy.MaxAllowedFailedSubjects
-                ? $"بیش از {PromotionPolicy.MaxAllowedFailedSubjects} مضمون ناکام ({failedCount} مضمون)"
-                : (absenceDays > PromotionPolicy.MaxAllowedAbsenceDays ? $"بیش از {PromotionPolicy.MaxAllowedAbsenceDays} روز غیرحاضری" : "عدم تکمیل معیار قبولی");
+            case PromotionOutcome.Promoted:
+                promoText = "ارتقاء نموده است (PROMOTED)";
+                break;
+            case PromotionOutcome.Conditional:
+                promoText = "مشروط (CONDITIONAL)";
+                failureReason = "عدم تکمیل معیار قبولی در برخی مضامین";
+                break;
+            default: // Repeat
+                promoText = "تکرار صنف (REPEAT)";
+                failureReason = failedCount > PromotionPolicy.MaxAllowedFailedSubjects
+                    ? $"بیش از {PromotionPolicy.MaxAllowedFailedSubjects} مضمون ناکام ({failedCount} مضمون)"
+                    : (avgPercentage < PromotionPolicy.PassingAverage ? $"اوسط نمرات کمتر از {PromotionPolicy.PassingAverage}" : $"بیش از {PromotionPolicy.MaxAllowedAbsenceDays} روز غیرحاضری");
+                break;
         }
 
         return new StudentReportCardDto
@@ -96,7 +101,7 @@ public sealed class ReportCardService(
             PassedSubjectsCount = passedCount,
             FailedSubjectsCount = failedCount,
             AbsenceDays = absenceDays,
-            IsPromoted = isPromoted,
+            PromotionOutcome = outcome,
             PromotionStatusText = promoText,
             FailureReason = failureReason
         };

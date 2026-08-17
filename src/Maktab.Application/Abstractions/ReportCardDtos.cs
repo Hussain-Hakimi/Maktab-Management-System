@@ -32,7 +32,7 @@ public sealed class StudentReportCardDto
     public int PassedSubjectsCount { get; set; }
     public int FailedSubjectsCount { get; set; }
     public int AbsenceDays { get; set; }
-    public bool IsPromoted { get; set; }
+    public PromotionOutcome PromotionOutcome { get; set; }
     public string PromotionStatusText { get; set; } = string.Empty;
     public string? FailureReason { get; set; }
 }
