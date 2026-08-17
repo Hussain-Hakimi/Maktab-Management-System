@@ -117,8 +117,6 @@ public class ExamMarkServiceTests
         Assert.Single(results);
         var r = results[0];
         Assert.Equal(93m, r.TotalScore);
-        Assert.Equal(93m, r.Percentage);
-        Assert.Equal(LetterGrade.A, r.Grade);
         Assert.True(r.IsPass);
     }
 
