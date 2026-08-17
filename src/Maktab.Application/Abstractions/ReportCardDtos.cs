@@ -8,8 +8,6 @@ public sealed class SubjectMarkReportDto
     public decimal MidtermScore { get; set; }
     public decimal FinalScore { get; set; }
     public decimal TotalScore { get; set; }
-    public decimal Percentage { get; set; }
-    public LetterGrade Grade { get; set; }
     public bool IsPass { get; set; }
 }
 
@@ -30,6 +28,7 @@ public sealed class StudentReportCardDto
     public decimal TotalObtainedScore { get; set; }
     public decimal TotalMaxScore { get; set; }
     public decimal AveragePercentage { get; set; }
+    public LetterGrade OverallGrade { get; set; }
     public int PassedSubjectsCount { get; set; }
     public int FailedSubjectsCount { get; set; }
     public int AbsenceDays { get; set; }

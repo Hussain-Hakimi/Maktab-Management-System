@@ -41,8 +41,6 @@ public sealed class ReportCardService(
             var midterm = mark?.MidtermScore ?? 0m;
             var final = mark?.FinalScore ?? 0m;
             var total = GradingPolicy.CalculateTotal(midterm, final);
-            var percentage = GradingPolicy.CalculatePercentage(total);
-            var grade = GradingPolicy.ResolveLetterGrade(percentage);
             var isPass = GradingPolicy.IsPass(total);
 
             totalObtained += total;
@@ -54,14 +52,13 @@ public sealed class ReportCardService(
                 MidtermScore = midterm,
                 FinalScore = final,
                 TotalScore = total,
-                Percentage = percentage,
-                Grade = grade,
                 IsPass = isPass
             });
         }
 
         var totalMaxScore = subjects.Count * GradingPolicy.TotalMax;
         var avgPercentage = totalMaxScore > 0 ? Math.Round((totalObtained / totalMaxScore) * 100m, 2) : 0m;
+        var overallGrade = GradingPolicy.ResolveLetterGrade(avgPercentage);
         var absenceDays = 0; // Baseline v1.0 attendance
 
         var isPromoted = PromotionPolicy.IsPromoted(failedCount, absenceDays);
@@ -95,6 +92,7 @@ public sealed class ReportCardService(
             TotalObtainedScore = totalObtained,
             TotalMaxScore = totalMaxScore,
             AveragePercentage = avgPercentage,
+            OverallGrade = overallGrade,
             PassedSubjectsCount = passedCount,
             FailedSubjectsCount = failedCount,
             AbsenceDays = absenceDays,
