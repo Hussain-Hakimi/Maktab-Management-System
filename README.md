@@ -479,6 +479,11 @@ Planned improvements:
 ### Version 1.1 — School Operations
 
 **Attendance**
+- Weekly/Monthly Excel templates for offline attendance tracking.
+- Pre-filled templates default to "Present".
+- Supported statuses: Present, Absent, Ill, Permission.
+- Manual data entry (Admin-driven) or Excel import functionality.
+- Automatic absence tallying tied to promotion rules.
 - Daily attendance
 - Present/absent records
 - Absence statistics
