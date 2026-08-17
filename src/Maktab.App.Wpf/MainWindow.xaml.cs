@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Windows;
+using Maktab.Application.Services;
 using Maktab.App.Wpf.Views;
 
 namespace Maktab.App.Wpf;
@@ -37,7 +38,7 @@ public partial class MainWindow : Window
             var shamsiDay = persianCalendar.GetDayOfMonth(now);
 
             CurrentDateTextBlock.Text = $"📅 {shamsiYear}/{shamsiMonth:D2}/{shamsiDay:D2} — {now:yyyy/MM/dd}";
-            SchoolYearTextBlock.Text = $"سال تحصیلی: {shamsiYear}";
+            SchoolYearTextBlock.Text = $"سال تحصیلی: {AcademicYearProvider.GetCurrentAcademicYear(now)}";
         }
         catch
         {
