@@ -159,9 +159,24 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
                 row.ConstantItem(12);
 
                 // Promotion Decision Box
-                var promoBorder = reportCard.IsPromoted ? Colors.Green.Darken2 : Colors.Red.Darken2;
-                var promoBg = reportCard.IsPromoted ? Colors.Green.Lighten5 : Colors.Red.Lighten5;
-                var promoTitle = reportCard.IsPromoted ? "نتیجه: ارتقاء نموده است ✓" : "نتیجه: مشروط / تکرار صنف ✗";
+                var promoBorder = reportCard.PromotionOutcome switch
+                {
+                    PromotionOutcome.Promoted => Colors.Green.Darken2,
+                    PromotionOutcome.Conditional => Colors.Yellow.Darken3,
+                    _ => Colors.Red.Darken2 // Repeat
+                };
+                var promoBg = reportCard.PromotionOutcome switch
+                {
+                    PromotionOutcome.Promoted => Colors.Green.Lighten5,
+                    PromotionOutcome.Conditional => Colors.Yellow.Lighten5,
+                    _ => Colors.Red.Lighten5 // Repeat
+                };
+                var promoTitle = reportCard.PromotionOutcome switch
+                {
+                    PromotionOutcome.Promoted => "نتیجه: ارتقاء نموده است ✓",
+                    PromotionOutcome.Conditional => "نتیجه: مشروط (نیاز به بازنگری) 🟡",
+                    _ => "نتیجه: تکرار صنف (ناکام) ✗"
+                };
 
                 row.RelativeItem(4).Border(1.5f).BorderColor(promoBorder).Background(promoBg).Padding(8).Column(c =>
                 {
