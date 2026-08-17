@@ -15,14 +15,14 @@ public class UnitTest1
 
     [Theory]
     [InlineData(95, LetterGrade.A)]
-    [InlineData(84, LetterGrade.B)]
-    [InlineData(75, LetterGrade.C)]
-    [InlineData(63, LetterGrade.D)]
-    [InlineData(51, LetterGrade.E)]
+    [InlineData(86, LetterGrade.B)]
+    [InlineData(78, LetterGrade.C)]
+    [InlineData(68, LetterGrade.D)]
+    [InlineData(51, LetterGrade.F)]
     [InlineData(39, LetterGrade.F)]
-    public void ResolveLetterGrade_ReturnsExpectedGrade(decimal percentage, LetterGrade expected)
+    public void ResolveLetterGrade_ReturnsExpectedGrade(decimal average, LetterGrade expected)
     {
-        var grade = GradingPolicy.ResolveLetterGrade(percentage);
+        var grade = GradingPolicy.ResolveLetterGrade(average);
 
         Assert.Equal(expected, grade);
     }
