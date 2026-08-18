@@ -7,14 +7,12 @@ public sealed class LibraryService(
     ILibraryRepository libraryRepository,
     IStudentRepository studentRepository) : ILibraryService
 {
-    public const int DefaultLoanDays = 14;
-
-    public Task<IReadOnlyList<LibraryBook>> GetAllBooksAsync(CancellationToken cancellationToken = default)
+    public Task<IReadOnlyList<LibraryBook>> GetBooksAsync(CancellationToken cancellationToken = default)
     {
         return libraryRepository.GetBooksAsync(cancellationToken);
     }
 
-    public Task<int> AddBookAsync(string title, string author, string? category, int totalCopies, CancellationToken cancellationToken = default)
+    public Task<int> AddBookAsync(string title, string author, string category, int totalCopies, CancellationToken cancellationToken = default)
     {
         ValidateBook(title, totalCopies);
 
@@ -22,7 +20,7 @@ public sealed class LibraryService(
         {
             Title = title.Trim(),
             Author = author?.Trim() ?? string.Empty,
-            Category = string.IsNullOrWhiteSpace(category) ? null : category.Trim(),
+            Category = category?.Trim() ?? string.Empty,
             TotalCopies = totalCopies,
             AvailableCopies = totalCopies
         };
@@ -30,85 +28,93 @@ public sealed class LibraryService(
         return libraryRepository.CreateBookAsync(book, cancellationToken);
     }
 
-    public async Task UpdateBookAsync(int bookId, string title, string author, string? category, int totalCopies, CancellationToken cancellationToken = default)
+    public async Task UpdateBookAsync(int bookId, string title, string author, string category, int totalCopies, CancellationToken cancellationToken = default)
     {
         if (bookId <= 0) throw new ArgumentOutOfRangeException(nameof(bookId));
         ValidateBook(title, totalCopies);
 
         var existing = await libraryRepository.GetBookByIdAsync(bookId, cancellationToken);
-        if (existing is null) throw new InvalidOperationException("کتاب یافت نشد.");
+        if (existing is null) throw new InvalidOperationException("Book not found.");
 
-        var issuedCopies = existing.TotalCopies - existing.AvailableCopies;
-        if (totalCopies < issuedCopies)
+        // Copies currently out on loan cannot be removed by shrinking the total.
+        var loanedOut = existing.TotalCopies - existing.AvailableCopies;
+        if (totalCopies < loanedOut)
         {
-            throw new InvalidOperationException($"تعداد کل نسخه‌ها نمی‌تواند از تعداد نسخه‌های امانت‌داده‌شده ({issuedCopies}) کمتر باشد.");
+            throw new InvalidOperationException($"Cannot set total copies to {totalCopies}: {loanedOut} copies are currently issued to students.");
         }
 
-        existing.Title = title.Trim();
-        existing.Author = author?.Trim() ?? string.Empty;
-        existing.Category = string.IsNullOrWhiteSpace(category) ? null : category.Trim();
-        existing.TotalCopies = totalCopies;
-        existing.AvailableCopies = totalCopies - issuedCopies;
+        var book = new LibraryBook
+        {
+            BookId = bookId,
+            Title = title.Trim(),
+            Author = author?.Trim() ?? string.Empty,
+            Category = category?.Trim() ?? string.Empty,
+            TotalCopies = totalCopies,
+            AvailableCopies = totalCopies - loanedOut
+        };
 
-        await libraryRepository.UpdateBookAsync(existing, cancellationToken);
+        await libraryRepository.UpdateBookAsync(book, cancellationToken);
     }
 
-    public async Task RemoveBookAsync(int bookId, CancellationToken cancellationToken = default)
+    public async Task DeleteBookAsync(int bookId, CancellationToken cancellationToken = default)
     {
         if (bookId <= 0) throw new ArgumentOutOfRangeException(nameof(bookId));
 
-        if (await libraryRepository.HasActiveLoansForBookAsync(bookId, cancellationToken))
+        var loans = await libraryRepository.GetLoansByBookAsync(bookId, cancellationToken);
+        if (loans.Count > 0)
         {
-            throw new InvalidOperationException("این کتاب نسخه‌های امانت‌داده‌شده دارد و تا بازگشت آنها قابل حذف نیست.");
+            throw new InvalidOperationException("This book has loan records and cannot be deleted. Return all copies and keep the record for history.");
         }
 
         await libraryRepository.DeleteBookAsync(bookId, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<BookLoanDto>> GetAllLoansAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<BookLoanDto>> GetLoanHistoryAsync(CancellationToken cancellationToken = default)
     {
-        return await EnrichLoansAsync(await libraryRepository.GetLoansAsync(cancellationToken), cancellationToken);
+        var loans = await libraryRepository.GetLoansAsync(cancellationToken);
+        return await ToDtosAsync(loans, cancellationToken);
     }
 
     public async Task<IReadOnlyList<BookLoanDto>> GetActiveLoansAsync(CancellationToken cancellationToken = default)
     {
-        return await EnrichLoansAsync(await libraryRepository.GetActiveLoansAsync(cancellationToken), cancellationToken);
+        var loans = await libraryRepository.GetActiveLoansAsync(cancellationToken);
+        return await ToDtosAsync(loans, cancellationToken);
     }
 
     public async Task<IReadOnlyList<BookLoanDto>> GetOverdueLoansAsync(CancellationToken cancellationToken = default)
     {
-        var active = await GetActiveLoansAsync(cancellationToken);
-        return active.Where(l => l.IsOverdue).ToList();
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var loans = await libraryRepository.GetOverdueLoansAsync(today, cancellationToken);
+        return await ToDtosAsync(loans, cancellationToken);
     }
 
-    public async Task<int> IssueBookAsync(int bookId, int studentId, int loanDays, CancellationToken cancellationToken = default)
+    public async Task<int> IssueBookAsync(int bookId, int studentId, int loanDays = 14, CancellationToken cancellationToken = default)
     {
         if (bookId <= 0) throw new ArgumentOutOfRangeException(nameof(bookId));
         if (studentId <= 0) throw new ArgumentOutOfRangeException(nameof(studentId));
-        if (loanDays < 1 || loanDays > 365) throw new ArgumentOutOfRangeException(nameof(loanDays), "مدت امانت باید بین ۱ و ۳۶۵ روز باشد.");
+        if (loanDays < 1) throw new ArgumentOutOfRangeException(nameof(loanDays), "Loan period must be at least one day.");
 
         var book = await libraryRepository.GetBookByIdAsync(bookId, cancellationToken);
-        if (book is null) throw new InvalidOperationException("کتاب یافت نشد.");
+        if (book is null) throw new InvalidOperationException("Book not found.");
         if (book.AvailableCopies <= 0)
         {
-            throw new InvalidOperationException($"نسخه‌ای از کتاب «{book.Title}» در کتابخانه موجود نیست.");
+            throw new InvalidOperationException($"No copies of '{book.Title}' are available right now.");
         }
 
         var student = await studentRepository.GetStudentByIdAsync(studentId, cancellationToken);
-        if (student is null) throw new InvalidOperationException($"شاگرد با آیدی {studentId} یافت نشد.");
+        if (student is null) throw new InvalidOperationException("Student not found.");
 
-        var today = DateOnly.FromDateTime(DateTime.Now);
+        var today = DateOnly.FromDateTime(DateTime.Today);
         var loan = new BookLoan
         {
             BookId = bookId,
             StudentId = studentId,
             IssueDate = today,
-            DueDate = today.AddDays(loanDays),
-            ReturnDate = null
+            DueDate = today.AddDays(loanDays)
         };
 
         var loanId = await libraryRepository.CreateLoanAsync(loan, cancellationToken);
-        await libraryRepository.SetAvailableCopiesAsync(bookId, book.AvailableCopies - 1, cancellationToken);
+        await libraryRepository.AdjustAvailableCopiesAsync(bookId, -1, cancellationToken);
         return loanId;
     }
 
@@ -116,53 +122,45 @@ public sealed class LibraryService(
     {
         if (loanId <= 0) throw new ArgumentOutOfRangeException(nameof(loanId));
 
-        var loans = await libraryRepository.GetLoansAsync(cancellationToken);
-        var loan = loans.FirstOrDefault(l => l.LoanId == loanId);
-        if (loan is null) throw new InvalidOperationException("رکورد امانت یافت نشد.");
-        if (loan.IsReturned) throw new InvalidOperationException("این کتاب قبلاً بازگردانده شده است.");
+        var loan = await libraryRepository.GetLoanByIdAsync(loanId, cancellationToken);
+        if (loan is null) throw new InvalidOperationException("Loan record not found.");
+        if (loan.IsReturned) throw new InvalidOperationException("This book has already been returned.");
 
-        var today = DateOnly.FromDateTime(DateTime.Now);
-        await libraryRepository.ReturnLoanAsync(loanId, today, cancellationToken);
-
-        var book = await libraryRepository.GetBookByIdAsync(loan.BookId, cancellationToken);
-        if (book is not null)
-        {
-            await libraryRepository.SetAvailableCopiesAsync(book.BookId, Math.Min(book.AvailableCopies + 1, book.TotalCopies), cancellationToken);
-        }
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        await libraryRepository.MarkLoanReturnedAsync(loanId, today, cancellationToken);
+        await libraryRepository.AdjustAvailableCopiesAsync(loan.BookId, +1, cancellationToken);
     }
 
-    private async Task<IReadOnlyList<BookLoanDto>> EnrichLoansAsync(IReadOnlyList<BookLoan> loans, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<BookLoanDto>> ToDtosAsync(IReadOnlyList<BookLoan> loans, CancellationToken cancellationToken)
     {
-        var today = DateOnly.FromDateTime(DateTime.Now);
-        var result = new List<BookLoanDto>();
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var books = await libraryRepository.GetBooksAsync(cancellationToken);
+        var bookMap = books.ToDictionary(b => b.BookId, b => b.Title);
+        var students = await studentRepository.GetStudentsAsync(cancellationToken);
+        var studentMap = students.ToDictionary(s => s.StudentId);
 
-        foreach (var loan in loans)
+        return loans.Select(l =>
         {
-            var book = await libraryRepository.GetBookByIdAsync(loan.BookId, cancellationToken);
-            var student = await studentRepository.GetStudentByIdAsync(loan.StudentId, cancellationToken);
-
-            result.Add(new BookLoanDto
+            studentMap.TryGetValue(l.StudentId, out var student);
+            return new BookLoanDto
             {
-                LoanId = loan.LoanId,
-                BookId = loan.BookId,
-                BookTitle = book?.Title ?? $"کتاب {loan.BookId}",
-                StudentId = loan.StudentId,
-                StudentName = student is null ? $"شاگرد {loan.StudentId}" : $"{student.FirstName} {student.LastName}",
+                LoanId = l.LoanId,
+                BookId = l.BookId,
+                BookTitle = bookMap.TryGetValue(l.BookId, out var title) ? title : $"Book {l.BookId}",
+                StudentId = l.StudentId,
+                StudentName = student is null ? $"شاگرد {l.StudentId}" : $"{student.FirstName} {student.LastName}",
                 RollNumber = student?.RollNumber ?? string.Empty,
-                IssueDate = loan.IssueDate,
-                DueDate = loan.DueDate,
-                ReturnDate = loan.ReturnDate,
-                IsReturned = loan.IsReturned,
-                IsOverdue = loan.IsOverdue(today)
-            });
-        }
-
-        return result;
+                IssueDate = l.IssueDate,
+                DueDate = l.DueDate,
+                ReturnDate = l.ReturnDate,
+                IsOverdue = l.IsOverdue(today)
+            };
+        }).ToList();
     }
 
     private static void ValidateBook(string title, int totalCopies)
     {
-        if (string.IsNullOrWhiteSpace(title)) throw new ArgumentException("عنوان کتاب ضروری است.", nameof(title));
-        if (totalCopies < 0) throw new ArgumentOutOfRangeException(nameof(totalCopies), "تعداد نسخه‌ها نمی‌تواند منفی باشد.");
+        if (string.IsNullOrWhiteSpace(title)) throw new ArgumentException("Book title is required.", nameof(title));
+        if (totalCopies < 1) throw new ArgumentOutOfRangeException(nameof(totalCopies), "Total copies must be at least 1.");
     }
 }

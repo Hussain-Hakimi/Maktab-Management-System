@@ -7,20 +7,20 @@ public sealed class TextbookService(
     ITextbookRepository textbookRepository,
     IStudentRepository studentRepository) : ITextbookService
 {
-    public Task<IReadOnlyList<Textbook>> GetAllTextbooksAsync(CancellationToken cancellationToken = default)
+    public Task<IReadOnlyList<Textbook>> GetTextbooksAsync(CancellationToken cancellationToken = default)
     {
         return textbookRepository.GetTextbooksAsync(cancellationToken);
     }
 
-    public Task<int> AddTextbookAsync(string title, string? subjectName, string? gradeLevel, int totalCopies, CancellationToken cancellationToken = default)
+    public Task<int> AddTextbookAsync(string title, string subjectName, string gradeLevel, int totalCopies, CancellationToken cancellationToken = default)
     {
         ValidateTextbook(title, totalCopies);
 
         var textbook = new Textbook
         {
             Title = title.Trim(),
-            SubjectName = string.IsNullOrWhiteSpace(subjectName) ? null : subjectName.Trim(),
-            GradeLevel = string.IsNullOrWhiteSpace(gradeLevel) ? null : gradeLevel.Trim(),
+            SubjectName = subjectName?.Trim() ?? string.Empty,
+            GradeLevel = gradeLevel?.Trim() ?? string.Empty,
             TotalCopies = totalCopies,
             AvailableCopies = totalCopies
         };
@@ -28,49 +28,56 @@ public sealed class TextbookService(
         return textbookRepository.CreateTextbookAsync(textbook, cancellationToken);
     }
 
-    public async Task UpdateTextbookAsync(int textbookId, string title, string? subjectName, string? gradeLevel, int totalCopies, CancellationToken cancellationToken = default)
+    public async Task UpdateTextbookAsync(int textbookId, string title, string subjectName, string gradeLevel, int totalCopies, CancellationToken cancellationToken = default)
     {
         if (textbookId <= 0) throw new ArgumentOutOfRangeException(nameof(textbookId));
         ValidateTextbook(title, totalCopies);
 
         var existing = await textbookRepository.GetTextbookByIdAsync(textbookId, cancellationToken);
-        if (existing is null) throw new InvalidOperationException("کتاب درسی یافت نشد.");
+        if (existing is null) throw new InvalidOperationException("Textbook not found.");
 
-        var issuedCopies = existing.TotalCopies - existing.AvailableCopies;
-        if (totalCopies < issuedCopies)
+        var issuedOut = existing.TotalCopies - existing.AvailableCopies;
+        if (totalCopies < issuedOut)
         {
-            throw new InvalidOperationException($"تعداد کل نسخه‌ها نمی‌تواند از تعداد نسخه‌های توزیع‌شده ({issuedCopies}) کمتر باشد.");
+            throw new InvalidOperationException($"Cannot set total copies to {totalCopies}: {issuedOut} copies are currently issued to students.");
         }
 
-        existing.Title = title.Trim();
-        existing.SubjectName = string.IsNullOrWhiteSpace(subjectName) ? null : subjectName.Trim();
-        existing.GradeLevel = string.IsNullOrWhiteSpace(gradeLevel) ? null : gradeLevel.Trim();
-        existing.TotalCopies = totalCopies;
-        existing.AvailableCopies = totalCopies - issuedCopies;
+        var textbook = new Textbook
+        {
+            TextbookId = textbookId,
+            Title = title.Trim(),
+            SubjectName = subjectName?.Trim() ?? string.Empty,
+            GradeLevel = gradeLevel?.Trim() ?? string.Empty,
+            TotalCopies = totalCopies,
+            AvailableCopies = totalCopies - issuedOut
+        };
 
-        await textbookRepository.UpdateTextbookAsync(existing, cancellationToken);
+        await textbookRepository.UpdateTextbookAsync(textbook, cancellationToken);
     }
 
-    public async Task RemoveTextbookAsync(int textbookId, CancellationToken cancellationToken = default)
+    public async Task DeleteTextbookAsync(int textbookId, CancellationToken cancellationToken = default)
     {
         if (textbookId <= 0) throw new ArgumentOutOfRangeException(nameof(textbookId));
 
-        if (await textbookRepository.HasActiveIssuesForTextbookAsync(textbookId, cancellationToken))
+        var issues = await textbookRepository.GetIssuesByTextbookAsync(textbookId, cancellationToken);
+        if (issues.Count > 0)
         {
-            throw new InvalidOperationException("این کتاب درسی نسخه‌های توزیع‌شده دارد و تا بازگشت آنها قابل حذف نیست.");
+            throw new InvalidOperationException("This textbook has issue records and cannot be deleted.");
         }
 
         await textbookRepository.DeleteTextbookAsync(textbookId, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<TextbookIssueDto>> GetAllIssuesAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TextbookIssueDto>> GetIssueHistoryAsync(CancellationToken cancellationToken = default)
     {
-        return await EnrichIssuesAsync(await textbookRepository.GetIssuesAsync(cancellationToken), cancellationToken);
+        var issues = await textbookRepository.GetIssuesAsync(cancellationToken);
+        return await ToDtosAsync(issues, cancellationToken);
     }
 
     public async Task<IReadOnlyList<TextbookIssueDto>> GetActiveIssuesAsync(CancellationToken cancellationToken = default)
     {
-        return await EnrichIssuesAsync(await textbookRepository.GetActiveIssuesAsync(cancellationToken), cancellationToken);
+        var issues = await textbookRepository.GetActiveIssuesAsync(cancellationToken);
+        return await ToDtosAsync(issues, cancellationToken);
     }
 
     public async Task<int> IssueTextbookAsync(int textbookId, int studentId, CancellationToken cancellationToken = default)
@@ -79,32 +86,24 @@ public sealed class TextbookService(
         if (studentId <= 0) throw new ArgumentOutOfRangeException(nameof(studentId));
 
         var textbook = await textbookRepository.GetTextbookByIdAsync(textbookId, cancellationToken);
-        if (textbook is null) throw new InvalidOperationException("کتاب درسی یافت نشد.");
+        if (textbook is null) throw new InvalidOperationException("Textbook not found.");
         if (textbook.AvailableCopies <= 0)
         {
-            throw new InvalidOperationException($"نسخه‌ای از کتاب «{textbook.Title}» در انبار موجود نیست.");
+            throw new InvalidOperationException($"No copies of '{textbook.Title}' are available right now.");
         }
 
         var student = await studentRepository.GetStudentByIdAsync(studentId, cancellationToken);
-        if (student is null) throw new InvalidOperationException($"شاگرد با آیدی {studentId} یافت نشد.");
-
-        // A student should not receive the same textbook twice before returning it
-        var studentIssues = await textbookRepository.GetIssuesByStudentAsync(studentId, cancellationToken);
-        if (studentIssues.Any(i => i.TextbookId == textbookId && !i.IsReturned))
-        {
-            throw new InvalidOperationException($"کتاب «{textbook.Title}» قبلاً به این شاگرد داده شده و هنوز بازگردانده نشده است.");
-        }
+        if (student is null) throw new InvalidOperationException("Student not found.");
 
         var issue = new TextbookIssue
         {
             TextbookId = textbookId,
             StudentId = studentId,
-            IssueDate = DateOnly.FromDateTime(DateTime.Now),
-            ReturnDate = null
+            IssueDate = DateOnly.FromDateTime(DateTime.Today)
         };
 
         var issueId = await textbookRepository.CreateIssueAsync(issue, cancellationToken);
-        await textbookRepository.SetAvailableCopiesAsync(textbookId, textbook.AvailableCopies - 1, cancellationToken);
+        await textbookRepository.AdjustAvailableCopiesAsync(textbookId, -1, cancellationToken);
         return issueId;
     }
 
@@ -112,50 +111,41 @@ public sealed class TextbookService(
     {
         if (issueId <= 0) throw new ArgumentOutOfRangeException(nameof(issueId));
 
-        var issues = await textbookRepository.GetIssuesAsync(cancellationToken);
-        var issue = issues.FirstOrDefault(i => i.IssueId == issueId);
-        if (issue is null) throw new InvalidOperationException("رکورد توزیع یافت نشد.");
-        if (issue.IsReturned) throw new InvalidOperationException("این کتاب قبلاً بازگردانده شده است.");
+        var issue = await textbookRepository.GetIssueByIdAsync(issueId, cancellationToken);
+        if (issue is null) throw new InvalidOperationException("Issue record not found.");
+        if (issue.IsReturned) throw new InvalidOperationException("This textbook has already been returned.");
 
-        var today = DateOnly.FromDateTime(DateTime.Now);
-        await textbookRepository.ReturnIssueAsync(issueId, today, cancellationToken);
-
-        var textbook = await textbookRepository.GetTextbookByIdAsync(issue.TextbookId, cancellationToken);
-        if (textbook is not null)
-        {
-            await textbookRepository.SetAvailableCopiesAsync(textbook.TextbookId, Math.Min(textbook.AvailableCopies + 1, textbook.TotalCopies), cancellationToken);
-        }
+        await textbookRepository.MarkIssueReturnedAsync(issueId, DateOnly.FromDateTime(DateTime.Today), cancellationToken);
+        await textbookRepository.AdjustAvailableCopiesAsync(issue.TextbookId, +1, cancellationToken);
     }
 
-    private async Task<IReadOnlyList<TextbookIssueDto>> EnrichIssuesAsync(IReadOnlyList<TextbookIssue> issues, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<TextbookIssueDto>> ToDtosAsync(IReadOnlyList<TextbookIssue> issues, CancellationToken cancellationToken)
     {
-        var result = new List<TextbookIssueDto>();
+        var textbooks = await textbookRepository.GetTextbooksAsync(cancellationToken);
+        var textbookMap = textbooks.ToDictionary(t => t.TextbookId, t => t.Title);
+        var students = await studentRepository.GetStudentsAsync(cancellationToken);
+        var studentMap = students.ToDictionary(s => s.StudentId);
 
-        foreach (var issue in issues)
+        return issues.Select(i =>
         {
-            var textbook = await textbookRepository.GetTextbookByIdAsync(issue.TextbookId, cancellationToken);
-            var student = await studentRepository.GetStudentByIdAsync(issue.StudentId, cancellationToken);
-
-            result.Add(new TextbookIssueDto
+            studentMap.TryGetValue(i.StudentId, out var student);
+            return new TextbookIssueDto
             {
-                IssueId = issue.IssueId,
-                TextbookId = issue.TextbookId,
-                TextbookTitle = textbook?.Title ?? $"کتاب {issue.TextbookId}",
-                StudentId = issue.StudentId,
-                StudentName = student is null ? $"شاگرد {issue.StudentId}" : $"{student.FirstName} {student.LastName}",
+                IssueId = i.IssueId,
+                TextbookId = i.TextbookId,
+                TextbookTitle = textbookMap.TryGetValue(i.TextbookId, out var title) ? title : $"Textbook {i.TextbookId}",
+                StudentId = i.StudentId,
+                StudentName = student is null ? $"شاگرد {i.StudentId}" : $"{student.FirstName} {student.LastName}",
                 RollNumber = student?.RollNumber ?? string.Empty,
-                IssueDate = issue.IssueDate,
-                ReturnDate = issue.ReturnDate,
-                IsReturned = issue.IsReturned
-            });
-        }
-
-        return result;
+                IssueDate = i.IssueDate,
+                ReturnDate = i.ReturnDate
+            };
+        }).ToList();
     }
 
     private static void ValidateTextbook(string title, int totalCopies)
     {
-        if (string.IsNullOrWhiteSpace(title)) throw new ArgumentException("عنوان کتاب درسی ضروری است.", nameof(title));
-        if (totalCopies < 0) throw new ArgumentOutOfRangeException(nameof(totalCopies), "تعداد نسخه‌ها نمی‌تواند منفی باشد.");
+        if (string.IsNullOrWhiteSpace(title)) throw new ArgumentException("Textbook title is required.", nameof(title));
+        if (totalCopies < 1) throw new ArgumentOutOfRangeException(nameof(totalCopies), "Total copies must be at least 1.");
     }
 }
