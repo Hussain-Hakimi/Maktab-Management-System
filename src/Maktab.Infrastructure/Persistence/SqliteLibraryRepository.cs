@@ -6,6 +6,8 @@ namespace Maktab.Infrastructure.Persistence;
 
 public sealed class SqliteLibraryRepository(IConnectionStringProvider connectionStringProvider) : ILibraryRepository
 {
+    private const string DateFormat = "yyyy-MM-dd";
+
     public async Task<IReadOnlyList<LibraryBook>> GetBooksAsync(CancellationToken cancellationToken = default)
     {
         const string sql = @"
@@ -70,7 +72,7 @@ SELECT last_insert_rowid();";
             command.CommandText = sql;
             command.Parameters.AddWithValue("$title", book.Title);
             command.Parameters.AddWithValue("$author", book.Author);
-            command.Parameters.AddWithValue("$category", (object?)book.Category ?? DBNull.Value);
+            command.Parameters.AddWithValue("$category", book.Category);
             command.Parameters.AddWithValue("$totalCopies", book.TotalCopies);
             command.Parameters.AddWithValue("$availableCopies", book.AvailableCopies);
 
@@ -107,7 +109,7 @@ WHERE BookID = $bookId;";
             command.CommandText = sql;
             command.Parameters.AddWithValue("$title", book.Title);
             command.Parameters.AddWithValue("$author", book.Author);
-            command.Parameters.AddWithValue("$category", (object?)book.Category ?? DBNull.Value);
+            command.Parameters.AddWithValue("$category", book.Category);
             command.Parameters.AddWithValue("$totalCopies", book.TotalCopies);
             command.Parameters.AddWithValue("$availableCopies", book.AvailableCopies);
             command.Parameters.AddWithValue("$bookId", book.BookId);
@@ -151,6 +153,37 @@ WHERE BookID = $bookId;";
         }
     }
 
+    public async Task AdjustAvailableCopiesAsync(int bookId, int delta, CancellationToken cancellationToken = default)
+    {
+        const string sql = @"
+UPDATE tbl_LibraryBooks
+SET AvailableCopies = AvailableCopies + $delta
+WHERE BookID = $bookId;";
+
+        await using var connection = new SqliteConnection(connectionStringProvider.GetConnectionString());
+        await connection.OpenAsync(cancellationToken);
+        await using var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            await using var command = connection.CreateCommand();
+            command.Transaction = transaction;
+            command.CommandText = sql;
+            command.Parameters.AddWithValue("$delta", delta);
+            command.Parameters.AddWithValue("$bookId", bookId);
+
+            var affected = await command.ExecuteNonQueryAsync(cancellationToken);
+            if (affected == 0) throw new InvalidOperationException("Book not found.");
+
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
     public async Task<IReadOnlyList<BookLoan>> GetLoansAsync(CancellationToken cancellationToken = default)
     {
         const string sql = @"
@@ -159,6 +192,17 @@ FROM tbl_BookLoans
 ORDER BY LoanID DESC;";
 
         return await QueryLoansAsync(sql, null, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<BookLoan>> GetLoansByBookAsync(int bookId, CancellationToken cancellationToken = default)
+    {
+        const string sql = @"
+SELECT LoanID, BookID, StudentID, IssueDate, DueDate, ReturnDate
+FROM tbl_BookLoans
+WHERE BookID = $bookId
+ORDER BY LoanID DESC;";
+
+        return await QueryLoansAsync(sql, c => c.Parameters.AddWithValue("$bookId", bookId), cancellationToken);
     }
 
     public async Task<IReadOnlyList<BookLoan>> GetActiveLoansAsync(CancellationToken cancellationToken = default)
@@ -172,29 +216,38 @@ ORDER BY DueDate;";
         return await QueryLoansAsync(sql, null, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<BookLoan>> GetLoansByStudentAsync(int studentId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<BookLoan>> GetOverdueLoansAsync(DateOnly today, CancellationToken cancellationToken = default)
     {
         const string sql = @"
 SELECT LoanID, BookID, StudentID, IssueDate, DueDate, ReturnDate
 FROM tbl_BookLoans
-WHERE StudentID = $studentId
-ORDER BY LoanID DESC;";
+WHERE ReturnDate IS NULL AND DueDate < $today
+ORDER BY DueDate;";
 
-        return await QueryLoansAsync(sql, ("$studentId", studentId), cancellationToken);
+        return await QueryLoansAsync(sql, c => c.Parameters.AddWithValue("$today", today.ToString(DateFormat)), cancellationToken);
     }
 
-    public async Task<bool> HasActiveLoansForBookAsync(int bookId, CancellationToken cancellationToken = default)
+    public async Task<BookLoan?> GetLoanByIdAsync(int loanId, CancellationToken cancellationToken = default)
     {
-        const string sql = "SELECT COUNT(1) FROM tbl_BookLoans WHERE BookID = $bookId AND ReturnDate IS NULL;";
+        const string sql = @"
+SELECT LoanID, BookID, StudentID, IssueDate, DueDate, ReturnDate
+FROM tbl_BookLoans
+WHERE LoanID = $loanId;";
 
         await using var connection = new SqliteConnection(connectionStringProvider.GetConnectionString());
         await connection.OpenAsync(cancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
-        command.Parameters.AddWithValue("$bookId", bookId);
+        command.Parameters.AddWithValue("$loanId", loanId);
 
-        return Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken)) > 0;
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (await reader.ReadAsync(cancellationToken))
+        {
+            return MapLoan(reader);
+        }
+
+        return null;
     }
 
     public async Task<int> CreateLoanAsync(BookLoan loan, CancellationToken cancellationToken = default)
@@ -215,8 +268,8 @@ SELECT last_insert_rowid();";
             command.CommandText = sql;
             command.Parameters.AddWithValue("$bookId", loan.BookId);
             command.Parameters.AddWithValue("$studentId", loan.StudentId);
-            command.Parameters.AddWithValue("$issueDate", FormatDate(loan.IssueDate));
-            command.Parameters.AddWithValue("$dueDate", FormatDate(loan.DueDate));
+            command.Parameters.AddWithValue("$issueDate", loan.IssueDate.ToString(DateFormat));
+            command.Parameters.AddWithValue("$dueDate", loan.DueDate.ToString(DateFormat));
 
             var id = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken));
             await transaction.CommitAsync(cancellationToken);
@@ -229,7 +282,7 @@ SELECT last_insert_rowid();";
         }
     }
 
-    public async Task ReturnLoanAsync(int loanId, DateOnly returnDate, CancellationToken cancellationToken = default)
+    public async Task MarkLoanReturnedAsync(int loanId, DateOnly returnDate, CancellationToken cancellationToken = default)
     {
         const string sql = @"
 UPDATE tbl_BookLoans
@@ -245,7 +298,7 @@ WHERE LoanID = $loanId AND ReturnDate IS NULL;";
             await using var command = connection.CreateCommand();
             command.Transaction = transaction;
             command.CommandText = sql;
-            command.Parameters.AddWithValue("$returnDate", FormatDate(returnDate));
+            command.Parameters.AddWithValue("$returnDate", returnDate.ToString(DateFormat));
             command.Parameters.AddWithValue("$loanId", loanId);
 
             var affected = await command.ExecuteNonQueryAsync(cancellationToken);
@@ -260,65 +313,20 @@ WHERE LoanID = $loanId AND ReturnDate IS NULL;";
         }
     }
 
-    public async Task SetAvailableCopiesAsync(int bookId, int availableCopies, CancellationToken cancellationToken = default)
-    {
-        const string sql = @"
-UPDATE tbl_LibraryBooks
-SET AvailableCopies = $availableCopies
-WHERE BookID = $bookId;";
-
-        await using var connection = new SqliteConnection(connectionStringProvider.GetConnectionString());
-        await connection.OpenAsync(cancellationToken);
-        await using var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken);
-
-        try
-        {
-            await using var command = connection.CreateCommand();
-            command.Transaction = transaction;
-            command.CommandText = sql;
-            command.Parameters.AddWithValue("$availableCopies", availableCopies);
-            command.Parameters.AddWithValue("$bookId", bookId);
-
-            var affected = await command.ExecuteNonQueryAsync(cancellationToken);
-            if (affected == 0) throw new InvalidOperationException("Book not found.");
-
-            await transaction.CommitAsync(cancellationToken);
-        }
-        catch
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
-        }
-    }
-
-    private async Task<IReadOnlyList<BookLoan>> QueryLoansAsync(
-        string sql,
-        (string Name, int Value)? parameter,
-        CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<BookLoan>> QueryLoansAsync(string sql, Action<SqliteCommand>? configure, CancellationToken cancellationToken)
     {
         await using var connection = new SqliteConnection(connectionStringProvider.GetConnectionString());
         await connection.OpenAsync(cancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
-        if (parameter is not null)
-        {
-            command.Parameters.AddWithValue(parameter.Value.Name, parameter.Value.Value);
-        }
+        configure?.Invoke(command);
 
         var result = new List<BookLoan>();
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
         {
-            result.Add(new BookLoan
-            {
-                LoanId = reader.GetInt32(0),
-                BookId = reader.GetInt32(1),
-                StudentId = reader.GetInt32(2),
-                IssueDate = ParseDate(reader.GetString(3)),
-                DueDate = ParseDate(reader.GetString(4)),
-                ReturnDate = reader.IsDBNull(5) ? null : ParseDate(reader.GetString(5))
-            });
+            result.Add(MapLoan(reader));
         }
 
         return result;
@@ -331,13 +339,22 @@ WHERE BookID = $bookId;";
             BookId = reader.GetInt32(0),
             Title = reader.GetString(1),
             Author = reader.GetString(2),
-            Category = reader.IsDBNull(3) ? null : reader.GetString(3),
+            Category = reader.GetString(3),
             TotalCopies = reader.GetInt32(4),
             AvailableCopies = reader.GetInt32(5)
         };
     }
 
-    private static string FormatDate(DateOnly date) => date.ToString("yyyy-MM-dd");
-
-    private static DateOnly ParseDate(string value) => DateOnly.ParseExact(value, "yyyy-MM-dd");
+    private static BookLoan MapLoan(SqliteDataReader reader)
+    {
+        return new BookLoan
+        {
+            LoanId = reader.GetInt32(0),
+            BookId = reader.GetInt32(1),
+            StudentId = reader.GetInt32(2),
+            IssueDate = DateOnly.ParseExact(reader.GetString(3), DateFormat),
+            DueDate = DateOnly.ParseExact(reader.GetString(4), DateFormat),
+            ReturnDate = reader.IsDBNull(5) ? null : DateOnly.ParseExact(reader.GetString(5), DateFormat)
+        };
+    }
 }
