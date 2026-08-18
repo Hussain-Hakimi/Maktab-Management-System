@@ -1,0 +1,160 @@
+<UserControl x:Class="Maktab.App.Wpf.Views.AttendanceView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="900"
+             FlowDirection="RightToLeft">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#065F46" Padding="14" CornerRadius="6" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="🗓️ مدیریت حاضری شاگردان" FontSize="20" FontWeight="Bold" Foreground="White" VerticalAlignment="Center" />
+                <TextBlock Text=" (Daily Attendance)" FontSize="13" Foreground="#6EE7B7" VerticalAlignment="Center" Margin="10,2,0,0" />
+            </StackPanel>
+        </Border>
+
+        <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
+            <!-- Tab 1: Daily Sheet -->
+            <TabItem Header="📝 ثبت حاضری روزانه">
+                <Grid Margin="0,10,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Selector Bar -->
+                    <Border Grid.Row="0" Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" Padding="10" CornerRadius="6" Margin="0,0,0,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="200" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" Text="صنف:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,8,0" />
+                            <ComboBox x:Name="ClassComboBox" Grid.Column="1" Height="32" DisplayMemberPath="GradeName" SelectedValuePath="ClassId" />
+
+                            <TextBlock Grid.Column="3" Text="تاریخ:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,8,0" />
+                            <DatePicker x:Name="AttendanceDatePicker" Grid.Column="4" Height="32" />
+
+                            <Button Grid.Column="6" Content="📋 بارگذاری حاضری" Height="32" Padding="14,0" Background="#3B82F6" Foreground="White" FontWeight="SemiBold" Click="LoadSheetButton_Click" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Action Buttons -->
+                    <Border Grid.Row="1" Background="#ECFDF5" BorderBrush="#A7F3D0" BorderThickness="1" Padding="8" CornerRadius="6" Margin="0,0,0,10">
+                        <WrapPanel>
+                            <Button Content="💾 ثبت حاضری" Height="34" Padding="14,0" Margin="0,0,8,0" Background="#16A34A" Foreground="White" FontWeight="Bold" Click="SaveSheetButton_Click" />
+                            <Button Content="✅ همه حاضر" Height="34" Padding="14,0" Margin="0,0,8,0" Background="#059669" Foreground="White" FontWeight="SemiBold" Click="MarkAllPresentButton_Click" />
+                            <Button Content="📥 دانلود قالب اکسل" Height="34" Padding="14,0" Margin="0,0,8,0" Background="#7C3AED" Foreground="White" FontWeight="SemiBold" Click="DownloadTemplateButton_Click" />
+                            <Button Content="📤 وارد کردن از اکسل" Height="34" Padding="14,0" Margin="0,0,8,0" Background="#9333EA" Foreground="White" FontWeight="SemiBold" Click="ImportExcelButton_Click" />
+                            <TextBlock Text="💡 حاضری همه به‌صورت پیش‌فرض «حاضر» است — فقط غیرحاضر، مریض یا اجازه را تغییر دهید." VerticalAlignment="Center" FontSize="12" Foreground="#047857" Margin="8,0,0,0" />
+                        </WrapPanel>
+                    </Border>
+
+                    <!-- Daily Sheet DataGrid -->
+                    <Border Grid.Row="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="8">
+                        <DataGrid x:Name="AttendanceDataGrid"
+                                  AutoGenerateColumns="False"
+                                  CanUserAddRows="False"
+                                  SelectionMode="Single"
+                                  GridLinesVisibility="Horizontal"
+                                  HorizontalGridLinesBrush="#E2E8F0"
+                                  RowHeight="34">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="شماره اساس" Binding="{Binding RollNumber}" Width="90" IsReadOnly="True" />
+                                <DataGridTextColumn Header="نام" Binding="{Binding FirstName}" Width="*" IsReadOnly="True" />
+                                <DataGridTextColumn Header="تخلص" Binding="{Binding LastName}" Width="*" IsReadOnly="True" />
+                                <DataGridTextColumn Header="نام پدر" Binding="{Binding FatherName}" Width="*" IsReadOnly="True" />
+                                <DataGridComboBoxColumn x:Name="StatusColumn" Header="حالت حاضری" Width="130" SelectedValueBinding="{Binding Status, UpdateSourceTrigger=PropertyChanged}" DisplayMemberPath="Label" SelectedValuePath="Value" />
+                                <DataGridTextColumn Header="یادداشت" Binding="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" Width="1.5*" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+
+                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="4,8,4,0">
+                        <TextBlock x:Name="SheetStatusTextBlock" Text="" FontSize="12" Foreground="#059669" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        <TextBlock x:Name="SheetCountTextBlock" Text="" FontSize="12" Foreground="#64748B" VerticalAlignment="Center" Margin="12,0,0,0" />
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- Tab 2: Statistics -->
+            <TabItem Header="📊 احصائیه و گزارش حاضری">
+                <Grid Margin="0,10,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" Padding="10" CornerRadius="6" Margin="0,0,0,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="200" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" Text="صنف:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,8,0" />
+                            <ComboBox x:Name="StatsClassComboBox" Grid.Column="1" Height="32" DisplayMemberPath="GradeName" SelectedValuePath="ClassId" />
+                            <Button Grid.Column="3" Content="📊 نمایش احصائیه" Height="32" Padding="14,0" Background="#0EA5E9" Foreground="White" FontWeight="SemiBold" Click="LoadStatsButton_Click" />
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="1" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="8">
+                        <DataGrid x:Name="StatsDataGrid"
+                                  AutoGenerateColumns="False"
+                                  CanUserAddRows="False"
+                                  IsReadOnly="True"
+                                  SelectionMode="Single"
+                                  GridLinesVisibility="Horizontal"
+                                  HorizontalGridLinesBrush="#E2E8F0"
+                                  RowHeight="32">
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ExceedsAbsenceLimit}" Value="True">
+                                            <Setter Property="Background" Value="#FEE2E2" />
+                                            <Setter Property="Foreground" Value="#991B1B" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="شماره اساس" Binding="{Binding RollNumber}" Width="90" />
+                                <DataGridTextColumn Header="نام" Binding="{Binding FirstName}" Width="*" />
+                                <DataGridTextColumn Header="تخلص" Binding="{Binding LastName}" Width="*" />
+                                <DataGridTextColumn Header="حاضر" Binding="{Binding PresentDays}" Width="70" />
+                                <DataGridTextColumn Header="غیرحاضر" Binding="{Binding AbsentDays}" Width="80" />
+                                <DataGridTextColumn Header="مریض" Binding="{Binding IllDays}" Width="70" />
+                                <DataGridTextColumn Header="اجازه" Binding="{Binding PermissionDays}" Width="70" />
+                                <DataGridTextColumn Header="مجموع روزها" Binding="{Binding TotalRecordedDays}" Width="100" />
+                                <DataGridTextColumn Header="وضعیت غیبت" Binding="{Binding AbsenceLimitStatus}" Width="160" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+
+                    <TextBlock Grid.Row="2" Margin="4,8,4,0" FontSize="12" Foreground="#B91C1C" TextWrapping="Wrap"
+                               Text="⚠️ ردیف‌های سرخ: غیبت بیش از ۳۰ روز است و طبق پالیسی ترقی صنف، شاگرد در صنف فعلی باقی می‌ماند (فقط «غیرحاضر» محاسبه می‌شود، مریض و اجازه معذوریت است)." />
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>
