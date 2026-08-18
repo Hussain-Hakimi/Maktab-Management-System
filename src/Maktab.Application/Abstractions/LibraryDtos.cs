@@ -1,8 +1,5 @@
 namespace Maktab.Application.Abstractions;
 
-/// <summary>
-/// A book loan enriched with book and student names for display.
-/// </summary>
 public sealed class BookLoanDto
 {
     public int LoanId { get; set; }
@@ -14,6 +11,6 @@ public sealed class BookLoanDto
     public DateOnly IssueDate { get; set; }
     public DateOnly DueDate { get; set; }
     public DateOnly? ReturnDate { get; set; }
-    public bool IsReturned { get; set; }
+    public bool IsReturned => ReturnDate.HasValue;
     public bool IsOverdue { get; set; }
 }

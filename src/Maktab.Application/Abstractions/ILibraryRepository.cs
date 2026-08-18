@@ -9,12 +9,13 @@ public interface ILibraryRepository
     Task<int> CreateBookAsync(LibraryBook book, CancellationToken cancellationToken = default);
     Task UpdateBookAsync(LibraryBook book, CancellationToken cancellationToken = default);
     Task DeleteBookAsync(int bookId, CancellationToken cancellationToken = default);
+    Task AdjustAvailableCopiesAsync(int bookId, int delta, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<BookLoan>> GetLoansAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<BookLoan>> GetLoansByBookAsync(int bookId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<BookLoan>> GetActiveLoansAsync(CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<BookLoan>> GetLoansByStudentAsync(int studentId, CancellationToken cancellationToken = default);
-    Task<bool> HasActiveLoansForBookAsync(int bookId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<BookLoan>> GetOverdueLoansAsync(DateOnly today, CancellationToken cancellationToken = default);
+    Task<BookLoan?> GetLoanByIdAsync(int loanId, CancellationToken cancellationToken = default);
     Task<int> CreateLoanAsync(BookLoan loan, CancellationToken cancellationToken = default);
-    Task ReturnLoanAsync(int loanId, DateOnly returnDate, CancellationToken cancellationToken = default);
-    Task SetAvailableCopiesAsync(int bookId, int availableCopies, CancellationToken cancellationToken = default);
+    Task MarkLoanReturnedAsync(int loanId, DateOnly returnDate, CancellationToken cancellationToken = default);
 }
