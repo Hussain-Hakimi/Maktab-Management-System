@@ -12,6 +12,10 @@ public static class DependencyInjection
         services.AddSingleton<IStudentService, StudentService>();
         services.AddSingleton<IExamMarkService, ExamMarkService>();
         services.AddSingleton<IReportCardService, ReportCardService>();
+        services.AddSingleton<IAttendanceService, AttendanceService>();
+        services.AddSingleton<ILibraryService, LibraryService>();
+        services.AddSingleton<ITextbookService, TextbookService>();
+        services.AddSingleton<IFeeService, FeeService>();
         return services;
     }
 }

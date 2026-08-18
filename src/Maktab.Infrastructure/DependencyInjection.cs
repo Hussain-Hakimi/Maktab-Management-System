@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Maktab.Application.Abstractions;
+using Maktab.Infrastructure.Excel;
 using Maktab.Infrastructure.Logging;
 using Maktab.Infrastructure.Persistence;
 using Maktab.Infrastructure.Reports;
@@ -18,6 +19,11 @@ public static class DependencyInjection
         services.AddSingleton<IClassSubjectRepository, SqliteClassSubjectRepository>();
         services.AddSingleton<IStudentRepository, SqliteStudentRepository>();
         services.AddSingleton<IExamMarkRepository, SqliteExamMarkRepository>();
+        services.AddSingleton<IAttendanceRepository, SqliteAttendanceRepository>();
+        services.AddSingleton<ILibraryRepository, SqliteLibraryRepository>();
+        services.AddSingleton<ITextbookRepository, SqliteTextbookRepository>();
+        services.AddSingleton<IFeeRepository, SqliteFeeRepository>();
+        services.AddSingleton<IAttendanceExcelService, AttendanceExcelService>();
         services.AddSingleton<IPdfReportCardGenerator, QuestPdfReportCardGenerator>();
 
         return services;
