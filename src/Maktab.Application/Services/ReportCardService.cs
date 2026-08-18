@@ -8,7 +8,8 @@ public sealed class ReportCardService(
     IStudentRepository studentRepository,
     IClassSubjectRepository classSubjectRepository,
     IExamMarkRepository markRepository,
-    IPdfReportCardGenerator pdfGenerator) : IReportCardService
+    IPdfReportCardGenerator pdfGenerator,
+    IAttendanceRepository? attendanceRepository = null) : IReportCardService
 {
     public async Task<StudentReportCardDto> GetStudentReportCardDataAsync(
         int studentId,
@@ -60,7 +61,11 @@ public sealed class ReportCardService(
         var totalMaxScore = subjects.Count * GradingPolicy.TotalMax;
         var avgPercentage = totalMaxScore > 0 ? Math.Round((totalObtained / totalMaxScore) * 100m, 2) : 0m;
         var overallGrade = GradingPolicy.ResolveLetterGrade(avgPercentage);
-        var absenceDays = 0; // Baseline v1.0 attendance
+        // V1.1: real absence count from the attendance module (unexcused "Absent" days).
+        // When no attendance repository is supplied (legacy/tests), the baseline is 0.
+        var absenceDays = attendanceRepository is null
+            ? 0
+            : await attendanceRepository.GetAbsenceCountAsync(studentId, cancellationToken);
 
         var outcome = PromotionPolicy.GetPromotionOutcome(avgPercentage, failedCount, absenceDays);
         string promoText;
