@@ -40,6 +40,75 @@ CREATE TABLE IF NOT EXISTS tbl_ExamMarks (
     UNIQUE (StudentID, SubjectID)
 );
 
+CREATE TABLE IF NOT EXISTS tbl_Attendance (
+    AttendanceID INTEGER PRIMARY KEY AUTOINCREMENT,
+    StudentID INTEGER NOT NULL,
+    AttendanceDate TEXT NOT NULL,
+    Status TEXT NOT NULL CHECK (Status IN ('Present', 'Absent', 'Ill', 'Permission')),
+    Notes TEXT NULL,
+    FOREIGN KEY (StudentID) REFERENCES tbl_Students(StudentID) ON DELETE CASCADE,
+    UNIQUE (StudentID, AttendanceDate)
+);
+
+CREATE TABLE IF NOT EXISTS tbl_LibraryBooks (
+    BookID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Title TEXT NOT NULL,
+    Author TEXT NOT NULL DEFAULT '',
+    Category TEXT NULL,
+    TotalCopies INTEGER NOT NULL CHECK (TotalCopies >= 0),
+    AvailableCopies INTEGER NOT NULL CHECK (AvailableCopies >= 0)
+);
+
+CREATE TABLE IF NOT EXISTS tbl_BookLoans (
+    LoanID INTEGER PRIMARY KEY AUTOINCREMENT,
+    BookID INTEGER NOT NULL,
+    StudentID INTEGER NOT NULL,
+    IssueDate TEXT NOT NULL,
+    DueDate TEXT NOT NULL,
+    ReturnDate TEXT NULL,
+    FOREIGN KEY (BookID) REFERENCES tbl_LibraryBooks(BookID) ON DELETE CASCADE,
+    FOREIGN KEY (StudentID) REFERENCES tbl_Students(StudentID) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS tbl_Textbooks (
+    TextbookID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Title TEXT NOT NULL,
+    SubjectName TEXT NULL,
+    GradeLevel TEXT NULL,
+    TotalCopies INTEGER NOT NULL CHECK (TotalCopies >= 0),
+    AvailableCopies INTEGER NOT NULL CHECK (AvailableCopies >= 0)
+);
+
+CREATE TABLE IF NOT EXISTS tbl_TextbookIssues (
+    IssueID INTEGER PRIMARY KEY AUTOINCREMENT,
+    TextbookID INTEGER NOT NULL,
+    StudentID INTEGER NOT NULL,
+    IssueDate TEXT NOT NULL,
+    ReturnDate TEXT NULL,
+    FOREIGN KEY (TextbookID) REFERENCES tbl_Textbooks(TextbookID) ON DELETE CASCADE,
+    FOREIGN KEY (StudentID) REFERENCES tbl_Students(StudentID) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS tbl_FeeRecords (
+    FeeID INTEGER PRIMARY KEY AUTOINCREMENT,
+    StudentID INTEGER NOT NULL,
+    Title TEXT NOT NULL,
+    AmountDue REAL NOT NULL CHECK (AmountDue >= 0),
+    DueDate TEXT NULL,
+    AcademicYear TEXT NULL,
+    CreatedDate TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+    FOREIGN KEY (StudentID) REFERENCES tbl_Students(StudentID) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS tbl_FeePayments (
+    PaymentID INTEGER PRIMARY KEY AUTOINCREMENT,
+    FeeID INTEGER NOT NULL,
+    AmountPaid REAL NOT NULL CHECK (AmountPaid > 0),
+    PaymentDate TEXT NOT NULL,
+    ReceiptNumber TEXT NOT NULL UNIQUE,
+    FOREIGN KEY (FeeID) REFERENCES tbl_FeeRecords(FeeID) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS tbl_AuditLog (
     LogID INTEGER PRIMARY KEY AUTOINCREMENT,
     UserName TEXT NOT NULL,
