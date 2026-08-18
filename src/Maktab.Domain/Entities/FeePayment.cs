@@ -6,5 +6,5 @@ public sealed class FeePayment
     public int FeeId { get; set; }
     public decimal AmountPaid { get; set; }
     public DateOnly PaymentDate { get; set; }
-    public required string ReceiptNumber { get; set; }
+    public string ReceiptNumber { get; set; } = string.Empty;
 }

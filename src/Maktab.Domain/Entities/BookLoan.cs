@@ -9,7 +9,10 @@ public sealed class BookLoan
     public DateOnly DueDate { get; set; }
     public DateOnly? ReturnDate { get; set; }
 
-    public bool IsReturned => ReturnDate is not null;
+    public bool IsReturned => ReturnDate.HasValue;
 
-    public bool IsOverdue(DateOnly today) => ReturnDate is null && DueDate < today;
+    public bool IsOverdue(DateOnly today)
+    {
+        return !IsReturned && DueDate < today;
+    }
 }

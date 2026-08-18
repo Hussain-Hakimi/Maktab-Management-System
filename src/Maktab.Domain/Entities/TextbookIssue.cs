@@ -8,5 +8,5 @@ public sealed class TextbookIssue
     public DateOnly IssueDate { get; set; }
     public DateOnly? ReturnDate { get; set; }
 
-    public bool IsReturned => ReturnDate is not null;
+    public bool IsReturned => ReturnDate.HasValue;
 }

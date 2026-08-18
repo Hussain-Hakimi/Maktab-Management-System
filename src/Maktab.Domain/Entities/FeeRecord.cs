@@ -6,7 +6,6 @@ public sealed class FeeRecord
     public int StudentId { get; set; }
     public required string Title { get; set; }
     public decimal AmountDue { get; set; }
-    public DateOnly? DueDate { get; set; }
-    public string? AcademicYear { get; set; }
-    public DateTime CreatedDate { get; set; }
+    public DateOnly DueDate { get; set; }
+    public string AcademicYear { get; set; } = string.Empty;
 }
