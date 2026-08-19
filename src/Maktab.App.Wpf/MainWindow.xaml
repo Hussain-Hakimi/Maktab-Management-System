@@ -117,6 +117,9 @@
             <TabItem Header="📚  کتابخانه">
                  <ContentControl x:Name="LibraryContent" />
             </TabItem>
+           <TabItem Header="📦  کتاب‌های درسی">
+                 <ContentControl x:Name="TextbookContent" />
+            </TabItem>
 
             <!-- Tab 5: Report Cards -->
             <TabItem Header="📄  کارنامه / اطلاع‌نامه">
