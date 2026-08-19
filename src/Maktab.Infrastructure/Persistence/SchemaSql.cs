@@ -76,6 +76,29 @@ CREATE TABLE IF NOT EXISTS tbl_BookIssues (
 CREATE INDEX IF NOT EXISTS idx_bookissues_status ON tbl_BookIssues(Status);
 CREATE INDEX IF NOT EXISTS idx_bookissues_due ON tbl_BookIssues(DueDate);
 
+CREATE TABLE IF NOT EXISTS tbl_Textbooks (
+    TextbookID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Title TEXT NOT NULL,
+    Subject TEXT,
+    ClassID INTEGER,
+    TotalCopies INTEGER NOT NULL CHECK (TotalCopies >= 0),
+    AvailableCopies INTEGER NOT NULL CHECK (AvailableCopies >= 0 AND AvailableCopies <= TotalCopies),
+    FOREIGN KEY (ClassID) REFERENCES tbl_Classes(ClassID) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS tbl_TextbookIssues (
+    IssueID INTEGER PRIMARY KEY AUTOINCREMENT,
+    TextbookID INTEGER NOT NULL,
+    StudentID INTEGER NOT NULL,
+    IssueDate TEXT NOT NULL,
+    ReturnDate TEXT,
+    Status TEXT NOT NULL CHECK (Status IN ('Issued', 'Returned')),
+    FOREIGN KEY (TextbookID) REFERENCES tbl_Textbooks(TextbookID) ON DELETE RESTRICT,
+    FOREIGN KEY (StudentID) REFERENCES tbl_Students(StudentID) ON DELETE RESTRICT
+);
+
+CREATE INDEX IF NOT EXISTS idx_textbookissues_status ON tbl_TextbookIssues(Status);
+
 CREATE TABLE IF NOT EXISTS tbl_AuditLog (
     LogID INTEGER PRIMARY KEY AUTOINCREMENT,
     UserName TEXT NOT NULL,
