@@ -14,6 +14,7 @@ public MainWindow(
     AttendanceView attendanceView,
     LibraryView libraryView,
     TextbookView textbookView,
+    FeesView feesView,
     ReportCardsView reportCardsView,
     BackupSettingsView backupSettingsView)
 {
@@ -26,6 +27,7 @@ public MainWindow(
     AttendanceContent.Content = attendanceView;
     LibraryContent.Content = libraryView;
     TextbookContent.Content = textbookView;
+    FeesContent.Content = feesView;
     ReportCardsContent.Content = reportCardsView;
     BackupSettingsContent.Content = backupSettingsView;
 
