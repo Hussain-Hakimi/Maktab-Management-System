@@ -8,7 +8,8 @@ public sealed class ReportCardService(
     IStudentRepository studentRepository,
     IClassSubjectRepository classSubjectRepository,
     IExamMarkRepository markRepository,
-    IPdfReportCardGenerator pdfGenerator) : IReportCardService
+    IPdfReportCardGenerator pdfGenerator,
+    IAttendanceService attendanceService) : IReportCardService
 {
     public async Task<StudentReportCardDto> GetStudentReportCardDataAsync(
         int studentId,
@@ -60,7 +61,9 @@ public sealed class ReportCardService(
         var totalMaxScore = subjects.Count * GradingPolicy.TotalMax;
         var avgPercentage = totalMaxScore > 0 ? Math.Round((totalObtained / totalMaxScore) * 100m, 2) : 0m;
         var overallGrade = GradingPolicy.ResolveLetterGrade(avgPercentage);
-        var absenceDays = 0; // Baseline v1.0 attendance
+
+        // Get actual absence days for the given academic year
+        var absenceDays = await attendanceService.GetStudentAbsenceDaysAsync(studentId, academicYear, cancellationToken);
 
         var outcome = PromotionPolicy.GetPromotionOutcome(avgPercentage, failedCount, absenceDays);
         string promoText;
@@ -77,9 +80,12 @@ public sealed class ReportCardService(
                 break;
             default: // Repeat
                 promoText = "تکرار صنف (REPEAT)";
-                failureReason = failedCount > PromotionPolicy.MaxAllowedFailedSubjects
-                    ? $"بیش از {PromotionPolicy.MaxAllowedFailedSubjects} مضمون ناکام ({failedCount} مضمون)"
-                    : (avgPercentage < PromotionPolicy.PassingAverage ? $"اوسط نمرات کمتر از {PromotionPolicy.PassingAverage}" : $"بیش از {PromotionPolicy.MaxAllowedAbsenceDays} روز غیرحاضری");
+                if (absenceDays > PromotionPolicy.MaxAllowedAbsenceDays)
+                    failureReason = $"بیش از {PromotionPolicy.MaxAllowedAbsenceDays} روز غیرحاضری ({absenceDays} روز)";
+                else if (failedCount > PromotionPolicy.MaxAllowedFailedSubjects)
+                    failureReason = $"بیش از {PromotionPolicy.MaxAllowedFailedSubjects} مضمون ناکام ({failedCount} مضمون)";
+                else
+                    failureReason = $"اوسط نمرات کمتر از {PromotionPolicy.PassingAverage}";
                 break;
         }
 

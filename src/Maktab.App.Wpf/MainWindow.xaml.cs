@@ -7,24 +7,30 @@ namespace Maktab.App.Wpf;
 
 public partial class MainWindow : Window
 {
-    public MainWindow(
-        ClassSubjectView classSubjectView,
-        StudentManagementView studentManagementView,
-        MarksEntryView marksEntryView,
-        ReportCardsView reportCardsView,
-        BackupSettingsView backupSettingsView)
-    {
-        InitializeComponent();
+public MainWindow(
+    ClassSubjectView classSubjectView,
+    StudentManagementView studentManagementView,
+    MarksEntryView marksEntryView,
+    AttendanceView attendanceView,
+    LibraryView libraryView,
+    TextbookView textbookView,
+    ReportCardsView reportCardsView,
+    BackupSettingsView backupSettingsView)
+{
+    InitializeComponent();
 
-        // Embed each view into its corresponding tab's ContentControl
-        ClassSubjectContent.Content = classSubjectView;
-        StudentManagementContent.Content = studentManagementView;
-        MarksEntryContent.Content = marksEntryView;
-        ReportCardsContent.Content = reportCardsView;
-        BackupSettingsContent.Content = backupSettingsView;
+    // Embed each view into its corresponding tab's ContentControl
+    ClassSubjectContent.Content = classSubjectView;
+    StudentManagementContent.Content = studentManagementView;
+    MarksEntryContent.Content = marksEntryView;
+    AttendanceContent.Content = attendanceView;
+    LibraryContent.Content = libraryView;
+    TextbookContent.Content = textbookView;
+    ReportCardsContent.Content = reportCardsView;
+    BackupSettingsContent.Content = backupSettingsView;
 
-        Loaded += MainWindow_Loaded;
-    }
+    Loaded += MainWindow_Loaded;
+}
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {

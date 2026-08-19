@@ -15,6 +15,8 @@ public sealed class StudentDisplayItem
     public int ClassId { get; set; }
     public string ClassName { get; set; } = string.Empty;
     public string RollNumber { get; set; } = string.Empty;
+    public DateTime RegistrationDate { get; set; }
+    public string RegistrationDateFormatted => RegistrationDate.ToString("yyyy/MM/dd");
 }
 
 public partial class StudentManagementView : UserControl
@@ -93,7 +95,8 @@ public partial class StudentManagementView : UserControl
                 FatherName = s.FatherName,
                 ClassId = s.ClassId,
                 ClassName = classDict.TryGetValue(s.ClassId, out var name) ? name : $"صنف {s.ClassId}",
-                RollNumber = s.RollNumber
+                RollNumber = s.RollNumber,
+                RegistrationDate = s.RegistrationDate
             }).ToList();
 
             ApplyFilters();

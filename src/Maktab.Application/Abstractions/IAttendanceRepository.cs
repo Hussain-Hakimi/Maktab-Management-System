@@ -1,0 +1,27 @@
+using Maktab.Domain.Entities;
+
+namespace Maktab.Application.Abstractions;
+
+public interface IAttendanceRepository
+{
+    Task<IReadOnlyList<AttendanceRecord>> GetByClassAndDateAsync(
+        int classId,
+        DateTime date,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<AttendanceRecord>> GetByStudentAndRangeAsync(
+        int studentId,
+        DateTime startDate,
+        DateTime endDate,
+        CancellationToken cancellationToken = default);
+
+    Task SaveOrUpdateBatchAsync(
+        IEnumerable<AttendanceRecord> records,
+        CancellationToken cancellationToken = default);
+
+    Task<int> GetAbsenceDaysByStudentAndRangeAsync(
+        int studentId,
+        DateTime startDate,
+        DateTime endDate,
+        CancellationToken cancellationToken = default);
+}

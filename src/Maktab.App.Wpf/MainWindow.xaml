@@ -110,12 +110,23 @@
                 <ContentControl x:Name="MarksEntryContent" />
             </TabItem>
 
-            <!-- Tab 4: Report Cards -->
+            <!-- Tab 4: Attendance -->
+            <TabItem Header="🗓️  حاضری روزانه">
+                <ContentControl x:Name="AttendanceContent" />
+            </TabItem>
+            <TabItem Header="📚  کتابخانه">
+                 <ContentControl x:Name="LibraryContent" />
+            </TabItem>
+           <TabItem Header="📦  کتاب‌های درسی">
+                 <ContentControl x:Name="TextbookContent" />
+            </TabItem>
+
+            <!-- Tab 5: Report Cards -->
             <TabItem Header="📄  کارنامه / اطلاع‌نامه">
                 <ContentControl x:Name="ReportCardsContent" />
             </TabItem>
 
-            <!-- Tab 5: Backup & Settings -->
+            <!-- Tab 6: Backup & Settings -->
             <TabItem Header="💾  پشتیبان‌گیری و تنظیمات">
                 <ContentControl x:Name="BackupSettingsContent" />
             </TabItem>
