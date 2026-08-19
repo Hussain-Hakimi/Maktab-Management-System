@@ -1,5 +1,3 @@
-
-
 using Maktab.Application.Abstractions;
 using Maktab.Domain.Entities;
 
@@ -24,7 +22,13 @@ public sealed class StudentService(IStudentRepository repository) : IStudentServ
         return repository.GetStudentByIdAsync(studentId, cancellationToken);
     }
 
-    public async Task<int> RegisterStudentAsync(string firstName, string lastName, string fatherName, int classId, string rollNumber, CancellationToken cancellationToken = default)
+    public async Task<int> RegisterStudentAsync(
+        string firstName,
+        string lastName,
+        string fatherName,
+        int classId,
+        string rollNumber,
+        CancellationToken cancellationToken = default)
     {
         ValidateStudentInfo(firstName, lastName, fatherName, classId, rollNumber);
 
@@ -39,13 +43,21 @@ public sealed class StudentService(IStudentRepository repository) : IStudentServ
             LastName = lastName.Trim(),
             FatherName = fatherName.Trim(),
             ClassId = classId,
-            RollNumber = rollNumber.Trim()
+            RollNumber = rollNumber.Trim(),
+            RegistrationDate = DateTime.Now
         };
 
         return await repository.CreateStudentAsync(student, cancellationToken);
     }
 
-    public async Task UpdateStudentAsync(int studentId, string firstName, string lastName, string fatherName, int classId, string rollNumber, CancellationToken cancellationToken = default)
+    public async Task UpdateStudentAsync(
+        int studentId,
+        string firstName,
+        string lastName,
+        string fatherName,
+        int classId,
+        string rollNumber,
+        CancellationToken cancellationToken = default)
     {
         if (studentId <= 0) throw new ArgumentOutOfRangeException(nameof(studentId));
         ValidateStudentInfo(firstName, lastName, fatherName, classId, rollNumber);
@@ -69,7 +81,8 @@ public sealed class StudentService(IStudentRepository repository) : IStudentServ
             LastName = lastName.Trim(),
             FatherName = fatherName.Trim(),
             ClassId = classId,
-            RollNumber = rollNumber.Trim()
+            RollNumber = rollNumber.Trim(),
+            RegistrationDate = existing.RegistrationDate  // preserve original registration date
         };
 
         await repository.UpdateStudentAsync(student, cancellationToken);
@@ -81,12 +94,26 @@ public sealed class StudentService(IStudentRepository repository) : IStudentServ
         return repository.DeleteStudentAsync(studentId, cancellationToken);
     }
 
-    private static void ValidateStudentInfo(string firstName, string lastName, string fatherName, int classId, string rollNumber)
+    private static void ValidateStudentInfo(
+        string firstName,
+        string lastName,
+        string fatherName,
+        int classId,
+        string rollNumber)
     {
-        if (string.IsNullOrWhiteSpace(firstName)) throw new ArgumentException("First name is required.", nameof(firstName));
-        if (string.IsNullOrWhiteSpace(lastName)) throw new ArgumentException("Last name is required.", nameof(lastName));
-        if (string.IsNullOrWhiteSpace(fatherName)) throw new ArgumentException("Father name is required.", nameof(fatherName));
-        if (string.IsNullOrWhiteSpace(rollNumber)) throw new ArgumentException("Roll number is required.", nameof(rollNumber));
-        if (classId <= 0) throw new ArgumentOutOfRangeException(nameof(classId), "Valid class must be selected.");
+        if (string.IsNullOrWhiteSpace(firstName))
+            throw new ArgumentException("First name is required.", nameof(firstName));
+
+        if (string.IsNullOrWhiteSpace(lastName))
+            throw new ArgumentException("Last name is required.", nameof(lastName));
+
+        if (string.IsNullOrWhiteSpace(fatherName))
+            throw new ArgumentException("Father name is required.", nameof(fatherName));
+
+        if (string.IsNullOrWhiteSpace(rollNumber))
+            throw new ArgumentException("Roll number is required.", nameof(rollNumber));
+
+        if (classId <= 0)
+            throw new ArgumentOutOfRangeException(nameof(classId), "Valid class must be selected.");
     }
 }
