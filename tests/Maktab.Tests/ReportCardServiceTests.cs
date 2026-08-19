@@ -50,6 +50,18 @@ public class ReportCardServiceTests
         public Task SaveOrUpdateMarksBatchAsync(IEnumerable<ExamMark> marks, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
+    private sealed class MockAttendanceService(int absenceDays = 0) : IAttendanceService
+    {
+        public Task<IReadOnlyList<StudentAttendanceDto>> GetClassAttendanceForDateAsync(int classId, DateTime date, CancellationToken cancellationToken = default)
+            => throw new NotImplementedException();
+
+        public Task SaveAttendanceBatchAsync(IEnumerable<SaveAttendanceDto> attendance, CancellationToken cancellationToken = default)
+            => throw new NotImplementedException();
+
+        public Task<int> GetStudentAbsenceDaysAsync(int studentId, string academicYear, CancellationToken cancellationToken = default)
+            => Task.FromResult(absenceDays);
+    }
+
     [Fact]
     public async Task GetStudentReportCardData_WhenStudentPassesAll_IsPromotedIsTrue()
     {
@@ -62,8 +74,8 @@ public class ReportCardServiceTests
         };
         var marks = new List<ExamMark>
         {
-            new() { StudentId = 1, SubjectId = 1, MidtermScore = 35m, FinalScore = 50m }, // 85 -> Pass
-            new() { StudentId = 1, SubjectId = 2, MidtermScore = 30m, FinalScore = 40m }  // 70 -> Pass
+            new() { StudentId = 1, SubjectId = 1, MidtermScore = 35m, FinalScore = 50m },
+            new() { StudentId = 1, SubjectId = 2, MidtermScore = 30m, FinalScore = 40m }
         };
 
         var mockPdf = new MockPdfGenerator();
@@ -71,7 +83,8 @@ public class ReportCardServiceTests
             new MockStudentRepository(student),
             new MockClassSubjectRepository(schoolClass, subjects),
             new MockExamMarkRepository(marks),
-            mockPdf);
+            mockPdf,
+            new MockAttendanceService(0));
 
         var result = await service.GetStudentReportCardDataAsync(1, "۱۴۰۳");
 
@@ -84,6 +97,7 @@ public class ReportCardServiceTests
         Assert.Equal(0, result.FailedSubjectsCount);
         Assert.Equal(PromotionOutcome.Promoted, result.PromotionOutcome);
         Assert.Null(result.FailureReason);
+        Assert.Equal(0, result.AbsenceDays);
     }
 
     [Fact]
@@ -100,10 +114,10 @@ public class ReportCardServiceTests
         };
         var marks = new List<ExamMark>
         {
-            new() { StudentId = 1, SubjectId = 1, MidtermScore = 10m, FinalScore = 20m }, // 30 -> Fail
-            new() { StudentId = 1, SubjectId = 2, MidtermScore = 12m, FinalScore = 15m }, // 27 -> Fail
-            new() { StudentId = 1, SubjectId = 3, MidtermScore = 10m, FinalScore = 25m }, // 35 -> Fail
-            new() { StudentId = 1, SubjectId = 4, MidtermScore = 10m, FinalScore = 20m }  // 30 -> Fail
+            new() { StudentId = 1, SubjectId = 1, MidtermScore = 10m, FinalScore = 20m },
+            new() { StudentId = 1, SubjectId = 2, MidtermScore = 12m, FinalScore = 15m },
+            new() { StudentId = 1, SubjectId = 3, MidtermScore = 10m, FinalScore = 25m },
+            new() { StudentId = 1, SubjectId = 4, MidtermScore = 10m, FinalScore = 20m }
         };
 
         var mockPdf = new MockPdfGenerator();
@@ -111,13 +125,45 @@ public class ReportCardServiceTests
             new MockStudentRepository(student),
             new MockClassSubjectRepository(schoolClass, subjects),
             new MockExamMarkRepository(marks),
-            mockPdf);
+            mockPdf,
+            new MockAttendanceService(0));
 
         var result = await service.GetStudentReportCardDataAsync(1, "۱۴۰۳");
 
         Assert.Equal(4, result.FailedSubjectsCount);
         Assert.Equal(PromotionOutcome.Repeat, result.PromotionOutcome);
         Assert.NotNull(result.FailureReason);
+    }
+
+    [Fact]
+    public async Task GetStudentReportCardData_WhenAbsenceOverLimit_ReturnsRepeat()
+    {
+        var student = new Student { StudentId = 1, FirstName = "Ahmad", LastName = "Karimi", FatherName = "Mohammad", ClassId = 1, RollNumber = "101" };
+        var schoolClass = new SchoolClass { ClassId = 1, GradeName = "صنف هفتم", NumberOfSubjects = 2 };
+        var subjects = new List<Subject>
+        {
+            new() { SubjectId = 1, ClassId = 1, SubjectName = "ریاضی" },
+            new() { SubjectId = 2, ClassId = 1, SubjectName = "فزیک" }
+        };
+        var marks = new List<ExamMark>
+        {
+            new() { StudentId = 1, SubjectId = 1, MidtermScore = 35m, FinalScore = 50m },
+            new() { StudentId = 1, SubjectId = 2, MidtermScore = 30m, FinalScore = 40m }
+        };
+
+        var mockPdf = new MockPdfGenerator();
+        var service = new ReportCardService(
+            new MockStudentRepository(student),
+            new MockClassSubjectRepository(schoolClass, subjects),
+            new MockExamMarkRepository(marks),
+            mockPdf,
+            new MockAttendanceService(31));
+
+        var result = await service.GetStudentReportCardDataAsync(1, "۱۴۰۳");
+
+        Assert.Equal(PromotionOutcome.Repeat, result.PromotionOutcome);
+        Assert.Equal(31, result.AbsenceDays);
+        Assert.Contains("غیرحاضری", result.FailureReason);
     }
 
     [Fact]
@@ -133,7 +179,8 @@ public class ReportCardServiceTests
             new MockStudentRepository(student),
             new MockClassSubjectRepository(schoolClass, subjects),
             new MockExamMarkRepository(marks),
-            mockPdf);
+            mockPdf,
+            new MockAttendanceService(0));
 
         var tempDir = Path.Combine(Path.GetTempPath(), "MaktabTests_" + Guid.NewGuid());
         var path = await service.GenerateStudentReportCardPdfAsync(1, "۱۴۰۳", tempDir);
