@@ -35,51 +35,52 @@ Built with **C# / .NET 8**, **WPF**, **SQLite**, and **QuestPDF**, with a Dari/P
 ---
 
 ## 🎯 Project Goal
-
 The goal of this project is to provide a simple, reliable, and completely offline school-management solution for schools that need to manage:
 
-- Classes and subjects
-- Students
-- Examination marks
-- Automatic grading
-- Student report cards
-- Database backup and restore
+Classes and subjects
+
+Students
+
+Attendance
+
+Library books and lending
+
+Textbooks inventory and distribution
+
+Student fees and payments
+
+Examination marks
+
+Automatic grading
+
+Student report cards
+
+Database backup and restore
 
 The system is designed to work on a single Windows computer without requiring an internet connection or an online server.
 
-## 🚀 Version 1.0 — Core Academic MVP
 
-Version 1.0 focuses on the core academic management features.
 
-### Included in V1.0
+## 🚀 Version History
 
-- 🏫 Class management
-- 📚 Subject management
-- 👨‍🎓 Student registration and management
-- 📝 Examination mark entry
-- 🧮 Automatic calculation of subject totals
-- 🎓 Automatic student grading
-- 📄 PDF report card / اطلاع‌نامه generation
-- 💾 SQLite database
-- 🔄 Database backup and restore
-- 📝 Application logging
-- 🇦🇫 Dari/Persian RTL interface
-- 🧪 Automated unit tests
+Version 1.0.1 — Stabilization Release
+The core academic MVP with classes, subjects, students, marks, grading, report cards, backup/restore, logging, and tests.
 
-### Not Included in V1.0
 
-The following features are **planned for later versions** and are not part of the current MVP:
+## Version 1.1.0 — School Operations Release
 
-- Attendance management
-- Library management
-- Textbook management
-- Fee management
-- User accounts and authentication
-- Role-based permissions
-- Advanced reports and analytics
-- Multi-user/network support
+Added the following modules:
 
-This keeps V1.0 focused on the essential academic workflow.
+🗓️ Attendance management (daily entry, absence tracking tied to promotion rules)
+
+📚 Library management (books, issue/return, overdue tracking)
+
+📦 Textbooks management (inventory, issue/return)
+
+💰 Fees management (fee records, payments, outstanding balances)
+
+🔄 Database migration system (PRAGMA user_version)
+
 
 ## 🏗️ Technology Stack
 
@@ -169,7 +170,6 @@ the system records:
 Total = 83
 ```
 
-The report card does not display `83%` for that individual subject — the subject total is sufficient.
 
 ### 🎓 Student Group / Grade
 
@@ -244,102 +244,130 @@ The system generates an offline PDF report card for each student, containing:
 - Promotion status (Promoted / Conditional / Repeat Grade — see [Promotion Rule](#promotion-rule))
 - Signature areas
 
-### Subject Marks
-
-For each subject, the report card displays the marks obtained out of the subject total. It does **not** calculate or display a separate percentage per subject.
-
-```
-Mathematics       82
-Physics           76
-Chemistry         91
-Dari              88
-```
-
-The report card then calculates the student's overall result from these subject totals.
-
-### 🧮 Overall Student Average
-
-The student's overall average is calculated from the subject totals, and that average determines the student's final group.
-
-The final report therefore focuses on:
-
-- Total Marks
-- Average
-- Final Group
-- Promotion Status
-
-— rather than displaying unnecessary percentages for every subject.
-
 ## 🏫 Classes and Subjects
 
-The system allows the administrator to manage:
+The system allows managing:
 
-**Classes**
-- Add classes
-- Edit classes
-- Delete classes
-- View class information
+Classes (add, edit, delete)
 
-**Subjects**
-- Add subjects
-- Edit subjects
-- Delete subjects
-- Assign subjects to classes
+Subjects (add, edit, delete, assign to classes)
+
 
 ## 👨‍🎓 Student Management
 
 Student records include:
 
-- Student ID
-- First name
-- Last name
-- Father's name
-- Class
-- Roll number
-- Registration date
+Student ID
+
+First name
+
+Last name
+
+Father's name
+
+Class
+
+Roll number
+
+Registration date
 
 The system validates student information and prevents duplicate roll numbers within the same class.
 
-## 📝 Mark Entry
+## 🗓️ Attendance
+The attendance module supports:
 
+Daily attendance entry per class
+
+Statuses: Present, Absent, Ill, Permission
+
+Automatic absence counting for academic year
+
+Absence days are integrated into promotion rules and report cards
+
+## 📚 Library
+
+The library module provides:
+
+Book management (title, author, ISBN, category, total/available copies)
+
+Issuing books to students
+
+Returning books
+
+Overdue tracking based on due date
+
+## 📦 Textbooks
+
+The textbooks module provides:
+
+Textbook inventory (title, subject, class, total/available copies)
+
+Issuing textbooks to students
+
+Returning textbooks
+
+## 💰 Fees
+
+The fees module provides:
+
+Fee records (student, type, amount, due date)
+
+Payment tracking with receipt numbers
+
+Outstanding balance calculation
+
+Status: Unpaid, Partial, Paid
+
+
+## 📝 Mark Entry
 The mark-entry system supports:
 
-- Selecting a class
-- Selecting a subject
-- Viewing students in the selected class
-- Entering midterm marks
-- Entering final marks
-- Automatic total calculation
-- Validation of mark ranges
-- Saving examination results
+Selecting a class and subject
 
-**Mark limits:**
+Viewing students in the selected class
 
-```
-Midterm: 0–40
-Final:   0–60
-Total:   0–100
-```
+Entering midterm marks (0–40)
 
-Invalid values are rejected.
+Entering final marks (0–60)
 
-## 💾 Database
+Automatic total calculation
 
-The application uses **SQLite** as its local database, stored locally on the computer. This allows the application to operate without an internet connection or remote database server — architecture intentionally designed for environments where reliable internet access may not be available.
+Validation of mark ranges
+
+##  💾 Database
+The application uses SQLite as its local database. All data is stored locally, ensuring offline operation.
+
+Database Migrations
+A simple migration system using PRAGMA user_version is implemented:
+
+user_version = 0 → New or pre‑migration database. The baseline schema (version 1) is applied, containing all tables for V1.0.1 and V1.1.
+
+Future schema changes will be added as new migrations in DatabaseMigrations.GetMigrations().
+
+This ensures existing databases are upgraded smoothly when a new version is installed.
 
 ## 🔄 Backup and Restore
-
 The application includes an offline database backup system supporting:
 
-- Manual database backup
-- Automatic startup backup
-- Backup listing
-- Database restoration
-- Backup retention
-- Old backup cleanup
-- Backup error logging
+Manual database backup
 
-The current backup retention policy keeps recent backups while removing older backups according to the configured retention period.
+Automatic startup backup
+
+Backup listing
+
+Database restoration
+
+Backup retention (7 days default)
+
+Old backup cleanup
+
+Backup error logging
+
+Recommended: Copy important backups to external storage regularly.
+
+## 📝 Logging
+The application maintains local log files for important events and errors. Logs are stored in AppData/Logs/.
+
 
 ### Recommended Backup Practice
 
@@ -351,40 +379,55 @@ Users should periodically copy important backups to an external storage device s
 
 A backup stored only on the same computer does not protect against complete hardware failure.
 
-## 📝 Logging
 
-The application maintains local log files for important application events and errors. Logging helps with:
+🇦🇫 Dari / Persian RTL Interface
+The application provides a right-to-left interface with Dari labels for all major functions:
 
-- Troubleshooting
-- Diagnosing failures
-- Backup monitoring
-- Application maintenance
+صنف‌ها و مضامین
 
-No internet connection is required for logging.
+شاگردان
 
-## 🇦🇫 Dari / Persian RTL Interface
+ثبت نمرات
 
-The application provides a right-to-left interface designed for Dari/Persian-speaking users, with Dari labels for major school-management functions such as:
+حاضری
 
-- صنف‌ها و مضامین
-- شاگردان
-- ثبت نمرات
-- کارنامه / اطلاع‌نامه
-- پشتیبان‌گیری و تنظیمات
+کتابخانه
+
+کتاب‌های درسی
+
+فیس‌ها
+
+کارنامه / اطلاع‌نامه
+
+پشتیبان‌گیری و تنظیمات 
+
+
 
 ## 🧪 Testing
 
-The project includes automated tests covering important application logic and services. Current test coverage includes:
+The project includes automated tests covering:
 
-- Student management
-- Examination marks
-- Report cards
-- Backup and restore (including a real backup → modify → restore round-trip)
-- Domain rules
-- Shamsi academic-year calculation
-- SQLite integration tests against a real temporary database (schema constraints, unique roll numbers, mark upserts, FK cascade/restrict)
+Student management
 
-Tests are intended to prevent regressions as new features are added.
+Examination marks
+
+Report cards
+
+Attendance
+
+Library
+
+Textbooks
+
+Fees
+
+Backup and restore
+
+Database migrations
+
+SQLite integration tests (schema constraints, foreign keys, upserts)
+
+Tests use xUnit and in-memory repositories for unit tests, plus real SQLite temporary databases for integration tests.
 
 ## ⚙️ Build and Run
 
@@ -452,34 +495,32 @@ Because the application is a Windows WPF application, the CI workflow uses a **W
 
 ## 🗺️ Development Roadmap
 
-### Version 1.0 — Core Academic MVP
-- Classes
-- Subjects
-- Student management
-- Mark entry
-- Automatic totals
-- Student grading
-- PDF report cards
-- SQLite database
-- Backup and restore
-- Logging
-- Dari RTL interface
-- Unit tests
+### Completed in V1.0.1
 
-### Version 1.0.1 — Stabilization
+Core academic features
 
-This release focused on making the existing MVP reliable before adding new features.
+Grading & promotion rules
 
-Completed:
-- ✅ New grading rules verified throughout the application (domain, services, PDF, UI)
-- ✅ Grading and report-card tests updated
-- ✅ GitHub Actions CI added (`windows-latest` runner)
-- ✅ Database/integration tests added (real SQLite: CRUD, unique roll numbers, mark upserts, CHECK constraints, FK cascade/restrict)
-- ✅ Backup and restore round-trip tests added
-- ✅ Foreign-key enforcement fixed on every connection (`ForeignKeys = true` in the connection string)
-- ✅ Hardcoded academic year removed — the current Shamsi academic year is now detected automatically (e.g. «۱۴۰۵ - ۱۴۰۶»)
-- ✅ Global error handling added (UI, background threads, and unobserved tasks are logged; a friendly Dari message is shown)
-- ✅ Publish/deployment instructions documented (see [Publish / Deployment](#-publish--deployment))
+Report cards
+
+Backup/restore
+
+Logging
+
+Tests
+
+### Completed in V1.1.0
+
+Attendance module
+
+Library module
+
+Textbooks module
+
+Fees module
+
+Database migration system
+
 
 ### Version 1.1 — School Operations
 
@@ -559,27 +600,8 @@ The primary data remains on the local computer — particularly important for sc
 
 ## 📌 Current Status
 
-**Version:** 1.0.1 — Stabilization Release
+**Version:** 1.1.0 — Stabilization Release
 
-The core MVP includes:
-
-```
-Classes
-   ↓
-Subjects
-   ↓
-Students
-   ↓
-Marks
-   ↓
-Subject Totals
-   ↓
-Overall Average
-   ↓
-A / B / C / D / F
-   ↓
-Report Card
-```
 
 `GradingPolicy.cs`, `PromotionPolicy.cs`, the report-card logic, the UI, and the tests are all in sync with the grading rules described in this document. Version 1.0.1 completed the stabilization roadmap (integration tests, backup/restore tests, FK enforcement, automatic Shamsi academic year, global error handling, publish instructions). The next development priority is the **V1.1 school-operation features** (attendance, library, textbooks, fees).
 
@@ -589,4 +611,4 @@ Report Card
 
 **Maktab Management System** — an offline school-management application designed with the goal of making academic administration simpler and more accessible for Afghan schools.
 
-Built with ❤️ for Afghan schools.
+Built with Hussain❤️Hakimi for Afghan schools.
