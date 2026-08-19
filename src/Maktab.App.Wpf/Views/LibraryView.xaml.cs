@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using Maktab.Application.Abstractions;
+using Maktab.Domain.Entities;
 using Maktab.Domain.Enums;
 
 namespace Maktab.App.Wpf.Views;
