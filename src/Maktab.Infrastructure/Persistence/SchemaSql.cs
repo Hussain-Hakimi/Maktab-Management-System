@@ -46,5 +46,16 @@ CREATE TABLE IF NOT EXISTS tbl_AuditLog (
     Action TEXT NOT NULL,
     Timestamp TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
 );
+
+CREATE TABLE IF NOT EXISTS tbl_Attendance (
+    AttendanceID INTEGER PRIMARY KEY AUTOINCREMENT,
+    StudentID INTEGER NOT NULL,
+    AttendanceDate TEXT NOT NULL,
+    Status TEXT NOT NULL CHECK (Status IN ('Present', 'Absent', 'Ill', 'Permission')),
+    FOREIGN KEY (StudentID) REFERENCES tbl_Students(StudentID) ON DELETE CASCADE,
+    UNIQUE (StudentID, AttendanceDate)
+);
+
+CREATE INDEX IF NOT EXISTS idx_attendance_date ON tbl_Attendance(AttendanceDate);
 ";
 }
