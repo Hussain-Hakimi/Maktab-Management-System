@@ -95,7 +95,7 @@ public partial class StudentManagementView : UserControl
                 FatherName = s.FatherName,
                 ClassId = s.ClassId,
                 ClassName = classDict.TryGetValue(s.ClassId, out var name) ? name : $"صنف {s.ClassId}",
-                RollNumber = s.RollNumber
+                RollNumber = s.RollNumber,
                 RegistrationDate = s.RegistrationDate
             }).ToList();
 
