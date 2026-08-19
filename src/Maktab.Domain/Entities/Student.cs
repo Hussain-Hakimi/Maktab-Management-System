@@ -8,4 +8,5 @@ public sealed class Student
     public required string FatherName { get; set; }
     public int ClassId { get; set; }
     public required string RollNumber { get; set; }
+    public DateTime RegistrationDate { get; set; } = DateTime.Now;
 }
