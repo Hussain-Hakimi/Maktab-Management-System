@@ -18,6 +18,7 @@ public static class DependencyInjection
         services.AddSingleton<IClassSubjectRepository, SqliteClassSubjectRepository>();
         services.AddSingleton<IStudentRepository, SqliteStudentRepository>();
         services.AddSingleton<IExamMarkRepository, SqliteExamMarkRepository>();
+        services.AddSingleton<IAttendanceRepository, SqliteAttendanceRepository>();
         services.AddSingleton<IPdfReportCardGenerator, QuestPdfReportCardGenerator>();
 
         return services;
