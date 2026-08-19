@@ -12,6 +12,7 @@ public MainWindow(
     StudentManagementView studentManagementView,
     MarksEntryView marksEntryView,
     AttendanceView attendanceView,
+    LibraryView libraryView,
     ReportCardsView reportCardsView,
     BackupSettingsView backupSettingsView)
 {
@@ -22,6 +23,7 @@ public MainWindow(
     StudentManagementContent.Content = studentManagementView;
     MarksEntryContent.Content = marksEntryView;
     AttendanceContent.Content = attendanceView;
+    LibraryContent.Content = libraryView;
     ReportCardsContent.Content = reportCardsView;
     BackupSettingsContent.Content = backupSettingsView;
 
