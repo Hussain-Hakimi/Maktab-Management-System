@@ -9,7 +9,7 @@ public sealed class SqliteStudentRepository(IConnectionStringProvider connection
     public async Task<IReadOnlyList<Student>> GetStudentsAsync(CancellationToken cancellationToken = default)
     {
         const string sql = @"
-SELECT StudentID, FirstName, LastName, FatherName, ClassID, RollNumber
+SELECT StudentID, FirstName, LastName, FatherName, ClassID, RollNumber, RegistrationDate
 FROM tbl_Students
 ORDER BY LastName, FirstName;";
 
@@ -32,7 +32,7 @@ ORDER BY LastName, FirstName;";
     public async Task<IReadOnlyList<Student>> GetStudentsByClassAsync(int classId, CancellationToken cancellationToken = default)
     {
         const string sql = @"
-SELECT StudentID, FirstName, LastName, FatherName, ClassID, RollNumber
+SELECT StudentID, FirstName, LastName, FatherName, ClassID, RollNumber, RegistrationDate
 FROM tbl_Students
 WHERE ClassID = $classId
 ORDER BY RollNumber;";
@@ -57,7 +57,7 @@ ORDER BY RollNumber;";
     public async Task<Student?> GetStudentByIdAsync(int studentId, CancellationToken cancellationToken = default)
     {
         const string sql = @"
-SELECT StudentID, FirstName, LastName, FatherName, ClassID, RollNumber
+SELECT StudentID, FirstName, LastName, FatherName, ClassID, RollNumber, RegistrationDate
 FROM tbl_Students
 WHERE StudentID = $studentId;";
 
@@ -80,8 +80,8 @@ WHERE StudentID = $studentId;";
     public async Task<int> CreateStudentAsync(Student student, CancellationToken cancellationToken = default)
     {
         const string sql = @"
-INSERT INTO tbl_Students (FirstName, LastName, FatherName, ClassID, RollNumber)
-VALUES ($firstName, $lastName, $fatherName, $classId, $rollNumber);
+INSERT INTO tbl_Students (FirstName, LastName, FatherName, ClassID, RollNumber, RegistrationDate)
+VALUES ($firstName, $lastName, $fatherName, $classId, $rollNumber, $registrationDate);
 SELECT last_insert_rowid();";
 
         await using var connection = new SqliteConnection(connectionStringProvider.GetConnectionString());
@@ -98,6 +98,7 @@ SELECT last_insert_rowid();";
             command.Parameters.AddWithValue("$fatherName", student.FatherName);
             command.Parameters.AddWithValue("$classId", student.ClassId);
             command.Parameters.AddWithValue("$rollNumber", student.RollNumber);
+            command.Parameters.AddWithValue("$registrationDate", student.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss"));
 
             var id = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken));
             await transaction.CommitAsync(cancellationToken);
@@ -201,7 +202,8 @@ WHERE StudentID = $studentId;";
             LastName = reader.GetString(2),
             FatherName = reader.GetString(3),
             ClassId = reader.GetInt32(4),
-            RollNumber = reader.GetString(5)
+            RollNumber = reader.GetString(5),
+            RegistrationDate = DateTime.Parse(reader.GetString(6))
         };
     }
 }
