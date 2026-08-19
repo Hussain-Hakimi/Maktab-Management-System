@@ -99,25 +99,26 @@
                         <TextBlock x:Name="CountTextBlock" Text=" (تعداد: 0)" Foreground="#64748B" Margin="6,2,0,0" />
                     </StackPanel>
 
-                    <DataGrid x:Name="StudentsDataGrid"
-                              Grid.Row="1"
-                              AutoGenerateColumns="False"
-                              CanUserAddRows="False"
-                              IsReadOnly="True"
-                              SelectionMode="Single"
-                              GridLinesVisibility="Horizontal"
-                              HorizontalGridLinesBrush="#E2E8F0"
-                              SelectionChanged="StudentsDataGrid_SelectionChanged"
-                              RowHeight="32">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="آیدی" Binding="{Binding StudentId}" Width="60" />
-                            <DataGridTextColumn Header="شماره اساس" Binding="{Binding RollNumber}" Width="100" />
-                            <DataGridTextColumn Header="نام" Binding="{Binding FirstName}" Width="*" />
-                            <DataGridTextColumn Header="تخلص" Binding="{Binding LastName}" Width="*" />
-                            <DataGridTextColumn Header="نام پدر" Binding="{Binding FatherName}" Width="*" />
-                            <DataGridTextColumn Header="صنف" Binding="{Binding ClassName}" Width="100" />
-                        </DataGrid.Columns>
-                    </DataGrid>
+<DataGrid x:Name="StudentsDataGrid"
+          Grid.Row="1"
+          AutoGenerateColumns="False"
+          CanUserAddRows="False"
+          IsReadOnly="True"
+          SelectionMode="Single"
+          GridLinesVisibility="Horizontal"
+          HorizontalGridLinesBrush="#E2E8F0"
+          SelectionChanged="StudentsDataGrid_SelectionChanged"
+          RowHeight="32">
+    <DataGrid.Columns>
+        <DataGridTextColumn Header="آیدی" Binding="{Binding StudentId}" Width="60" />
+        <DataGridTextColumn Header="شماره اساس" Binding="{Binding RollNumber}" Width="100" />
+        <DataGridTextColumn Header="نام" Binding="{Binding FirstName}" Width="*" />
+        <DataGridTextColumn Header="تخلص" Binding="{Binding LastName}" Width="*" />
+        <DataGridTextColumn Header="نام پدر" Binding="{Binding FatherName}" Width="*" />
+        <DataGridTextColumn Header="صنف" Binding="{Binding ClassName}" Width="100" />
+        <DataGridTextColumn Header="تاریخ ثبت" Binding="{Binding RegistrationDateFormatted}" Width="100" />
+    </DataGrid.Columns>
+</DataGrid>
 
                     <TextBlock Grid.Row="2" Margin="4,8,4,4" Text="💡 برای ویرایش یا حذف، روی ردیف شاگرد کلیک کنید." FontSize="12" Foreground="#64748B" />
                 </Grid>
