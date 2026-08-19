@@ -114,6 +114,9 @@
             <TabItem Header="🗓️  حاضری روزانه">
                 <ContentControl x:Name="AttendanceContent" />
             </TabItem>
+            <TabItem Header="📚  کتابخانه">
+                 <ContentControl x:Name="LibraryContent" />
+            </TabItem>
 
             <!-- Tab 5: Report Cards -->
             <TabItem Header="📄  کارنامه / اطلاع‌نامه">
