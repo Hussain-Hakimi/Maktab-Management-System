@@ -99,6 +99,30 @@ CREATE TABLE IF NOT EXISTS tbl_TextbookIssues (
 
 CREATE INDEX IF NOT EXISTS idx_textbookissues_status ON tbl_TextbookIssues(Status);
 
+CREATE TABLE IF NOT EXISTS tbl_Fees (
+    FeeID INTEGER PRIMARY KEY AUTOINCREMENT,
+    StudentID INTEGER NOT NULL,
+    FeeType TEXT NOT NULL,
+    Amount REAL NOT NULL CHECK (Amount > 0),
+    DueDate TEXT NOT NULL,
+    CreatedDate TEXT NOT NULL,
+    FOREIGN KEY (StudentID) REFERENCES tbl_Students(StudentID) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS tbl_FeePayments (
+    PaymentID INTEGER PRIMARY KEY AUTOINCREMENT,
+    FeeID INTEGER NOT NULL,
+    StudentID INTEGER NOT NULL,
+    Amount REAL NOT NULL CHECK (Amount > 0),
+    PaymentDate TEXT NOT NULL,
+    ReceiptNumber TEXT NOT NULL,
+    FOREIGN KEY (FeeID) REFERENCES tbl_Fees(FeeID) ON DELETE CASCADE,
+    FOREIGN KEY (StudentID) REFERENCES tbl_Students(StudentID) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_feepayments_fee ON tbl_FeePayments(FeeID);
+CREATE INDEX IF NOT EXISTS idx_feepayments_student ON tbl_FeePayments(StudentID);
+
 CREATE TABLE IF NOT EXISTS tbl_AuditLog (
     LogID INTEGER PRIMARY KEY AUTOINCREMENT,
     UserName TEXT NOT NULL,

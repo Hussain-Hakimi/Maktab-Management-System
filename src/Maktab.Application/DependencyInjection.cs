@@ -15,6 +15,7 @@ public static class DependencyInjection
         services.AddSingleton<IAttendanceService, AttendanceService>();
         services.AddSingleton<IBookService, BookService>();
         services.AddSingleton<ITextbookService, TextbookService>();
+        services.AddSingleton<IFeeService, FeeService>();
         return services;
     }
 }

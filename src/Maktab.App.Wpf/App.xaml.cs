@@ -37,6 +37,7 @@ public partial class App : System.Windows.Application
 					services.AddSingleton<AttendanceView>();
 					services.AddSingleton<LibraryView>();
 					services.AddSingleton<TextbookView>();
+					services.AddSingleton<FeesView>();
 					services.AddSingleton<MainWindow>();
 				})
 				.Build();
