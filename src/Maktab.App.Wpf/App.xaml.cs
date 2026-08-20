@@ -67,6 +67,8 @@ public partial class App : System.Windows.Application
             }
 
             // Log successful login to audit
+            var currentUserService = _host.Services.GetRequiredService<ICurrentUserService>();
+            currentUserService.CurrentUser = loginWindow.AuthenticatedUser;
             var auditService = _host.Services.GetRequiredService<IAuditService>();
             await auditService.LogAsync(loginWindow.AuthenticatedUser.Username, "ورود به سیستم");
 
