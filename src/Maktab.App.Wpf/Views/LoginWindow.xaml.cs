@@ -32,6 +32,7 @@ public partial class LoginWindow : Window
             if (user is null)
             {
                 ErrorTextBlock.Text = "نام کاربری یا رمز عبور اشتباه است.";
+                PasswordBox.Clear();
                 return;
             }
 
