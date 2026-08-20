@@ -16,7 +16,6 @@ public partial class App : System.Windows.Application
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-        ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
         RegisterGlobalExceptionHandlers();
 
@@ -43,6 +42,7 @@ public partial class App : System.Windows.Application
                     services.AddSingleton<UserManagementView>();
                     services.AddSingleton<PromotionSettingsView>();
                     services.AddSingleton<BulkImportView>();
+                    services.AddSingleton<AuditLogView>();
                     services.AddSingleton<MainWindow>();
                 })
                 .Build();
@@ -66,12 +66,15 @@ public partial class App : System.Windows.Application
                 return;
             }
 
+            // Log successful login to audit
+            var auditService = _host.Services.GetRequiredService<IAuditService>();
+            await auditService.LogAsync(loginWindow.AuthenticatedUser.Username, "ورود به سیستم");
+
             try
             {
                 var mainWindow = _host.Services.GetRequiredService<MainWindow>();
                 mainWindow.SetCurrentUser(loginWindow.AuthenticatedUser);
                 mainWindow.Show();
-                ShutdownMode = ShutdownMode.OnLastWindowClose;
             }
             catch (Exception ex)
             {
