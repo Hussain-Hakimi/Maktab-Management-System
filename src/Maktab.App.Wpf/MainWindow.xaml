@@ -101,6 +101,7 @@
                     <ListBoxItem Content="👥 مدیریت کاربران (Admin)" />
                     <ListBoxItem Content="⚙️ تنظیمات ارتقاء (Admin)" />
                     <ListBoxItem Content="📥 ورود اطلاعات دسته‌جمعی (Admin)" />
+                    <ListBoxItem Content="📋 گزارش وقایع (Admin)" />
                 </ListBox>
             </Border>
 
