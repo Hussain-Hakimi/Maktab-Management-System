@@ -1,3 +1,5 @@
+using Maktab.Application.Abstractions;
+
 namespace Maktab.Application.Services;
 
 public sealed class CurrentUserService : ICurrentUserService
