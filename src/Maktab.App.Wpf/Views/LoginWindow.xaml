@@ -5,27 +5,37 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="ورود به سیستم"
-        Height="300" Width="400"
+        Height="400" Width="480"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         Language="fa-IR"
-        FlowDirection="RightToLeft">
+        FlowDirection="RightToLeft"
+        Background="#F1F5F9">
 
-    <Grid Background="#F1F5F9">
-        <Border Background="White" CornerRadius="8" Margin="20" Padding="20">
+    <Grid>
+        <Border Background="White" CornerRadius="12" Margin="30" Padding="30"
+                BorderBrush="#E2E8F0" BorderThickness="1">
             <StackPanel VerticalAlignment="Center">
-                <TextBlock Text="📘 سیستم مدیریت مکتب" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10" />
-                <TextBlock Text="لطفاً وارد شوید" FontSize="14" Foreground="#475569" HorizontalAlignment="Center" Margin="0,0,0,20" />
+                <TextBlock Text="📘 سیستم مدیریت مکتب" FontSize="22" FontWeight="Bold"
+                           HorizontalAlignment="Center" Margin="0,0,0,10" Foreground="#0F172A" />
+                <TextBlock Text="لطفاً وارد شوید" FontSize="14" Foreground="#475569"
+                           HorizontalAlignment="Center" Margin="0,0,0,30" />
 
-                <TextBlock Text="نام کاربری" FontWeight="SemiBold" Margin="0,0,0,4" />
-                <TextBox x:Name="UsernameTextBox" Height="32" Margin="0,0,0,10" />
+                <TextBlock Text="نام کاربری" FontWeight="SemiBold" Margin="0,0,0,6" Foreground="#334155" />
+                <TextBox x:Name="UsernameTextBox" Height="40" Margin="0,0,0,16"
+                         FontSize="14" Padding="10,8" VerticalContentAlignment="Center"
+                         TextAlignment="Right" />
 
-                <TextBlock Text="رمز عبور" FontWeight="SemiBold" Margin="0,0,0,4" />
-                <PasswordBox x:Name="PasswordBox" Height="32" Margin="0,0,0,20" />
+                <TextBlock Text="رمز عبور" FontWeight="SemiBold" Margin="0,0,0,6" Foreground="#334155" />
+                <PasswordBox x:Name="PasswordBox" Height="40" Margin="0,0,0,24"
+                             FontSize="14" Padding="10,8" VerticalContentAlignment="Center" />
 
-                <Button Height="38" Content="ورود" Background="#3B82F6" Foreground="White" FontWeight="Bold" Click="LoginButton_Click" />
+                <Button Height="44" Content="ورود" Background="#3B82F6" Foreground="White"
+                        FontWeight="Bold" FontSize="16" BorderThickness="0" CornerRadius="6"
+                        Cursor="Hand" Click="LoginButton_Click" />
 
-                <TextBlock x:Name="ErrorTextBlock" Foreground="#DC2626" FontSize="12" Margin="0,10,0,0" TextWrapping="Wrap" />
+                <TextBlock x:Name="ErrorTextBlock" Foreground="#DC2626" FontSize="13"
+                           Margin="0,14,0,0" TextWrapping="Wrap" />
             </StackPanel>
         </Border>
     </Grid>
