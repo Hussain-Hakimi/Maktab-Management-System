@@ -38,6 +38,10 @@ public partial class App : System.Windows.Application
 					services.AddSingleton<LibraryView>();
 					services.AddSingleton<TextbookView>();
 					services.AddSingleton<FeesView>();
+					services.AddSingleton<DashboardView>();
+                    services.AddSingleton<UserManagementView>();
+                    services.AddSingleton<PromotionSettingsView>();
+                    services.AddSingleton<BulkImportView>();
 					services.AddSingleton<MainWindow>();
 				})
 				.Build();
