@@ -1,38 +1,74 @@
 using System.Globalization;
 using System.Windows;
-using Maktab.Application.Services;
+using System.Windows.Controls;
+using Maktab.App.Wpf.Services;
 using Maktab.App.Wpf.Views;
+using Maktab.Application.Services;
 
 namespace Maktab.App.Wpf;
 
 public partial class MainWindow : Window
 {
-public MainWindow(
-    ClassSubjectView classSubjectView,
-    StudentManagementView studentManagementView,
-    MarksEntryView marksEntryView,
-    AttendanceView attendanceView,
-    LibraryView libraryView,
-    TextbookView textbookView,
-    FeesView feesView,
-    ReportCardsView reportCardsView,
-    BackupSettingsView backupSettingsView)
-{
-    InitializeComponent();
+    private readonly NavigationService _navigationService;
 
-    // Embed each view into its corresponding tab's ContentControl
-    ClassSubjectContent.Content = classSubjectView;
-    StudentManagementContent.Content = studentManagementView;
-    MarksEntryContent.Content = marksEntryView;
-    AttendanceContent.Content = attendanceView;
-    LibraryContent.Content = libraryView;
-    TextbookContent.Content = textbookView;
-    FeesContent.Content = feesView;
-    ReportCardsContent.Content = reportCardsView;
-    BackupSettingsContent.Content = backupSettingsView;
+    // Existing view instances
+    private readonly ClassSubjectView _classSubjectView;
+    private readonly StudentManagementView _studentManagementView;
+    private readonly MarksEntryView _marksEntryView;
+    private readonly AttendanceView _attendanceView;
+    private readonly LibraryView _libraryView;
+    private readonly TextbookView _textbookView;
+    private readonly FeesView _feesView;
+    private readonly ReportCardsView _reportCardsView;
+    private readonly BackupSettingsView _backupSettingsView;
 
-    Loaded += MainWindow_Loaded;
-}
+    // New placeholder view instances
+    private readonly DashboardView _dashboardView;
+    private readonly UserManagementView _userManagementView;
+    private readonly PromotionSettingsView _promotionSettingsView;
+    private readonly BulkImportView _bulkImportView;
+
+    public MainWindow(
+        ClassSubjectView classSubjectView,
+        StudentManagementView studentManagementView,
+        MarksEntryView marksEntryView,
+        AttendanceView attendanceView,
+        LibraryView libraryView,
+        TextbookView textbookView,
+        FeesView feesView,
+        ReportCardsView reportCardsView,
+        BackupSettingsView backupSettingsView,
+        DashboardView dashboardView,
+        UserManagementView userManagementView,
+        PromotionSettingsView promotionSettingsView,
+        BulkImportView bulkImportView)
+    {
+        InitializeComponent();
+
+        // Store instances
+        _classSubjectView = classSubjectView;
+        _studentManagementView = studentManagementView;
+        _marksEntryView = marksEntryView;
+        _attendanceView = attendanceView;
+        _libraryView = libraryView;
+        _textbookView = textbookView;
+        _feesView = feesView;
+        _reportCardsView = reportCardsView;
+        _backupSettingsView = backupSettingsView;
+
+        _dashboardView = dashboardView;
+        _userManagementView = userManagementView;
+        _promotionSettingsView = promotionSettingsView;
+        _bulkImportView = bulkImportView;
+
+        // Initialize navigation service
+        _navigationService = new NavigationService(MainContentArea);
+
+        // Set default selection to first item (Dashboard)
+        SidebarListBox.SelectedIndex = 0;
+
+        Loaded += MainWindow_Loaded;
+    }
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
@@ -54,5 +90,53 @@ public MainWindow(
         }
 
         StatusBarText.Text = "✅ سیستم آماده استفاده است.";
+    }
+
+    private void SidebarListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (SidebarListBox.SelectedIndex < 0) return;
+
+        switch (SidebarListBox.SelectedIndex)
+        {
+            case 0:
+                _navigationService.Navigate(_dashboardView);
+                break;
+            case 1:
+                _navigationService.Navigate(_studentManagementView);
+                break;
+            case 2:
+                _navigationService.Navigate(_classSubjectView);
+                break;
+            case 3:
+                _navigationService.Navigate(_marksEntryView);
+                break;
+            case 4:
+                _navigationService.Navigate(_attendanceView);
+                break;
+            case 5:
+                _navigationService.Navigate(_libraryView);
+                break;
+            case 6:
+                _navigationService.Navigate(_textbookView);
+                break;
+            case 7:
+                _navigationService.Navigate(_feesView);
+                break;
+            case 8:
+                _navigationService.Navigate(_reportCardsView);
+                break;
+            case 9:
+                _navigationService.Navigate(_backupSettingsView);
+                break;
+            case 10:
+                _navigationService.Navigate(_userManagementView);
+                break;
+            case 11:
+                _navigationService.Navigate(_promotionSettingsView);
+                break;
+            case 12:
+                _navigationService.Navigate(_bulkImportView);
+                break;
+        }
     }
 }
