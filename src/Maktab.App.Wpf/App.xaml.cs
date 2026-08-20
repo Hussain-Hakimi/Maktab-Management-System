@@ -65,10 +65,23 @@ public partial class App : System.Windows.Application
                 return;
             }
 
-            // Resolve MainWindow and set current user
-            var mainWindow = _host.Services.GetRequiredService<MainWindow>();
-            mainWindow.SetCurrentUser(loginWindow.AuthenticatedUser);
-            mainWindow.Show();
+            try
+            {
+                var mainWindow = _host.Services.GetRequiredService<MainWindow>();
+                mainWindow.SetCurrentUser(loginWindow.AuthenticatedUser);
+                mainWindow.Show();
+            }
+            catch (Exception ex)
+            {
+                LogException("Failed to show main window", ex);
+                MessageBox.Show(
+                    $"باز کردن پنجره اصلی با خطا مواجه شد:\n{ex.Message}",
+                    "خطا",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                Shutdown(1);
+                return;
+            }
         }
         catch (Exception ex)
         {
