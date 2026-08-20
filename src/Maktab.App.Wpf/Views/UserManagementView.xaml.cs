@@ -9,11 +9,19 @@ namespace Maktab.App.Wpf.Views;
 public partial class UserManagementView : UserControl
 {
     private readonly IUserService _userService;
+    private readonly IAuditService _auditService;
+    private readonly ICurrentUserService _currentUserService;
     private readonly ObservableCollection<UserDto> _users = [];
 
-    public UserManagementView(IUserService userService)
+    public UserManagementView(
+        IUserService userService,
+        IAuditService auditService,
+        ICurrentUserService currentUserService)
     {
         _userService = userService;
+        _auditService = auditService;
+        _currentUserService = currentUserService;
+
         InitializeComponent();
 
         RoleComboBox.ItemsSource = Enum.GetValues<UserRole>();
@@ -48,6 +56,7 @@ public partial class UserManagementView : UserControl
         try
         {
             await _userService.CreateUserAsync(userDto);
+            await LogAuditAsync($"افزودن کاربر '{userDto.Username}'");
             await LoadUsersAsync();
             ClearForm();
             MessageBox.Show("کاربر جدید با موفقیت اضافه شد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -71,6 +80,7 @@ public partial class UserManagementView : UserControl
         try
         {
             await _userService.UpdateUserAsync(selected.UserId, userDto);
+            await LogAuditAsync($"ویرایش کاربر '{userDto.Username}'");
             await LoadUsersAsync();
             ClearForm();
             MessageBox.Show("اطلاعات کاربر ویرایش شد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -95,6 +105,7 @@ public partial class UserManagementView : UserControl
         try
         {
             await _userService.DeleteUserAsync(selected.UserId);
+            await LogAuditAsync($"حذف کاربر '{selected.Username}'");
             await LoadUsersAsync();
             ClearForm();
             MessageBox.Show("کاربر حذف شد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -172,5 +183,18 @@ public partial class UserManagementView : UserControl
             IsActive: IsActiveCheckBox.IsChecked ?? true);
 
         return true;
+    }
+
+    private async Task LogAuditAsync(string action)
+    {
+        try
+        {
+            var userName = _currentUserService.CurrentUser?.Username ?? "Unknown";
+            await _auditService.LogAsync(userName, action);
+        }
+        catch
+        {
+            // Audit logging should not break user management
+        }
     }
 }
