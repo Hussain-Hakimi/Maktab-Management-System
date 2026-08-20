@@ -30,6 +30,7 @@ public partial class MainWindow : Window
     private readonly UserManagementView _userManagementView;
     private readonly PromotionSettingsView _promotionSettingsView;
     private readonly BulkImportView _bulkImportView;
+    private readonly AuditLogView _auditLogView;
 
     // Allowed roles per sidebar item index (matching order in XAML)
     private static readonly UserRole[][] SidebarItemRoles =
@@ -46,7 +47,8 @@ public partial class MainWindow : Window
         [UserRole.Admin],                                                             // Backup/Restore
         [UserRole.Admin],                                                             // User Management
         [UserRole.Admin],                                                             // Promotion Settings
-        [UserRole.Admin]                                                              // Bulk Import
+        [UserRole.Admin],                                                             // Bulk Import
+        [UserRole.Admin]                                                              // Audit Logs
     ];
 
     public MainWindow(
@@ -62,7 +64,8 @@ public partial class MainWindow : Window
         DashboardView dashboardView,
         UserManagementView userManagementView,
         PromotionSettingsView promotionSettingsView,
-        BulkImportView bulkImportView)
+        BulkImportView bulkImportView,
+        AuditLogView auditLogView)
     {
         InitializeComponent();
 
@@ -80,36 +83,50 @@ public partial class MainWindow : Window
         _userManagementView = userManagementView;
         _promotionSettingsView = promotionSettingsView;
         _bulkImportView = bulkImportView;
+        _auditLogView = auditLogView;
 
         _navigationService = new NavigationService(MainContentArea);
 
-        // Set default selection to Dashboard
         SidebarListBox.SelectedIndex = 0;
-
         Loaded += MainWindow_Loaded;
     }
 
     public void SetCurrentUser(UserDto user)
     {
         _currentUser = user;
-        ApplyRoleBasedSidebarVisibility();
+        try
+        {
+            ApplyRoleBasedSidebarVisibility();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error setting current user: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void ApplyRoleBasedSidebarVisibility()
     {
         if (_currentUser is null) return;
 
-        for (int i = 0; i < SidebarListBox.Items.Count; i++)
+        try
         {
-            var item = (ListBoxItem)SidebarListBox.Items[i];
-            var allowedRoles = SidebarItemRoles[i];
-            item.Visibility = allowedRoles.Contains(_currentUser.Role) ? Visibility.Visible : Visibility.Collapsed;
-        }
+            for (int i = 0; i < SidebarListBox.Items.Count; i++)
+            {
+                if (SidebarListBox.Items[i] is not ListBoxItem item)
+                    continue;
 
-        // Ensure selected item is visible, otherwise select Dashboard
-        if (SidebarListBox.SelectedItem is ListBoxItem selectedItem && selectedItem.Visibility != Visibility.Visible)
+                var allowedRoles = SidebarItemRoles[i];
+                item.Visibility = allowedRoles.Contains(_currentUser.Role) ? Visibility.Visible : Visibility.Collapsed;
+            }
+
+            if (SidebarListBox.SelectedItem is ListBoxItem selectedItem && selectedItem.Visibility != Visibility.Visible)
+            {
+                SidebarListBox.SelectedIndex = 0;
+            }
+        }
+        catch (Exception ex)
         {
-            SidebarListBox.SelectedIndex = 0;
+            MessageBox.Show($"Error applying role-based sidebar: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -153,6 +170,7 @@ public partial class MainWindow : Window
             case 10: _navigationService.Navigate(_userManagementView); break;
             case 11: _navigationService.Navigate(_promotionSettingsView); break;
             case 12: _navigationService.Navigate(_bulkImportView); break;
+            case 13: _navigationService.Navigate(_auditLogView); break;
         }
     }
 }
