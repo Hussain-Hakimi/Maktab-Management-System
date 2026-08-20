@@ -31,7 +31,7 @@
                              FontSize="14" Padding="10,8" VerticalContentAlignment="Center" />
 
                 <Button Height="44" Content="ورود" Background="#3B82F6" Foreground="White"
-                        FontWeight="Bold" FontSize="16" BorderThickness="0" CornerRadius="6"
+                        FontWeight="Bold" FontSize="16" BorderThickness="0"
                         Cursor="Hand" Click="LoginButton_Click" />
 
                 <TextBlock x:Name="ErrorTextBlock" Foreground="#DC2626" FontSize="13"

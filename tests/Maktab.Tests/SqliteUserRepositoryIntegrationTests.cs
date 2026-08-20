@@ -62,7 +62,7 @@ public class SqliteUserRepositoryIntegrationTests : IDisposable
     {
         await _userRepository.CreateAsync(new User
         {
-            Username = "admin",
+            Username = "nonexistentuser",
             PasswordHash = "hash",
             FullName = "Admin",
             Role = UserRole.Admin,
@@ -73,7 +73,7 @@ public class SqliteUserRepositoryIntegrationTests : IDisposable
         {
             await _userRepository.CreateAsync(new User
             {
-                Username = "admin",
+                Username = "nonexistentuser",
                 PasswordHash = "another",
                 FullName = "Admin 2",
                 Role = UserRole.Admin,

@@ -16,6 +16,7 @@ public partial class App : System.Windows.Application
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
         RegisterGlobalExceptionHandlers();
 
@@ -70,6 +71,7 @@ public partial class App : System.Windows.Application
                 var mainWindow = _host.Services.GetRequiredService<MainWindow>();
                 mainWindow.SetCurrentUser(loginWindow.AuthenticatedUser);
                 mainWindow.Show();
+                ShutdownMode = ShutdownMode.OnLastWindowClose;
             }
             catch (Exception ex)
             {
