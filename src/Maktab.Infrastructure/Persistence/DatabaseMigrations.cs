@@ -18,8 +18,13 @@ CREATE TABLE IF NOT EXISTS tbl_Users (
     FullName TEXT NOT NULL,
     Role TEXT NOT NULL CHECK (Role IN ('Admin', 'Teacher', 'Librarian', 'Accountant')),
     IsActive INTEGER NOT NULL CHECK (IsActive IN (0, 1))
-);
-")
+);"),
+            new(3, @"
+CREATE TABLE IF NOT EXISTS tbl_Settings (
+    SettingID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Key TEXT NOT NULL UNIQUE,
+    Value TEXT NOT NULL
+);")
         };
     }
 }
