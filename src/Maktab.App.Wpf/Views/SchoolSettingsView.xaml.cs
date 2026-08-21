@@ -109,7 +109,6 @@ public partial class SchoolSettingsView : UserControl
             var fileName = $"school_logo_{DateTime.Now:yyyyMMddHHmmss}{extension}";
             var destPath = Path.Combine(logosDir, fileName);
 
-            // Copy only if source is not already inside Logos folder
             if (!string.Equals(Path.GetFullPath(sourcePath), Path.GetFullPath(destPath), StringComparison.OrdinalIgnoreCase))
             {
                 File.Copy(sourcePath, destPath, overwrite: true);
