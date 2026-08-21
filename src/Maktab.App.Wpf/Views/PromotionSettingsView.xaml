@@ -4,12 +4,49 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
-             d:DesignHeight="400" d:DesignWidth="800"
+             d:DesignHeight="600" d:DesignWidth="900"
              FlowDirection="RightToLeft">
-    <Grid>
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-            <TextBlock Text="⚙️ تنظیمات ارتقاء" FontSize="28" FontWeight="Bold" Foreground="#334155" />
-            <TextBlock Text="Coming Soon" FontSize="16" Foreground="#64748B" Margin="0,8,0,0" />
-        </StackPanel>
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#334155" Padding="14" CornerRadius="6" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="⚙️ تنظیمات ارتقاء و قوانین" FontSize="20" FontWeight="Bold" Foreground="White" />
+                <TextBlock Text=" (Promotion Policy Settings)" FontSize="13" Foreground="#CBD5E1" VerticalAlignment="Center" Margin="10,2,0,0" />
+            </StackPanel>
+        </Border>
+
+        <!-- Settings Form -->
+        <Border Grid.Row="1" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="20">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="قوانین ارتقاء" FontSize="18" FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,20" />
+
+                    <!-- Passing Average -->
+                    <TextBlock Text="اوسط فیصدی برای ارتقاء (Passing Average)" FontWeight="SemiBold" Margin="0,0,0,6" Foreground="#334155" />
+                    <TextBox x:Name="PassingAverageTextBox" Height="36" Margin="0,0,0,16" FontSize="14" Padding="8,6" VerticalContentAlignment="Center" />
+
+                    <!-- Passing Mark -->
+                    <TextBlock Text="نمره قبولی هر مضمون (Passing Mark)" FontWeight="SemiBold" Margin="0,0,0,6" Foreground="#334155" />
+                    <TextBox x:Name="PassingMarkTextBox" Height="36" Margin="0,0,0,16" FontSize="14" Padding="8,6" VerticalContentAlignment="Center" />
+
+                    <!-- Max Failed Subjects -->
+                    <TextBlock Text="حداکثر مضامین ناکام مجاز (Max Failed Subjects)" FontWeight="SemiBold" Margin="0,0,0,6" Foreground="#334155" />
+                    <TextBox x:Name="MaxFailedSubjectsTextBox" Height="36" Margin="0,0,0,16" FontSize="14" Padding="8,6" VerticalContentAlignment="Center" />
+
+                    <!-- Max Absence Days -->
+                    <TextBlock Text="حداکثر ایام غیرحاضری (Max Absence Days)" FontWeight="SemiBold" Margin="0,0,0,6" Foreground="#334155" />
+                    <TextBox x:Name="MaxAbsenceDaysTextBox" Height="36" Margin="0,0,0,24" FontSize="14" Padding="8,6" VerticalContentAlignment="Center" />
+
+                    <!-- Save Button -->
+                    <Button Height="40" Content="💾 ذخیره تنظیمات" Background="#16A34A" Foreground="White" FontWeight="Bold" FontSize="15"
+                            CornerRadius="6" BorderThickness="0" Cursor="Hand" Click="SaveButton_Click" HorizontalAlignment="Left" Padding="20,0" />
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
     </Grid>
 </UserControl>
