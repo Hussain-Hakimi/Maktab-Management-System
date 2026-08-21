@@ -1,3 +1,4 @@
+using System.Text;
 using Maktab.Application.Abstractions;
 
 namespace Maktab.Application.Services;
@@ -15,11 +16,9 @@ public sealed class BulkImportService(
         if (lines.Length == 0)
             return new BulkImportResultDto();
 
-        // Assume first line is header
-        var header = lines[0];
         var dataLines = lines.Skip(1).ToList();
-
         var result = new BulkImportResultDto { TotalRows = dataLines.Count };
+
         var classes = await classSubjectService.GetClassesAsync(cancellationToken);
         var classDict = classes.ToDictionary(c => c.GradeName.Trim(), c => c.ClassId, StringComparer.OrdinalIgnoreCase);
 
@@ -46,7 +45,6 @@ public sealed class BulkImportService(
                 ClassName = columns[4].Trim()
             };
 
-            // Validate
             if (string.IsNullOrWhiteSpace(row.FirstName) ||
                 string.IsNullOrWhiteSpace(row.LastName) ||
                 string.IsNullOrWhiteSpace(row.FatherName) ||
@@ -85,9 +83,8 @@ public sealed class BulkImportService(
 
     private static string[] SplitCsvLine(string line)
     {
-        // Simple CSV splitter that respects double quotes
         var result = new List<string>();
-        var current = new System.Text.StringBuilder();
+        var current = new StringBuilder();
         bool inQuotes = false;
 
         for (int i = 0; i < line.Length; i++)
