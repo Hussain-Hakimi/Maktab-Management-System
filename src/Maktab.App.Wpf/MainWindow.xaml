@@ -100,6 +100,7 @@
                     <ListBoxItem Content="💾 پشتیبان‌گیری و تنظیمات" />
                     <ListBoxItem Content="👥 مدیریت کاربران (Admin)" />
                     <ListBoxItem Content="⚙️ تنظیمات ارتقاء (Admin)" />
+                    <ListBoxItem Content="🏫 تنظیمات عمومی (Admin)" />
                     <ListBoxItem Content="📥 ورود اطلاعات دسته‌جمعی (Admin)" />
                     <ListBoxItem Content="📋 گزارش وقایع (Admin)" />
                 </ListBox>
@@ -117,7 +118,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <TextBlock x:Name="StatusBarText" Text="آماده" FontSize="12" Foreground="#94A3B8" VerticalAlignment="Center" />
-                <TextBlock Grid.Column="1" Text="نسخه ۱.۱.۰ — ساخته‌شده با ❤️ برای مکاتب افغانستان" FontSize="11" Foreground="#64748B" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="ساخته شده توسط حسین❤️حکیمی برای مکاتب افغانستان نسخه ۱.۲" FontSize="11" Foreground="#64748B" VerticalAlignment="Center" />
             </Grid>
         </Border>
     </Grid>
