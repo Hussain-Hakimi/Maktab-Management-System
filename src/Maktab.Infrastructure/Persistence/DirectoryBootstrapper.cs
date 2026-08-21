@@ -9,5 +9,6 @@ public static class DirectoryBootstrapper
         Directory.CreateDirectory(folders.Logs);
         Directory.CreateDirectory(folders.Backups);
         Directory.CreateDirectory(folders.Reports);
+        Directory.CreateDirectory(folders.Logos);
     }
 }
