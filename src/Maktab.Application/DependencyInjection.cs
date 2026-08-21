@@ -19,6 +19,7 @@ public static class DependencyInjection
         services.AddSingleton<IUserService, UserService>();
         services.AddSingleton<IAuditService, AuditService>();
         services.AddSingleton<ICurrentUserService, CurrentUserService>();
+        services.AddSingleton<ISettingService, SettingService>();
         return services;
     }
 }
