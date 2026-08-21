@@ -21,6 +21,7 @@ PRAGMA synchronous = NORMAL;
         await RunMigrationsAsync(connection, cancellationToken);
         await SeedDefaultAdminAsync(connection, cancellationToken);
         await SeedDefaultSettingsAsync(connection, cancellationToken);
+        await SeedDefaultSchoolSettingsAsync(connection, cancellationToken);
         await LoadPromotionSettingsIntoPolicyAsync(connection, cancellationToken);
     }
 
@@ -74,21 +75,41 @@ VALUES ($username, $passwordHash, $fullName, 'Admin', 1);";
         SqliteConnection connection,
         CancellationToken cancellationToken)
     {
-        // Insert default promotion settings if not present
-        const string upsertSql = @"
-INSERT INTO tbl_Settings (Key, Value)
-VALUES ($key, $value)
-ON CONFLICT(Key) DO NOTHING;";
+        await ExecuteUpsertIfNotExistsAsync(connection, "Promotion.PassingAverage", "65", cancellationToken);
+        await ExecuteUpsertIfNotExistsAsync(connection, "Promotion.PassingMark", "40", cancellationToken);
+        await ExecuteUpsertIfNotExistsAsync(connection, "Promotion.MaxFailedSubjects", "3", cancellationToken);
+        await ExecuteUpsertIfNotExistsAsync(connection, "Promotion.MaxAbsenceDays", "30", cancellationToken);
+    }
 
+    private static async Task SeedDefaultSchoolSettingsAsync(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
+    {
+        await ExecuteUpsertIfNotExistsAsync(connection, "School.Name", "مکتب نمونه", cancellationToken);
+        await ExecuteUpsertIfNotExistsAsync(connection, "School.Address", "", cancellationToken);
+        await ExecuteUpsertIfNotExistsAsync(connection, "School.Phone", "", cancellationToken);
+        await ExecuteUpsertIfNotExistsAsync(connection, "School.AcademicYear", AcademicYearProvider.GetCurrentAcademicYear(), cancellationToken);
+        await ExecuteUpsertIfNotExistsAsync(connection, "School.LogoPath", "", cancellationToken);
+    }
+
+    private static async Task ExecuteUpsertIfNotExistsAsync(
+        SqliteConnection connection,
+        string key,
+        string value,
+        CancellationToken cancellationToken)
+    {
         await using var checkCmd = connection.CreateCommand();
-        checkCmd.CommandText = "SELECT COUNT(1) FROM tbl_Settings WHERE Key = 'Promotion.PassingAverage';";
-        var existing = Convert.ToInt32(await checkCmd.ExecuteScalarAsync(cancellationToken));
-        if (existing == 0)
+        checkCmd.CommandText = "SELECT COUNT(1) FROM tbl_Settings WHERE Key = $key;";
+        checkCmd.Parameters.AddWithValue("$key", key);
+        var exists = Convert.ToInt32(await checkCmd.ExecuteScalarAsync(cancellationToken)) > 0;
+        if (!exists)
         {
-            await ExecuteUpsertAsync(connection, "Promotion.PassingAverage", "65", cancellationToken);
-            await ExecuteUpsertAsync(connection, "Promotion.PassingMark", "40", cancellationToken);
-            await ExecuteUpsertAsync(connection, "Promotion.MaxFailedSubjects", "3", cancellationToken);
-            await ExecuteUpsertAsync(connection, "Promotion.MaxAbsenceDays", "30", cancellationToken);
+            const string insertSql = "INSERT INTO tbl_Settings (Key, Value) VALUES ($key, $value);";
+            await using var insertCmd = connection.CreateCommand();
+            insertCmd.CommandText = insertSql;
+            insertCmd.Parameters.AddWithValue("$key", key);
+            insertCmd.Parameters.AddWithValue("$value", value);
+            await insertCmd.ExecuteNonQueryAsync(cancellationToken);
         }
     }
 
@@ -114,33 +135,13 @@ ON CONFLICT(Key) DO NOTHING;";
         PromotionPolicy.SetValues(passingAverage, passingMark, maxFailed, maxAbsence);
     }
 
-    private static async Task ExecuteUpsertAsync(
-        SqliteConnection connection,
-        string key,
-        string value,
-        CancellationToken cancellationToken)
-    {
-        const string sql = "INSERT INTO tbl_Settings (Key, Value) VALUES ($key, $value) ON CONFLICT(Key) DO NOTHING;";
-        await using var command = connection.CreateCommand();
-        command.CommandText = sql;
-        command.Parameters.AddWithValue("$key", key);
-        command.Parameters.AddWithValue("$value", value);
-        await command.ExecuteNonQueryAsync(cancellationToken);
-    }
-
     private static decimal GetDecimal(Dictionary<string, string> dict, string key, decimal defaultValue)
-    {
-        return dict.TryGetValue(key, out var value) && decimal.TryParse(value, out var result) ? result : defaultValue;
-    }
+        => dict.TryGetValue(key, out var value) && decimal.TryParse(value, out var result) ? result : defaultValue;
 
     private static int GetInt(Dictionary<string, string> dict, string key, int defaultValue)
-    {
-        return dict.TryGetValue(key, out var value) && int.TryParse(value, out var result) ? result : defaultValue;
-    }
+        => dict.TryGetValue(key, out var value) && int.TryParse(value, out var result) ? result : defaultValue;
 
-    private static async Task<int> GetUserVersionAsync(
-        SqliteConnection connection,
-        CancellationToken cancellationToken)
+    private static async Task<int> GetUserVersionAsync(SqliteConnection connection, CancellationToken cancellationToken)
     {
         await using var command = connection.CreateCommand();
         command.CommandText = "PRAGMA user_version;";
@@ -148,20 +149,14 @@ ON CONFLICT(Key) DO NOTHING;";
         return Convert.ToInt32(result);
     }
 
-    private static async Task SetUserVersionAsync(
-        SqliteConnection connection,
-        int version,
-        CancellationToken cancellationToken)
+    private static async Task SetUserVersionAsync(SqliteConnection connection, int version, CancellationToken cancellationToken)
     {
         await using var command = connection.CreateCommand();
         command.CommandText = $"PRAGMA user_version = {version};";
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    private static async Task ExecuteNonQueryAsync(
-        SqliteConnection connection,
-        string sql,
-        CancellationToken cancellationToken)
+    private static async Task ExecuteNonQueryAsync(SqliteConnection connection, string sql, CancellationToken cancellationToken)
     {
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
