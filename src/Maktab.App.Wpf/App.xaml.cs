@@ -17,6 +17,9 @@ public partial class App : System.Windows.Application
     {
         base.OnStartup(e);
 
+        // Prevent automatic shutdown when login window closes.
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
         RegisterGlobalExceptionHandlers();
 
         try
@@ -67,15 +70,22 @@ public partial class App : System.Windows.Application
             }
 
             // Log successful login to audit
-            var currentUserService = _host.Services.GetRequiredService<ICurrentUserService>();
-            currentUserService.CurrentUser = loginWindow.AuthenticatedUser;
             var auditService = _host.Services.GetRequiredService<IAuditService>();
             await auditService.LogAsync(loginWindow.AuthenticatedUser.Username, "ورود به سیستم");
+
+            // Set current user in ICurrentUserService
+            var currentUserService = _host.Services.GetRequiredService<ICurrentUserService>();
+            currentUserService.CurrentUser = loginWindow.AuthenticatedUser;
 
             try
             {
                 var mainWindow = _host.Services.GetRequiredService<MainWindow>();
                 mainWindow.SetCurrentUser(loginWindow.AuthenticatedUser);
+
+                // Assign as main window and change shutdown mode
+                MainWindow = mainWindow;
+                ShutdownMode = ShutdownMode.OnMainWindowClose;
+
                 mainWindow.Show();
             }
             catch (Exception ex)
@@ -102,7 +112,7 @@ public partial class App : System.Windows.Application
             return;
         }
 
-        // Auto-backup on startup
+        // Auto-backup on startup (fire-and-forget with logging)
         _ = Task.Run(async () =>
         {
             try
