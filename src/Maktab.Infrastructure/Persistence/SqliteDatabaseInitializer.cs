@@ -1,4 +1,5 @@
 using Microsoft.Data.Sqlite;
+using Maktab.Application.Services;
 
 namespace Maktab.Infrastructure.Persistence;
 
@@ -9,7 +10,6 @@ public sealed class SqliteDatabaseInitializer(IConnectionStringProvider connecti
         await using var connection = new SqliteConnection(connectionStringProvider.GetConnectionString());
         await connection.OpenAsync(cancellationToken);
 
-        // Pragmas must be set on every connection; initializer runs once at startup.
         var pragmas = @"
 PRAGMA foreign_keys = ON;
 PRAGMA journal_mode = WAL;
@@ -17,18 +17,16 @@ PRAGMA synchronous = NORMAL;
 ";
         await ExecuteNonQueryAsync(connection, pragmas, cancellationToken);
 
-        // Run database migrations
         await RunMigrationsAsync(connection, cancellationToken);
+        await SeedDefaultAdminAsync(connection, cancellationToken);
     }
 
     private static async Task RunMigrationsAsync(
         SqliteConnection connection,
         CancellationToken cancellationToken)
     {
-        // 1. Get current user_version
         int currentVersion = await GetUserVersionAsync(connection, cancellationToken);
 
-        // 2. If database is new (version 0), apply baseline schema and set version 1
         if (currentVersion == 0)
         {
             await ExecuteNonQueryAsync(connection, DatabaseMigrations.BaselineSql, cancellationToken);
@@ -36,7 +34,6 @@ PRAGMA synchronous = NORMAL;
             currentVersion = 1;
         }
 
-        // 3. Apply any pending migrations beyond the baseline
         var migrations = DatabaseMigrations.GetMigrations()
             .Where(m => m.Version > currentVersion)
             .OrderBy(m => m.Version);
@@ -46,6 +43,31 @@ PRAGMA synchronous = NORMAL;
             await ExecuteNonQueryAsync(connection, migration.Sql, cancellationToken);
             await SetUserVersionAsync(connection, migration.Version, cancellationToken);
         }
+    }
+
+    private static async Task SeedDefaultAdminAsync(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
+    {
+        // Check if any user exists
+        await using (var checkCmd = connection.CreateCommand())
+        {
+            checkCmd.CommandText = "SELECT COUNT(1) FROM tbl_Users;";
+            var count = Convert.ToInt32(await checkCmd.ExecuteScalarAsync(cancellationToken));
+            if (count > 0)
+                return;
+        }
+
+        const string insertSql = @"
+INSERT INTO tbl_Users (Username, PasswordHash, FullName, Role, IsActive)
+VALUES ($username, $passwordHash, $fullName, 'Admin', 1);";
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = insertSql;
+        command.Parameters.AddWithValue("$username", "admin");
+        command.Parameters.AddWithValue("$passwordHash", PasswordHasher.HashPassword("admin123"));
+        command.Parameters.AddWithValue("$fullName", "مدیر سیستم");
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private static async Task<int> GetUserVersionAsync(
