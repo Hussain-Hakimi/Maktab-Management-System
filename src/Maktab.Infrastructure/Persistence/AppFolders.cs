@@ -5,7 +5,8 @@ public sealed record AppFolders(
     string Data,
     string Logs,
     string Backups,
-    string Reports)
+    string Reports,
+    string Logos)
 {
     public static AppFolders CreateDefault()
     {
@@ -16,6 +17,7 @@ public sealed record AppFolders(
             Data: Path.Combine(root, "Data"),
             Logs: Path.Combine(root, "Logs"),
             Backups: Path.Combine(root, "Backups"),
-            Reports: Path.Combine(root, "Reports"));
+            Reports: Path.Combine(root, "Reports"),
+            Logos: Path.Combine(root, "Logos"));
     }
 }
