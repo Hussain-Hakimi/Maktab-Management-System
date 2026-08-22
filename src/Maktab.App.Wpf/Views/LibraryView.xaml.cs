@@ -4,7 +4,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using Maktab.Application.Abstractions;
-using Maktab.Domain.Entities;
 using Maktab.Domain.Enums;
 
 namespace Maktab.App.Wpf.Views;
@@ -14,6 +13,8 @@ public partial class LibraryView : UserControl
     private readonly IBookService _bookService;
     private readonly IClassSubjectService _classSubjectService;
     private readonly IStudentService _studentService;
+    private readonly IAuditService _auditService;
+    private readonly ICurrentUserService _currentUserService;
 
     private readonly ObservableCollection<BookDto> _books = [];
     private readonly ObservableCollection<BookIssueDto> _issues = [];
@@ -23,11 +24,15 @@ public partial class LibraryView : UserControl
     public LibraryView(
         IBookService bookService,
         IClassSubjectService classSubjectService,
-        IStudentService studentService)
+        IStudentService studentService,
+        IAuditService auditService,
+        ICurrentUserService currentUserService)
     {
         _bookService = bookService;
         _classSubjectService = classSubjectService;
         _studentService = studentService;
+        _auditService = auditService;
+        _currentUserService = currentUserService;
 
         InitializeComponent();
 
@@ -142,6 +147,7 @@ public partial class LibraryView : UserControl
         try
         {
             await _bookService.AddBookAsync(bookDto);
+            await LogAuditAsync($"افزودن کتاب '{bookDto.Title}'");
             await LoadBooksAsync();
             ClearBookForm();
             MessageBox.Show("کتاب با موفقیت اضافه شد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -166,6 +172,7 @@ public partial class LibraryView : UserControl
         try
         {
             await _bookService.UpdateBookAsync(selected.BookId, bookDto);
+            await LogAuditAsync($"ویرایش کتاب '{bookDto.Title}'");
             await LoadBooksAsync();
             ClearBookForm();
             MessageBox.Show("کتاب ویرایش شد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -191,6 +198,7 @@ public partial class LibraryView : UserControl
         try
         {
             await _bookService.DeleteBookAsync(selected.BookId);
+            await LogAuditAsync($"حذف کتاب '{selected.Title}'");
             await LoadBooksAsync();
             ClearBookForm();
             MessageBox.Show("کتاب حذف شد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -229,6 +237,7 @@ public partial class LibraryView : UserControl
         try
         {
             await _bookService.IssueBookAsync(new IssueBookDto(bookId, studentId, dueDate));
+            await LogAuditAsync($"امانت کتاب با آیدی {bookId} به شاگرد آیدی {studentId}");
             await LoadBooksAsync();
             await LoadIssuesAsync();
             MessageBox.Show("کتاب با موفقیت امانت داده شد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -246,6 +255,7 @@ public partial class LibraryView : UserControl
             try
             {
                 await _bookService.ReturnBookAsync(new ReturnBookDto(issueId));
+                await LogAuditAsync($"بازگشت کتاب با شماره امانت {issueId}");
                 await LoadBooksAsync();
                 await LoadIssuesAsync();
                 MessageBox.Show("کتاب با موفقیت بازگشت داده شد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -302,6 +312,19 @@ public partial class LibraryView : UserControl
             TotalCopies: totalCopies);
 
         return true;
+    }
+
+    private async Task LogAuditAsync(string action)
+    {
+        try
+        {
+            var userName = _currentUserService.CurrentUser?.Username ?? "Unknown";
+            await _auditService.LogAsync(userName, action);
+        }
+        catch
+        {
+            // Audit logging should not break library operations
+        }
     }
 }
 
