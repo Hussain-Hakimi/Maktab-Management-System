@@ -23,15 +23,23 @@ public partial class StudentManagementView : UserControl
 {
     private readonly IStudentService _studentService;
     private readonly IClassSubjectService _classSubjectService;
+    private readonly IAuditService _auditService;
+    private readonly ICurrentUserService _currentUserService;
 
     private readonly ObservableCollection<StudentDisplayItem> _displayedStudents = [];
     private List<StudentDisplayItem> _allStudents = [];
     private readonly List<SchoolClass> _classes = [];
 
-    public StudentManagementView(IStudentService studentService, IClassSubjectService classSubjectService)
+    public StudentManagementView(
+        IStudentService studentService,
+        IClassSubjectService classSubjectService,
+        IAuditService auditService,
+        ICurrentUserService currentUserService)
     {
         _studentService = studentService;
         _classSubjectService = classSubjectService;
+        _auditService = auditService;
+        _currentUserService = currentUserService;
 
         InitializeComponent();
 
@@ -147,6 +155,7 @@ public partial class StudentManagementView : UserControl
         try
         {
             await _studentService.RegisterStudentAsync(firstName, lastName, fatherName, classId, rollNumber);
+            await LogAuditAsync($"ثبت شاگرد '{firstName} {lastName}'");
             FormStatusTextBlock.Text = $"✅ شاگرد «{firstName} {lastName}» با موفقیت ثبت شد.";
             ClearInputs();
             await RefreshStudentsListAsync();
@@ -174,6 +183,7 @@ public partial class StudentManagementView : UserControl
         try
         {
             await _studentService.UpdateStudentAsync(selected.StudentId, firstName, lastName, fatherName, classId, rollNumber);
+            await LogAuditAsync($"ویرایش شاگرد '{firstName} {lastName}'");
             FormStatusTextBlock.Text = $"✅ اطلاعات شاگرد «{firstName} {lastName}» ویرایش گردید.";
             ClearInputs();
             await RefreshStudentsListAsync();
@@ -207,6 +217,7 @@ public partial class StudentManagementView : UserControl
         try
         {
             await _studentService.RemoveStudentAsync(selected.StudentId);
+            await LogAuditAsync($"حذف شاگرد '{selected.FirstName} {selected.LastName}'");
             FormStatusTextBlock.Text = $"✅ شاگرد «{selected.FirstName} {selected.LastName}» حذف گردید.";
             ClearInputs();
             await RefreshStudentsListAsync();
@@ -307,5 +318,18 @@ public partial class StudentManagementView : UserControl
         FatherNameTextBox.Clear();
         RollNumberTextBox.Clear();
         StudentsDataGrid.SelectedItem = null;
+    }
+
+    private async Task LogAuditAsync(string action)
+    {
+        try
+        {
+            var userName = _currentUserService.CurrentUser?.Username ?? "Unknown";
+            await _auditService.LogAsync(userName, action);
+        }
+        catch
+        {
+            // Audit logging should not break the operation
+        }
     }
 }
