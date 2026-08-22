@@ -102,15 +102,23 @@ public partial class MarksEntryView : UserControl
 {
     private readonly IExamMarkService _examMarkService;
     private readonly IClassSubjectService _classSubjectService;
+    private readonly IAuditService _auditService;
+    private readonly ICurrentUserService _currentUserService;
 
     private readonly ObservableCollection<EditableMarkRowItem> _markRows = [];
     private readonly List<SchoolClass> _classes = [];
     private readonly List<Subject> _subjects = [];
 
-    public MarksEntryView(IExamMarkService examMarkService, IClassSubjectService classSubjectService)
+    public MarksEntryView(
+        IExamMarkService examMarkService,
+        IClassSubjectService classSubjectService,
+        IAuditService auditService,
+        ICurrentUserService currentUserService)
     {
         _examMarkService = examMarkService;
         _classSubjectService = classSubjectService;
+        _auditService = auditService;
+        _currentUserService = currentUserService;
 
         InitializeComponent();
 
@@ -277,11 +285,25 @@ public partial class MarksEntryView : UserControl
 
             await _examMarkService.SaveMarksBatchAsync(dtos);
 
+            await LogAuditAsync($"ثبت نمرات برای {_markRows.Count} شاگرد");
             SaveStatusTextBlock.Text = $"✅ تمام نمرات این مضمون با موفقیت در دیتابیس ذخیره شدند. ({DateTime.Now:HH:mm:ss})";
         }
         catch (Exception ex)
         {
             MessageBox.Show($"خطا در ذخیره نمرات:\n{ex.Message}", "خطا در ذخیره", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private async Task LogAuditAsync(string action)
+    {
+        try
+        {
+            var userName = _currentUserService.CurrentUser?.Username ?? "Unknown";
+            await _auditService.LogAsync(userName, action);
+        }
+        catch
+        {
+            // Audit logging should not break saving marks
         }
     }
 }
