@@ -25,7 +25,7 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
                         <Border x:Name="Bd" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" CornerRadius="6">
-                            <ContentPresenter x:Name="Cp" VerticalAlignment="Center" />
+                            <ContentPresenter VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -33,7 +33,7 @@
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter TargetName="Bd" Property="Background" Value="#3B82F6" />
-                                <Setter TargetName="Cp" Property="TextElement.Foreground" Value="White" />
+                                <Setter Property="Foreground" Value="White" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -61,13 +61,17 @@
                     <TextBlock Text="📘" FontSize="24" VerticalAlignment="Center" Margin="0,0,8,0" />
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="سیستم مدیریت مکتب" FontSize="20" FontWeight="Bold" Foreground="White" />
-                        <TextBlock Text="Afghan School Management System — V1.1.0" FontSize="11" Foreground="#94A3B8" Margin="0,2,0,0" FlowDirection="LeftToRight" />
+                        <TextBlock Text="Afghan School Management System — V1.2.0" FontSize="11" Foreground="#94A3B8" Margin="0,2,0,0" FlowDirection="LeftToRight" />
                     </StackPanel>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock x:Name="CurrentUserTextBlock" Text="" FontSize="12" Foreground="#CBD5E1" VerticalAlignment="Center" Margin="0,0,16,0" />
                     <TextBlock x:Name="SchoolYearTextBlock" Text="" FontSize="12" Foreground="#CBD5E1" VerticalAlignment="Center" Margin="0,0,12,0" />
-                    <TextBlock x:Name="CurrentDateTextBlock" Text="" FontSize="12" Foreground="#CBD5E1" VerticalAlignment="Center" />
+                    <TextBlock x:Name="CurrentDateTextBlock" Text="" FontSize="12" Foreground="#CBD5E1" VerticalAlignment="Center" Margin="0,0,16,0" />
+                    <Button Content="🔒 تغییر رمز عبور" Height="30" Padding="12,0" Background="#334155" Foreground="White"
+                            FontSize="12" FontWeight="SemiBold" BorderThickness="0" CornerRadius="4" Cursor="Hand"
+                            Click="ChangePasswordButton_Click" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -100,9 +104,9 @@
                     <ListBoxItem Content="💾 پشتیبان‌گیری و تنظیمات" />
                     <ListBoxItem Content="👥 مدیریت کاربران (Admin)" />
                     <ListBoxItem Content="⚙️ تنظیمات ارتقاء (Admin)" />
-                    <ListBoxItem Content="🏫 تنظیمات عمومی (Admin)" />
                     <ListBoxItem Content="📥 ورود اطلاعات دسته‌جمعی (Admin)" />
                     <ListBoxItem Content="📋 گزارش وقایع (Admin)" />
+                    <ListBoxItem Content="🏫 تنظیمات عمومی (Admin)" />
                 </ListBox>
             </Border>
 
@@ -118,7 +122,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <TextBlock x:Name="StatusBarText" Text="آماده" FontSize="12" Foreground="#94A3B8" VerticalAlignment="Center" />
-                <TextBlock Grid.Column="1" Text="ساخته شده توسط حسین❤️حکیمی برای مکاتب افغانستان نسخه ۱.۲" FontSize="11" Foreground="#64748B" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="نسخه ۱.۲.۰ — ساخته‌شده با ❤️ برای مکاتب افغانستان" FontSize="11" Foreground="#64748B" VerticalAlignment="Center" />
             </Grid>
         </Border>
     </Grid>
