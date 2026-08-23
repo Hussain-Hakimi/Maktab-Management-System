@@ -23,6 +23,7 @@ public partial class MainWindow : Window
     private readonly StudentManagementView _studentManagementView;
     private readonly MarksEntryView _marksEntryView;
     private readonly AttendanceView _attendanceView;
+    private readonly AttendanceReportsView _attendanceReportsView;
     private readonly LibraryView _libraryView;
     private readonly TextbookView _textbookView;
     private readonly FeesView _feesView;
@@ -47,6 +48,7 @@ public partial class MainWindow : Window
         [UserRole.Admin, UserRole.Teacher],                                           // Classes
         [UserRole.Admin, UserRole.Teacher],                                           // Marks
         [UserRole.Admin, UserRole.Teacher],                                           // Attendance
+        [UserRole.Admin, UserRole.Teacher],                                           // Attendance Reports
         [UserRole.Admin, UserRole.Librarian],                                         // Library
         [UserRole.Admin, UserRole.Librarian],                                         // Textbooks
         [UserRole.Admin, UserRole.Accountant],                                        // Fees
@@ -66,6 +68,7 @@ public partial class MainWindow : Window
         StudentManagementView studentManagementView,
         MarksEntryView marksEntryView,
         AttendanceView attendanceView,
+        AttendanceReportsView attendanceReportsView,
         LibraryView libraryView,
         TextbookView textbookView,
         FeesView feesView,
@@ -89,6 +92,7 @@ public partial class MainWindow : Window
         _studentManagementView = studentManagementView;
         _marksEntryView = marksEntryView;
         _attendanceView = attendanceView;
+        _attendanceReportsView = attendanceReportsView;
         _libraryView = libraryView;
         _textbookView = textbookView;
         _feesView = feesView;
@@ -201,18 +205,19 @@ public partial class MainWindow : Window
             case 2: _navigationService.Navigate(_classSubjectView); break;
             case 3: _navigationService.Navigate(_marksEntryView); break;
             case 4: _navigationService.Navigate(_attendanceView); break;
-            case 5: _navigationService.Navigate(_libraryView); break;
-            case 6: _navigationService.Navigate(_textbookView); break;
-            case 7: _navigationService.Navigate(_feesView); break;
-            case 8: _navigationService.Navigate(_reportCardsView); break;
-            case 9: _navigationService.Navigate(_reportsView); break;
-            case 10: _navigationService.Navigate(_backupSettingsView); break;
-            case 11: _navigationService.Navigate(_userManagementView); break;
-            case 12: _navigationService.Navigate(_promotionSettingsView); break;
-            case 13: _navigationService.Navigate(_bulkImportView); break;
-            case 14: _navigationService.Navigate(_auditLogView); break;
-            case 15: _navigationService.Navigate(_schoolSettingsView); break;
-            case 16: _navigationService.Navigate(_academicYearView); break;
+            case 5: _navigationService.Navigate(_attendanceReportsView); break;
+            case 6: _navigationService.Navigate(_libraryView); break;
+            case 7: _navigationService.Navigate(_textbookView); break;
+            case 8: _navigationService.Navigate(_feesView); break;
+            case 9: _navigationService.Navigate(_reportCardsView); break;
+            case 10: _navigationService.Navigate(_reportsView); break;
+            case 11: _navigationService.Navigate(_backupSettingsView); break;
+            case 12: _navigationService.Navigate(_userManagementView); break;
+            case 13: _navigationService.Navigate(_promotionSettingsView); break;
+            case 14: _navigationService.Navigate(_bulkImportView); break;
+            case 15: _navigationService.Navigate(_auditLogView); break;
+            case 16: _navigationService.Navigate(_schoolSettingsView); break;
+            case 17: _navigationService.Navigate(_academicYearView); break;
         }
     }
 }
