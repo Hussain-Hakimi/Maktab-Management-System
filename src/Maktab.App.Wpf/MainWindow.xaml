@@ -101,6 +101,7 @@
                     <ListBoxItem Content="📦 کتاب‌های درسی" />
                     <ListBoxItem Content="💰 فیس‌ها" />
                     <ListBoxItem Content="📄 کارنامه / اطلاع‌نامه" />
+                    <ListBoxItem Content="📊 گزارش‌ها" />
                     <ListBoxItem Content="💾 پشتیبان‌گیری و تنظیمات" />
                     <ListBoxItem Content="👥 مدیریت کاربران (Admin)" />
                     <ListBoxItem Content="⚙️ تنظیمات ارتقاء (Admin)" />
