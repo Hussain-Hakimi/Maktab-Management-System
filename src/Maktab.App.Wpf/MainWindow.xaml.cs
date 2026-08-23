@@ -12,6 +12,10 @@ namespace Maktab.App.Wpf;
 public partial class MainWindow : Window
 {
     private readonly NavigationService _navigationService;
+    private readonly IUserService _userService;
+    private readonly IAuditService _auditService;
+    private readonly ICurrentUserService _currentUserService;
+
     private UserDto? _currentUser;
 
     // Existing view instances
@@ -33,7 +37,6 @@ public partial class MainWindow : Window
     private readonly AuditLogView _auditLogView;
     private readonly SchoolSettingsView _schoolSettingsView;
 
-    // Allowed roles per sidebar item index (matching order in XAML)
     private static readonly UserRole[][] SidebarItemRoles =
     [
         [UserRole.Admin, UserRole.Teacher, UserRole.Librarian, UserRole.Accountant], // Dashboard
@@ -68,7 +71,10 @@ public partial class MainWindow : Window
         PromotionSettingsView promotionSettingsView,
         BulkImportView bulkImportView,
         AuditLogView auditLogView,
-        SchoolSettingsView schoolSettingsView)
+        SchoolSettingsView schoolSettingsView,
+        IUserService userService,
+        IAuditService auditService,
+        ICurrentUserService currentUserService)
     {
         InitializeComponent();
 
@@ -89,6 +95,10 @@ public partial class MainWindow : Window
         _auditLogView = auditLogView;
         _schoolSettingsView = schoolSettingsView;
 
+        _userService = userService;
+        _auditService = auditService;
+        _currentUserService = currentUserService;
+
         _navigationService = new NavigationService(MainContentArea);
 
         SidebarListBox.SelectedIndex = 0;
@@ -98,6 +108,7 @@ public partial class MainWindow : Window
     public void SetCurrentUser(UserDto user)
     {
         _currentUser = user;
+        CurrentUserTextBlock.Text = $"👤 {user.FullName} ({user.Role})";
         try
         {
             ApplyRoleBasedSidebarVisibility();
@@ -153,6 +164,21 @@ public partial class MainWindow : Window
         }
 
         StatusBarText.Text = "✅ سیستم آماده استفاده است.";
+    }
+
+    private async void ChangePasswordButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_currentUser is null)
+            return;
+
+        var changePasswordWindow = new ChangePasswordWindow(_userService, _currentUser);
+        var result = changePasswordWindow.ShowDialog();
+
+        if (result == true)
+        {
+            await _auditService.LogAsync(_currentUser.Username, "تغییر رمز عبور");
+            MessageBox.Show("رمز عبور با موفقیت تغییر کرد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
     }
 
     private void SidebarListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
