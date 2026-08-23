@@ -5,7 +5,6 @@ using System.Windows;
 using System.Windows.Controls;
 using Maktab.Application.Abstractions;
 using Maktab.Domain.Entities;
-using Maktab.Domain.Enums;
 using Maktab.Domain.Rules;
 
 namespace Maktab.App.Wpf.Views;
@@ -102,6 +101,7 @@ public partial class MarksEntryView : UserControl
 {
     private readonly IExamMarkService _examMarkService;
     private readonly IClassSubjectService _classSubjectService;
+    private readonly IAcademicYearService _academicYearService;
     private readonly IAuditService _auditService;
     private readonly ICurrentUserService _currentUserService;
 
@@ -112,11 +112,13 @@ public partial class MarksEntryView : UserControl
     public MarksEntryView(
         IExamMarkService examMarkService,
         IClassSubjectService classSubjectService,
+        IAcademicYearService academicYearService,
         IAuditService auditService,
         ICurrentUserService currentUserService)
     {
         _examMarkService = examMarkService;
         _classSubjectService = classSubjectService;
+        _academicYearService = academicYearService;
         _auditService = auditService;
         _currentUserService = currentUserService;
 
@@ -258,7 +260,7 @@ public partial class MarksEntryView : UserControl
             return;
         }
 
-        // Validate all ranges before saving
+        // Validate ranges
         foreach (var row in _markRows)
         {
             if (row.MidtermScore < 0m || row.MidtermScore > GradingPolicy.MidtermMax)
@@ -276,15 +278,23 @@ public partial class MarksEntryView : UserControl
 
         try
         {
+            // Get active academic year
+            var activeYear = await _academicYearService.GetActiveAcademicYearAsync();
+            if (activeYear is null)
+            {
+                MessageBox.Show("سال تعلیمی فعال تعیین نشده است.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             var dtos = _markRows.Select(r => new SaveExamMarkDto(
                 StudentId: r.StudentId,
                 SubjectId: r.SubjectId,
                 MidtermScore: r.MidtermScore,
-                FinalScore: r.FinalScore
+                FinalScore: r.FinalScore,
+                AcademicYearId: activeYear.AcademicYearId
             )).ToList();
 
             await _examMarkService.SaveMarksBatchAsync(dtos);
-
             await LogAuditAsync($"ثبت نمرات برای {_markRows.Count} شاگرد");
             SaveStatusTextBlock.Text = $"✅ تمام نمرات این مضمون با موفقیت در دیتابیس ذخیره شدند. ({DateTime.Now:HH:mm:ss})";
         }
