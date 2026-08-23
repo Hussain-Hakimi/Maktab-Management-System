@@ -1,5 +1,6 @@
 using Maktab.Application.Abstractions;
 using Maktab.Domain.Entities;
+using Maktab.Domain.Rules;
 
 namespace Maktab.Application.Services;
 

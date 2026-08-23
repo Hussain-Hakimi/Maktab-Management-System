@@ -44,7 +44,7 @@
 
                     <!-- Save Button -->
                     <Button Height="40" Content="💾 ذخیره تنظیمات" Background="#16A34A" Foreground="White" FontWeight="Bold" FontSize="15"
-                            CornerRadius="6" BorderThickness="0" Cursor="Hand" Click="SaveButton_Click" HorizontalAlignment="Left" Padding="20,0" />
+                            BorderThickness="0" Cursor="Hand" Click="SaveButton_Click" HorizontalAlignment="Left" Padding="20,0" />
                 </StackPanel>
             </ScrollViewer>
         </Border>
