@@ -49,6 +49,7 @@ public partial class App : System.Windows.Application
                     services.AddSingleton<SchoolSettingsView>();
                     services.AddSingleton<AcademicYearView>();
                     services.AddSingleton<MainWindow>();
+                    services.AddSingleton<AttendanceReportsView>();
                 })
                 .Build();
 
