@@ -11,12 +11,12 @@ public sealed class SqliteFeeRepository(IConnectionStringProvider connectionStri
     {
         const string sql = @"
 SELECT f.FeeID, f.StudentID, s.FirstName || ' ' || s.LastName AS StudentName, s.RollNumber,
-       f.FeeType, f.Amount, f.DueDate,
+       f.FeeType, f.Amount, f.DueDate, f.AcademicYearId,
        COALESCE(SUM(p.Amount), 0) AS TotalPaid
 FROM tbl_Fees f
 JOIN tbl_Students s ON f.StudentID = s.StudentID
 LEFT JOIN tbl_FeePayments p ON f.FeeID = p.FeeID
-GROUP BY f.FeeID, f.StudentID, s.FirstName, s.LastName, s.RollNumber, f.FeeType, f.Amount, f.DueDate
+GROUP BY f.FeeID, f.StudentID, s.FirstName, s.LastName, s.RollNumber, f.FeeType, f.Amount, f.DueDate, f.AcademicYearId
 ORDER BY f.DueDate;";
 
         await using var connection = new SqliteConnection(connectionStringProvider.GetConnectionString());
@@ -30,7 +30,7 @@ ORDER BY f.DueDate;";
         while (await reader.ReadAsync(cancellationToken))
         {
             var amount = Convert.ToDecimal(reader.GetDouble(5));
-            var totalPaid = Convert.ToDecimal(reader.GetDouble(7));
+            var totalPaid = Convert.ToDecimal(reader.GetDouble(8));
             var status = totalPaid <= 0m ? FeeStatus.Unpaid :
                          totalPaid >= amount ? FeeStatus.Paid : FeeStatus.Partial;
 
@@ -43,6 +43,7 @@ ORDER BY f.DueDate;";
                 FeeType = reader.GetString(4),
                 Amount = amount,
                 DueDate = DateTime.Parse(reader.GetString(6)),
+                AcademicYearId = reader.GetInt32(7),
                 TotalPaid = totalPaid,
                 Status = status
             });
@@ -54,7 +55,7 @@ ORDER BY f.DueDate;";
     public async Task<Fee?> GetFeeByIdAsync(int feeId, CancellationToken cancellationToken = default)
     {
         const string sql = @"
-SELECT FeeID, StudentID, FeeType, Amount, DueDate, CreatedDate
+SELECT FeeID, StudentID, FeeType, Amount, DueDate, CreatedDate, AcademicYearId
 FROM tbl_Fees
 WHERE FeeID = $feeId;";
 
@@ -75,7 +76,8 @@ WHERE FeeID = $feeId;";
                 FeeType = reader.GetString(2),
                 Amount = Convert.ToDecimal(reader.GetDouble(3)),
                 DueDate = DateTime.Parse(reader.GetString(4)),
-                CreatedDate = DateTime.Parse(reader.GetString(5))
+                CreatedDate = DateTime.Parse(reader.GetString(5)),
+                AcademicYearId = reader.GetInt32(6)
             };
         }
 
@@ -85,8 +87,8 @@ WHERE FeeID = $feeId;";
     public async Task<int> CreateFeeAsync(Fee fee, CancellationToken cancellationToken = default)
     {
         const string sql = @"
-INSERT INTO tbl_Fees (StudentID, FeeType, Amount, DueDate, CreatedDate)
-VALUES ($studentId, $feeType, $amount, $dueDate, $createdDate);
+INSERT INTO tbl_Fees (StudentID, FeeType, Amount, DueDate, CreatedDate, AcademicYearId)
+VALUES ($studentId, $feeType, $amount, $dueDate, $createdDate, $academicYearId);
 SELECT last_insert_rowid();";
 
         await using var connection = new SqliteConnection(connectionStringProvider.GetConnectionString());
@@ -103,6 +105,7 @@ SELECT last_insert_rowid();";
             command.Parameters.AddWithValue("$amount", (double)fee.Amount);
             command.Parameters.AddWithValue("$dueDate", fee.DueDate.ToString("yyyy-MM-dd"));
             command.Parameters.AddWithValue("$createdDate", fee.CreatedDate.ToString("yyyy-MM-dd HH:mm:ss"));
+            command.Parameters.AddWithValue("$academicYearId", fee.AcademicYearId);
 
             var id = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken));
             await transaction.CommitAsync(cancellationToken);
