@@ -27,6 +27,7 @@ public partial class MainWindow : Window
     private readonly TextbookView _textbookView;
     private readonly FeesView _feesView;
     private readonly ReportCardsView _reportCardsView;
+    private readonly ReportsView _reportsView;
     private readonly BackupSettingsView _backupSettingsView;
 
     // New placeholder view instances
@@ -50,6 +51,7 @@ public partial class MainWindow : Window
         [UserRole.Admin, UserRole.Librarian],                                         // Textbooks
         [UserRole.Admin, UserRole.Accountant],                                        // Fees
         [UserRole.Admin, UserRole.Teacher],                                           // Report Cards
+        [UserRole.Admin, UserRole.Teacher],                                           // Reports
         [UserRole.Admin],                                                             // Backup/Restore
         [UserRole.Admin],                                                             // User Management
         [UserRole.Admin],                                                             // Promotion Settings
@@ -68,6 +70,7 @@ public partial class MainWindow : Window
         TextbookView textbookView,
         FeesView feesView,
         ReportCardsView reportCardsView,
+        ReportsView reportsView,
         BackupSettingsView backupSettingsView,
         DashboardView dashboardView,
         UserManagementView userManagementView,
@@ -90,6 +93,7 @@ public partial class MainWindow : Window
         _textbookView = textbookView;
         _feesView = feesView;
         _reportCardsView = reportCardsView;
+        _reportsView = reportsView;
         _backupSettingsView = backupSettingsView;
 
         _dashboardView = dashboardView;
@@ -201,13 +205,14 @@ public partial class MainWindow : Window
             case 6: _navigationService.Navigate(_textbookView); break;
             case 7: _navigationService.Navigate(_feesView); break;
             case 8: _navigationService.Navigate(_reportCardsView); break;
-            case 9: _navigationService.Navigate(_backupSettingsView); break;
-            case 10: _navigationService.Navigate(_userManagementView); break;
-            case 11: _navigationService.Navigate(_promotionSettingsView); break;
-            case 12: _navigationService.Navigate(_bulkImportView); break;
-            case 13: _navigationService.Navigate(_auditLogView); break;
-            case 14: _navigationService.Navigate(_schoolSettingsView); break;
-            case 15: _navigationService.Navigate(_academicYearView); break;
+            case 9: _navigationService.Navigate(_reportsView); break;
+            case 10: _navigationService.Navigate(_backupSettingsView); break;
+            case 11: _navigationService.Navigate(_userManagementView); break;
+            case 12: _navigationService.Navigate(_promotionSettingsView); break;
+            case 13: _navigationService.Navigate(_bulkImportView); break;
+            case 14: _navigationService.Navigate(_auditLogView); break;
+            case 15: _navigationService.Navigate(_schoolSettingsView); break;
+            case 16: _navigationService.Navigate(_academicYearView); break;
         }
     }
 }
