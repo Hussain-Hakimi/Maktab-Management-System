@@ -16,6 +16,7 @@ public partial class AttendanceView : UserControl
 
     private readonly IAttendanceService _attendanceService;
     private readonly IClassSubjectService _classSubjectService;
+    private readonly IAcademicYearService _academicYearService;
     private readonly IAuditService _auditService;
     private readonly ICurrentUserService _currentUserService;
 
@@ -25,11 +26,13 @@ public partial class AttendanceView : UserControl
     public AttendanceView(
         IAttendanceService attendanceService,
         IClassSubjectService classSubjectService,
+        IAcademicYearService academicYearService,
         IAuditService auditService,
         ICurrentUserService currentUserService)
     {
         _attendanceService = attendanceService;
         _classSubjectService = classSubjectService;
+        _academicYearService = academicYearService;
         _auditService = auditService;
         _currentUserService = currentUserService;
 
@@ -150,14 +153,22 @@ public partial class AttendanceView : UserControl
 
         try
         {
+            // Get active academic year
+            var activeYear = await _academicYearService.GetActiveAcademicYearAsync();
+            if (activeYear is null)
+            {
+                MessageBox.Show("سال تعلیمی فعال تعیین نشده است.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             var dtos = _attendanceRows.Select(r => new SaveAttendanceDto(
                 StudentId: r.StudentId,
                 Date: date,
-                Status: r.Status
+                Status: r.Status,
+                AcademicYearId: activeYear.AcademicYearId
             )).ToList();
 
             await _attendanceService.SaveAttendanceBatchAsync(dtos);
-
             await LogAuditAsync($"ثبت حاضری برای {_attendanceRows.Count} شاگرد");
             SaveStatusTextBlock.Text = $"✅ حاضری تمام شاگردان برای {date:yyyy/MM/dd} با موفقیت ذخیره شد.";
         }
