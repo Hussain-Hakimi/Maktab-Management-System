@@ -24,7 +24,7 @@ public sealed class AttendanceService(
         {
             var status = recordMap.TryGetValue(student.StudentId, out var record)
                 ? record.Status
-                : AttendanceStatus.Present; // default to Present
+                : AttendanceStatus.Present;
 
             result.Add(new StudentAttendanceDto
             {
@@ -56,7 +56,8 @@ public sealed class AttendanceService(
             {
                 StudentId = item.StudentId,
                 Date = item.Date.Date,
-                Status = item.Status
+                Status = item.Status,
+                AcademicYearId = item.AcademicYearId
             });
         }
 
