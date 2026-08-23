@@ -14,6 +14,7 @@ public sealed class FeeDto
     public decimal TotalPaid { get; set; }
     public decimal Outstanding => Amount - TotalPaid;
     public FeeStatus Status { get; set; }
+    public int AcademicYearId { get; set; }
 }
 
 public sealed class FeePaymentDto
@@ -32,7 +33,8 @@ public sealed record SaveFeeDto(
     int StudentId,
     string FeeType,
     decimal Amount,
-    DateTime DueDate);
+    DateTime DueDate,
+    int AcademicYearId);
 
 public sealed record RecordPaymentDto(
     int FeeId,
