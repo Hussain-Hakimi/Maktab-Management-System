@@ -22,6 +22,7 @@ PRAGMA synchronous = NORMAL;
         await SeedDefaultAdminAsync(connection, cancellationToken);
         await SeedDefaultSettingsAsync(connection, cancellationToken);
         await SeedDefaultSchoolSettingsAsync(connection, cancellationToken);
+        await SeedDefaultAcademicYearAsync(connection, cancellationToken);
         await LoadPromotionSettingsIntoPolicyAsync(connection, cancellationToken);
     }
 
@@ -90,6 +91,53 @@ VALUES ($username, $passwordHash, $fullName, 'Admin', 1);";
         await ExecuteUpsertIfNotExistsAsync(connection, "School.Phone", "", cancellationToken);
         await ExecuteUpsertIfNotExistsAsync(connection, "School.AcademicYear", AcademicYearProvider.GetCurrentAcademicYear(), cancellationToken);
         await ExecuteUpsertIfNotExistsAsync(connection, "School.LogoPath", "", cancellationToken);
+    }
+
+    private static async Task SeedDefaultAcademicYearAsync(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
+    {
+        // Check if any academic year exists
+        await using var checkCmd = connection.CreateCommand();
+        checkCmd.CommandText = "SELECT COUNT(1) FROM tbl_AcademicYears;";
+        var count = Convert.ToInt32(await checkCmd.ExecuteScalarAsync(cancellationToken));
+        if (count > 0)
+            return;
+
+        var yearName = AcademicYearProvider.GetCurrentAcademicYear();
+        var (start, end) = ShamsiDateHelper.GetAcademicYearRange(yearName);
+
+        const string insertSql = @"
+INSERT INTO tbl_AcademicYears (YearName, StartDate, EndDate, IsActive)
+VALUES ($name, $start, $end, 1);
+SELECT last_insert_rowid();";
+
+        await using var insertCmd = connection.CreateCommand();
+        insertCmd.CommandText = insertSql;
+        insertCmd.Parameters.AddWithValue("$name", yearName);
+        insertCmd.Parameters.AddWithValue("$start", start.ToString("yyyy-MM-dd"));
+        insertCmd.Parameters.AddWithValue("$end", end.ToString("yyyy-MM-dd"));
+        var yearId = Convert.ToInt32(await insertCmd.ExecuteScalarAsync(cancellationToken));
+
+        // Update existing records to point to the active year
+        await using (var updateMarks = connection.CreateCommand())
+        {
+            updateMarks.CommandText = "UPDATE tbl_ExamMarks SET AcademicYearId = $id WHERE AcademicYearId = 0;";
+            updateMarks.Parameters.AddWithValue("$id", yearId);
+            await updateMarks.ExecuteNonQueryAsync(cancellationToken);
+        }
+        await using (var updateAttendance = connection.CreateCommand())
+        {
+            updateAttendance.CommandText = "UPDATE tbl_Attendance SET AcademicYearId = $id WHERE AcademicYearId = 0;";
+            updateAttendance.Parameters.AddWithValue("$id", yearId);
+            await updateAttendance.ExecuteNonQueryAsync(cancellationToken);
+        }
+        await using (var updateFees = connection.CreateCommand())
+        {
+            updateFees.CommandText = "UPDATE tbl_Fees SET AcademicYearId = $id WHERE AcademicYearId = 0;";
+            updateFees.Parameters.AddWithValue("$id", yearId);
+            await updateFees.ExecuteNonQueryAsync(cancellationToken);
+        }
     }
 
     private static async Task ExecuteUpsertIfNotExistsAsync(
