@@ -73,11 +73,15 @@
                             <DataGridTextColumn Header="شروع" Binding="{Binding StartDate, StringFormat={}{0:yyyy/MM/dd}}" Width="100" />
                             <DataGridTextColumn Header="پایان" Binding="{Binding EndDate, StringFormat={}{0:yyyy/MM/dd}}" Width="100" />
                             <DataGridTextColumn Header="فعال" Binding="{Binding IsActive}" Width="70" />
-                            <DataGridTemplateColumn Header="عملیات" Width="100">
+                            <DataGridTemplateColumn Header="عملیات" Width="180">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Button Content="فعال‌سازی" Background="#2563EB" Foreground="White" FontSize="12" Padding="8,4"
-                                                Click="SetActiveButton_Click" Tag="{Binding AcademicYearId}" />
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="فعال‌سازی" Background="#2563EB" Foreground="White" FontSize="11" Padding="6,3"
+                                                    Click="SetActiveButton_Click" Tag="{Binding AcademicYearId}" Margin="0,0,4,0" />
+                                            <Button Content="اجرای ارتقاء" Background="#DC2626" Foreground="White" FontSize="11" Padding="6,3"
+                                                    Click="RunPromotionButton_Click" Tag="{Binding AcademicYearId}" />
+                                        </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
