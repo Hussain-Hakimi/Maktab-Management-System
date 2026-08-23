@@ -43,6 +43,44 @@ WHERE s.ClassID = $classId AND m.SubjectID = $subjectId;";
         return result;
     }
 
+    public async Task<IReadOnlyList<ExamMark>> GetMarksByClassSubjectAndYearAsync(
+        int classId,
+        int subjectId,
+        int academicYearId,
+        CancellationToken cancellationToken = default)
+    {
+        const string sql = @"
+SELECT m.StudentID, m.SubjectID, m.MidtermScore, m.FinalScore, m.AcademicYearId
+FROM tbl_ExamMarks m
+INNER JOIN tbl_Students s ON m.StudentID = s.StudentID
+WHERE s.ClassID = $classId AND m.SubjectID = $subjectId AND m.AcademicYearId = $academicYearId;";
+
+        await using var connection = new SqliteConnection(connectionStringProvider.GetConnectionString());
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.AddWithValue("$classId", classId);
+        command.Parameters.AddWithValue("$subjectId", subjectId);
+        command.Parameters.AddWithValue("$academicYearId", academicYearId);
+
+        var result = new List<ExamMark>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            result.Add(new ExamMark
+            {
+                StudentId = reader.GetInt32(0),
+                SubjectId = reader.GetInt32(1),
+                MidtermScore = Convert.ToDecimal(reader.GetDouble(2)),
+                FinalScore = Convert.ToDecimal(reader.GetDouble(3)),
+                AcademicYearId = reader.GetInt32(4)
+            });
+        }
+
+        return result;
+    }
+
     public async Task<IReadOnlyList<ExamMark>> GetMarksByStudentAsync(
         int studentId,
         CancellationToken cancellationToken = default)
