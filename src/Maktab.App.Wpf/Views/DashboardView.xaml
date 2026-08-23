@@ -57,6 +57,7 @@
                     <StackPanel>
                         <TextBlock Text="🗓️ حاضری امروز" FontSize="14" FontWeight="SemiBold" Foreground="#B45309" />
                         <TextBlock x:Name="TodayAttendanceTextBlock" Text="۰/۰" FontSize="28" FontWeight="Bold" Foreground="#92400E" Margin="0,8,0,0" />
+                        <TextBlock x:Name="TodayAbsenceRateTextBlock" Text="غیبت: ۰%" FontSize="12" Foreground="#92400E" Margin="0,4,0,0" />
                     </StackPanel>
                 </Border>
 
