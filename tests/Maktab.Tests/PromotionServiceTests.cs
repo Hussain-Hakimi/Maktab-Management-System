@@ -1,0 +1,138 @@
+using Maktab.Application.Abstractions;
+using Maktab.Application.Services;
+using Maktab.Domain.Entities;
+using Maktab.Domain.Enums;
+
+namespace Maktab.Tests;
+
+public class PromotionServiceTests
+{
+    private sealed class InMemoryStudentRepository : IStudentRepository
+    {
+        public List<Student> Students { get; } = [];
+
+        public Task<IReadOnlyList<Student>> GetStudentsAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<Student>>(Students);
+
+        public Task<IReadOnlyList<Student>> GetStudentsByClassAsync(int classId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<Student>>(Students.Where(s => s.ClassId == classId).ToList());
+
+        public Task<Student?> GetStudentByIdAsync(int studentId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Students.FirstOrDefault(s => s.StudentId == studentId));
+
+        public Task<int> CreateStudentAsync(Student student, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+
+        public Task UpdateStudentAsync(Student student, CancellationToken cancellationToken = default)
+        {
+            var idx = Students.FindIndex(s => s.StudentId == student.StudentId);
+            if (idx >= 0) Students[idx] = student;
+            return Task.CompletedTask;
+        }
+
+        public Task DeleteStudentAsync(int studentId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<bool> ExistsByRollNumberAsync(int classId, string rollNumber, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    }
+
+    private sealed class InMemoryClassSubjectRepository : IClassSubjectRepository
+    {
+        public List<SchoolClass> Classes { get; } = [];
+        public List<Subject> Subjects { get; } = [];
+
+        public Task<IReadOnlyList<SchoolClass>> GetClassesAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<SchoolClass>>(Classes);
+
+        public Task<IReadOnlyList<Subject>> GetSubjectsByClassAsync(int classId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<Subject>>(Subjects.Where(s => s.ClassId == classId).ToList());
+
+        public Task<int> CreateClassAsync(SchoolClass schoolClass, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task UpdateClassAsync(SchoolClass schoolClass, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task DeleteClassAsync(int classId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<int> CreateSubjectAsync(Subject subject, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task UpdateSubjectAsync(Subject subject, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task DeleteSubjectAsync(int subjectId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    }
+
+    private sealed class InMemoryExamMarkRepository : IExamMarkRepository
+    {
+        public List<ExamMark> Marks { get; } = [];
+
+        public Task<IReadOnlyList<ExamMark>> GetMarksByClassAndSubjectAsync(int classId, int subjectId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<ExamMark>>(Marks.Where(m => m.SubjectId == subjectId).ToList());
+
+        public Task<IReadOnlyList<ExamMark>> GetMarksByStudentAsync(int studentId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<ExamMark>>(Marks.Where(m => m.StudentId == studentId).ToList());
+
+        public Task<IReadOnlyList<ExamMark>> GetMarksByStudentAndYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<ExamMark>>(Marks.Where(m => m.StudentId == studentId && m.AcademicYearId == academicYearId).ToList());
+
+        public Task<IReadOnlyList<ExamMark>> GetMarksByClassAsync(int classId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task SaveOrUpdateMarkAsync(ExamMark mark, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task SaveOrUpdateMarksBatchAsync(IEnumerable<ExamMark> marks, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    }
+
+    private sealed class InMemoryAttendanceRepository : IAttendanceRepository
+    {
+        public List<AttendanceRecord> Records { get; } = [];
+
+        public Task<IReadOnlyList<AttendanceRecord>> GetByClassAndDateAsync(int classId, DateTime date, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<IReadOnlyList<AttendanceRecord>> GetByStudentAndRangeAsync(int studentId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task SaveOrUpdateBatchAsync(IEnumerable<AttendanceRecord> records, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<int> GetAbsenceDaysByStudentAndRangeAsync(int studentId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<int> GetAbsenceDaysByStudentAndYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default)
+            => Task.FromResult(Records.Count(r => r.StudentId == studentId && r.AcademicYearId == academicYearId && r.Status == AttendanceStatus.Absent));
+    }
+
+    private sealed class InMemoryPromotionHistoryRepository : IStudentPromotionHistoryRepository
+    {
+        public List<StudentPromotionHistory> Histories { get; } = [];
+
+        public Task<int> AddAsync(StudentPromotionHistory history, CancellationToken cancellationToken = default)
+        {
+            history.PromotionId = Histories.Count + 1;
+            Histories.Add(history);
+            return Task.FromResult(history.PromotionId);
+        }
+
+        public Task<IReadOnlyList<StudentPromotionHistory>> GetByStudentAsync(int studentId, CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<StudentPromotionHistory>>(Histories.Where(h => h.StudentId == studentId).ToList());
+    }
+
+    [Fact]
+    public async Task RunPromotion_WhenStudentPassesAll_UpdatesClassAndRecordsHistory()
+    {
+        var studentRepo = new InMemoryStudentRepository();
+        var classRepo = new InMemoryClassSubjectRepository();
+        var markRepo = new InMemoryExamMarkRepository();
+        var attendanceRepo = new InMemoryAttendanceRepository();
+        var historyRepo = new InMemoryPromotionHistoryRepository();
+
+        classRepo.Classes.Add(new SchoolClass { ClassId = 1, GradeName = "Grade 1", NumberOfSubjects = 2 });
+        classRepo.Classes.Add(new SchoolClass { ClassId = 2, GradeName = "Grade 2", NumberOfSubjects = 2 });
+        classRepo.Subjects.Add(new Subject { SubjectId = 1, ClassId = 1, SubjectName = "Math" });
+        classRepo.Subjects.Add(new Subject { SubjectId = 2, ClassId = 1, SubjectName = "Science" });
+
+        var student = new Student
+        {
+            StudentId = 1,
+            FirstName = "Ahmad",
+            LastName = "Karimi",
+            FatherName = "Mohammad",
+            ClassId = 1,
+            RollNumber = "101",
+            RegistrationDate = DateTime.Now
+        };
+        studentRepo.Students.Add(student);
+
+        markRepo.Marks.Add(new ExamMark { StudentId = 1, SubjectId = 1, MidtermScore = 35m, FinalScore = 50m, AcademicYearId = 1 });
+        markRepo.Marks.Add(new ExamMark { StudentId = 1, SubjectId = 2, MidtermScore = 30m, FinalScore = 45m, AcademicYearId = 1 });
+
+        var service = new PromotionService(studentRepo, classRepo, markRepo, attendanceRepo, historyRepo);
+        var result = await service.RunPromotionForYearAsync(1);
+
+        Assert.Equal(1, result.TotalStudents);
+        Assert.Equal(1, result.PromotedCount);
+        Assert.Equal(2, studentRepo.Students[0].ClassId);
+        Assert.Single(historyRepo.Histories);
+        Assert.Equal("Promoted", historyRepo.Histories[0].Result);
+    }
+}
