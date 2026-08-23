@@ -171,6 +171,79 @@ WHERE StudentID = $studentId
         return Convert.ToInt32(result);
     }
 
+    public async Task<IReadOnlyList<AttendanceRecord>> GetByStudentAndYearAsync(
+        int studentId,
+        int academicYearId,
+        CancellationToken cancellationToken = default)
+    {
+        const string sql = @"
+SELECT AttendanceID, StudentID, AttendanceDate, Status, AcademicYearId
+FROM tbl_Attendance
+WHERE StudentID = $studentId AND AcademicYearId = $academicYearId
+ORDER BY AttendanceDate;";
+
+        await using var connection = new SqliteConnection(connectionStringProvider.GetConnectionString());
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.AddWithValue("$studentId", studentId);
+        command.Parameters.AddWithValue("$academicYearId", academicYearId);
+
+        var result = new List<AttendanceRecord>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            result.Add(new AttendanceRecord
+            {
+                AttendanceId = reader.GetInt32(0),
+                StudentId = reader.GetInt32(1),
+                Date = DateTime.Parse(reader.GetString(2)),
+                Status = ParseStatus(reader.GetString(3)),
+                AcademicYearId = reader.GetInt32(4)
+            });
+        }
+
+        return result;
+    }
+
+    public async Task<IReadOnlyList<AttendanceRecord>> GetByClassAndYearAsync(
+        int classId,
+        int academicYearId,
+        CancellationToken cancellationToken = default)
+    {
+        const string sql = @"
+SELECT a.AttendanceID, a.StudentID, a.AttendanceDate, a.Status, a.AcademicYearId
+FROM tbl_Attendance a
+INNER JOIN tbl_Students s ON a.StudentID = s.StudentID
+WHERE s.ClassID = $classId AND a.AcademicYearId = $academicYearId
+ORDER BY a.AttendanceDate;";
+
+        await using var connection = new SqliteConnection(connectionStringProvider.GetConnectionString());
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.AddWithValue("$classId", classId);
+        command.Parameters.AddWithValue("$academicYearId", academicYearId);
+
+        var result = new List<AttendanceRecord>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            result.Add(new AttendanceRecord
+            {
+                AttendanceId = reader.GetInt32(0),
+                StudentId = reader.GetInt32(1),
+                Date = DateTime.Parse(reader.GetString(2)),
+                Status = ParseStatus(reader.GetString(3)),
+                AcademicYearId = reader.GetInt32(4)
+            });
+        }
+
+        return result;
+    }
+
     private static AttendanceStatus ParseStatus(string status) => status switch
     {
         "Present" => AttendanceStatus.Present,
