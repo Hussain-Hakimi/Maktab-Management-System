@@ -66,6 +66,7 @@ public class PromotionServiceTests
             Task.FromResult<IReadOnlyList<ExamMark>>(Marks.Where(m => m.StudentId == studentId && m.AcademicYearId == academicYearId).ToList());
 
         public Task<IReadOnlyList<ExamMark>> GetMarksByClassAsync(int classId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<IReadOnlyList<ExamMark>> GetMarksByClassSubjectAndYearAsync(int classId, int subjectId, int academicYearId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task SaveOrUpdateMarkAsync(ExamMark mark, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task SaveOrUpdateMarksBatchAsync(IEnumerable<ExamMark> marks, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
@@ -80,6 +81,8 @@ public class PromotionServiceTests
         public Task<int> GetAbsenceDaysByStudentAndRangeAsync(int studentId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<int> GetAbsenceDaysByStudentAndYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default)
             => Task.FromResult(Records.Count(r => r.StudentId == studentId && r.AcademicYearId == academicYearId && r.Status == AttendanceStatus.Absent));
+        public Task<IReadOnlyList<AttendanceRecord>> GetByStudentAndYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<IReadOnlyList<AttendanceRecord>> GetByClassAndYearAsync(int classId, int academicYearId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
     private sealed class InMemoryPromotionHistoryRepository : IStudentPromotionHistoryRepository

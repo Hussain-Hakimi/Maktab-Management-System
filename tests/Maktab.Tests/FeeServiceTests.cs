@@ -82,7 +82,7 @@ public class FeeServiceTests
         var repo = new InMemoryFeeRepository();
         var service = new FeeService(repo);
 
-        var id = await service.AddFeeAsync(new SaveFeeDto(1, "Tuition", 1000m, DateTime.Today.AddDays(30)));
+        var id = await service.AddFeeAsync(new SaveFeeDto(1, "Tuition", 1000m, DateTime.Today.AddDays(30), 1));
 
         Assert.True(id > 0);
         var fees = await service.GetFeesAsync();
@@ -96,7 +96,7 @@ public class FeeServiceTests
     {
         var repo = new InMemoryFeeRepository();
         var service = new FeeService(repo);
-        var feeId = await service.AddFeeAsync(new SaveFeeDto(1, "Tuition", 1000m, DateTime.Today.AddDays(30)));
+        var feeId = await service.AddFeeAsync(new SaveFeeDto(1, "Tuition", 1000m, DateTime.Today.AddDays(30), 1));
 
         await service.RecordPaymentAsync(new RecordPaymentDto(feeId, 400m, DateTime.Today));
 
@@ -111,7 +111,7 @@ public class FeeServiceTests
     {
         var repo = new InMemoryFeeRepository();
         var service = new FeeService(repo);
-        var feeId = await service.AddFeeAsync(new SaveFeeDto(1, "Tuition", 1000m, DateTime.Today.AddDays(30)));
+        var feeId = await service.AddFeeAsync(new SaveFeeDto(1, "Tuition", 1000m, DateTime.Today.AddDays(30), 1));
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
         {
@@ -124,7 +124,7 @@ public class FeeServiceTests
     {
         var repo = new InMemoryFeeRepository();
         var service = new FeeService(repo);
-        var feeId = await service.AddFeeAsync(new SaveFeeDto(1, "Tuition", 1000m, DateTime.Today.AddDays(30)));
+        var feeId = await service.AddFeeAsync(new SaveFeeDto(1, "Tuition", 1000m, DateTime.Today.AddDays(30), 1));
 
         await service.RecordPaymentAsync(new RecordPaymentDto(feeId, 1000m, DateTime.Today));
 
@@ -139,7 +139,7 @@ public class FeeServiceTests
     {
         var repo = new InMemoryFeeRepository();
         var service = new FeeService(repo);
-        var feeId = await service.AddFeeAsync(new SaveFeeDto(1, "Tuition", 1000m, DateTime.Today.AddDays(30)));
+        var feeId = await service.AddFeeAsync(new SaveFeeDto(1, "Tuition", 1000m, DateTime.Today.AddDays(30), 1));
         await service.RecordPaymentAsync(new RecordPaymentDto(feeId, 500m, DateTime.Today));
 
         await service.DeleteFeeAsync(feeId);
