@@ -17,4 +17,21 @@ public interface IAttendanceService
         int studentId,
         string academicYear,
         CancellationToken cancellationToken = default);
+
+    Task<StudentAttendanceSummaryDto?> GetStudentAttendanceSummaryAsync(
+        int studentId,
+        int academicYearId,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<StudentAttendanceSummaryDto>> GetClassAttendanceSummaryAsync(
+        int classId,
+        int academicYearId,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<MonthlyAttendanceRowDto>> GetMonthlyAttendanceReportAsync(
+        int classId,
+        int year,
+        int month,
+        int academicYearId,
+        CancellationToken cancellationToken = default);
 }
