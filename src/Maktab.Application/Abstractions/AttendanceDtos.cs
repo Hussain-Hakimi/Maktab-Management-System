@@ -5,7 +5,8 @@ namespace Maktab.Application.Abstractions;
 public sealed record SaveAttendanceDto(
     int StudentId,
     DateTime Date,
-    AttendanceStatus Status);
+    AttendanceStatus Status,
+    int AcademicYearId);
 
 public sealed class StudentAttendanceDto
 {
