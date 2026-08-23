@@ -8,16 +8,19 @@ namespace Maktab.App.Wpf.Views;
 public partial class AcademicYearView : UserControl
 {
     private readonly IAcademicYearService _academicYearService;
+    private readonly IPromotionService _promotionService;
     private readonly IAuditService _auditService;
     private readonly ICurrentUserService _currentUserService;
     private readonly ObservableCollection<AcademicYearDto> _years = [];
 
     public AcademicYearView(
         IAcademicYearService academicYearService,
+        IPromotionService promotionService,
         IAuditService auditService,
         ICurrentUserService currentUserService)
     {
         _academicYearService = academicYearService;
+        _promotionService = promotionService;
         _auditService = auditService;
         _currentUserService = currentUserService;
 
@@ -105,6 +108,41 @@ public partial class AcademicYearView : UserControl
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+    }
+
+    private async void RunPromotionButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && button.Tag is int yearId)
+        {
+            var confirm = MessageBox.Show(
+                "آیا از اجرای عملیات ارتقاء برای این سال تعلیمی اطمینان دارید؟\nاین عملیات غیرقابل بازگشت است.",
+                "تأیید اجرای ارتقاء",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (confirm != MessageBoxResult.Yes)
+                return;
+
+            try
+            {
+                var result = await _promotionService.RunPromotionForYearAsync(yearId);
+                await LogAuditAsync($"اجرای ارتقاء برای سال {yearId}: {result.PromotedCount} ارتقاء، {result.ConditionalCount} مشروط، {result.RepeatCount} تکرار");
+                MessageBox.Show(
+                    $"نتایج ارتقاء:\n" +
+                    $"کل شاگردان: {result.TotalStudents}\n" +
+                    $"ارتقاء یافته: {result.PromotedCount}\n" +
+                    $"مشروط: {result.ConditionalCount}\n" +
+                    $"تکرار صنف: {result.RepeatCount}\n" +
+                    (result.Errors.Count > 0 ? $"\nخطاها:\n{string.Join("\n", result.Errors)}" : ""),
+                    "نتیجه ارتقاء",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }
