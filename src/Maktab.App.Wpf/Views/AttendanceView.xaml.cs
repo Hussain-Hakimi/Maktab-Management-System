@@ -16,16 +16,25 @@ public partial class AttendanceView : UserControl
 
     private readonly IAttendanceService _attendanceService;
     private readonly IClassSubjectService _classSubjectService;
+    private readonly IAcademicYearService _academicYearService;
+    private readonly IAuditService _auditService;
+    private readonly ICurrentUserService _currentUserService;
 
     private readonly ObservableCollection<EditableAttendanceRowItem> _attendanceRows = [];
     private readonly List<SchoolClass> _classes = [];
 
     public AttendanceView(
         IAttendanceService attendanceService,
-        IClassSubjectService classSubjectService)
+        IClassSubjectService classSubjectService,
+        IAcademicYearService academicYearService,
+        IAuditService auditService,
+        ICurrentUserService currentUserService)
     {
         _attendanceService = attendanceService;
         _classSubjectService = classSubjectService;
+        _academicYearService = academicYearService;
+        _auditService = auditService;
+        _currentUserService = currentUserService;
 
         InitializeComponent();
 
@@ -144,19 +153,41 @@ public partial class AttendanceView : UserControl
 
         try
         {
+            // Get active academic year
+            var activeYear = await _academicYearService.GetActiveAcademicYearAsync();
+            if (activeYear is null)
+            {
+                MessageBox.Show("سال تعلیمی فعال تعیین نشده است.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             var dtos = _attendanceRows.Select(r => new SaveAttendanceDto(
                 StudentId: r.StudentId,
                 Date: date,
-                Status: r.Status
+                Status: r.Status,
+                AcademicYearId: activeYear.AcademicYearId
             )).ToList();
 
             await _attendanceService.SaveAttendanceBatchAsync(dtos);
-
+            await LogAuditAsync($"ثبت حاضری برای {_attendanceRows.Count} شاگرد");
             SaveStatusTextBlock.Text = $"✅ حاضری تمام شاگردان برای {date:yyyy/MM/dd} با موفقیت ذخیره شد.";
         }
         catch (Exception ex)
         {
             MessageBox.Show($"خطا در ذخیره حاضری:\n{ex.Message}", "خطا در ذخیره", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private async Task LogAuditAsync(string action)
+    {
+        try
+        {
+            var userName = _currentUserService.CurrentUser?.Username ?? "Unknown";
+            await _auditService.LogAsync(userName, action);
+        }
+        catch
+        {
+            // Audit logging should not break attendance saving
         }
     }
 }

@@ -5,8 +5,7 @@ using Maktab.Domain.Enums;
 
 namespace Maktab.Infrastructure.Persistence;
 
-public sealed class SqliteAttendanceRepository(
-    IConnectionStringProvider connectionStringProvider) : IAttendanceRepository
+public sealed class SqliteAttendanceRepository(IConnectionStringProvider connectionStringProvider) : IAttendanceRepository
 {
     public async Task<IReadOnlyList<AttendanceRecord>> GetByClassAndDateAsync(
         int classId,
@@ -14,7 +13,7 @@ public sealed class SqliteAttendanceRepository(
         CancellationToken cancellationToken = default)
     {
         const string sql = @"
-SELECT a.AttendanceID, a.StudentID, a.AttendanceDate, a.Status
+SELECT a.AttendanceID, a.StudentID, a.AttendanceDate, a.Status, a.AcademicYearId
 FROM tbl_Attendance a
 INNER JOIN tbl_Students s ON a.StudentID = s.StudentID
 WHERE s.ClassID = $classId AND a.AttendanceDate = $date;";
@@ -36,7 +35,8 @@ WHERE s.ClassID = $classId AND a.AttendanceDate = $date;";
                 AttendanceId = reader.GetInt32(0),
                 StudentId = reader.GetInt32(1),
                 Date = DateTime.Parse(reader.GetString(2)),
-                Status = ParseStatus(reader.GetString(3))
+                Status = ParseStatus(reader.GetString(3)),
+                AcademicYearId = reader.GetInt32(4)
             });
         }
 
@@ -50,7 +50,7 @@ WHERE s.ClassID = $classId AND a.AttendanceDate = $date;";
         CancellationToken cancellationToken = default)
     {
         const string sql = @"
-SELECT AttendanceID, StudentID, AttendanceDate, Status
+SELECT AttendanceID, StudentID, AttendanceDate, Status, AcademicYearId
 FROM tbl_Attendance
 WHERE StudentID = $studentId
   AND AttendanceDate BETWEEN $startDate AND $endDate
@@ -74,7 +74,8 @@ ORDER BY AttendanceDate;";
                 AttendanceId = reader.GetInt32(0),
                 StudentId = reader.GetInt32(1),
                 Date = DateTime.Parse(reader.GetString(2)),
-                Status = ParseStatus(reader.GetString(3))
+                Status = ParseStatus(reader.GetString(3)),
+                AcademicYearId = reader.GetInt32(4)
             });
         }
 
@@ -86,10 +87,11 @@ ORDER BY AttendanceDate;";
         CancellationToken cancellationToken = default)
     {
         const string upsertSql = @"
-INSERT INTO tbl_Attendance (StudentID, AttendanceDate, Status)
-VALUES ($studentId, $date, $status)
+INSERT INTO tbl_Attendance (StudentID, AttendanceDate, Status, AcademicYearId)
+VALUES ($studentId, $date, $status, $academicYearId)
 ON CONFLICT(StudentID, AttendanceDate) DO UPDATE SET
-    Status = excluded.Status;";
+    Status = excluded.Status,
+    AcademicYearId = excluded.AcademicYearId;";
 
         await using var connection = new SqliteConnection(connectionStringProvider.GetConnectionString());
         await connection.OpenAsync(cancellationToken);
@@ -105,6 +107,7 @@ ON CONFLICT(StudentID, AttendanceDate) DO UPDATE SET
                 command.Parameters.AddWithValue("$studentId", record.StudentId);
                 command.Parameters.AddWithValue("$date", record.Date.ToString("yyyy-MM-dd"));
                 command.Parameters.AddWithValue("$status", record.Status.ToString());
+                command.Parameters.AddWithValue("$academicYearId", record.AcademicYearId);
 
                 await command.ExecuteNonQueryAsync(cancellationToken);
             }
@@ -142,6 +145,103 @@ WHERE StudentID = $studentId
 
         var result = await command.ExecuteScalarAsync(cancellationToken);
         return Convert.ToInt32(result);
+    }
+
+    public async Task<int> GetAbsenceDaysByStudentAndYearAsync(
+        int studentId,
+        int academicYearId,
+        CancellationToken cancellationToken = default)
+    {
+        const string sql = @"
+SELECT COUNT(*)
+FROM tbl_Attendance
+WHERE StudentID = $studentId
+  AND Status = 'Absent'
+  AND AcademicYearId = $academicYearId;";
+
+        await using var connection = new SqliteConnection(connectionStringProvider.GetConnectionString());
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.AddWithValue("$studentId", studentId);
+        command.Parameters.AddWithValue("$academicYearId", academicYearId);
+
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return Convert.ToInt32(result);
+    }
+
+    public async Task<IReadOnlyList<AttendanceRecord>> GetByStudentAndYearAsync(
+        int studentId,
+        int academicYearId,
+        CancellationToken cancellationToken = default)
+    {
+        const string sql = @"
+SELECT AttendanceID, StudentID, AttendanceDate, Status, AcademicYearId
+FROM tbl_Attendance
+WHERE StudentID = $studentId AND AcademicYearId = $academicYearId
+ORDER BY AttendanceDate;";
+
+        await using var connection = new SqliteConnection(connectionStringProvider.GetConnectionString());
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.AddWithValue("$studentId", studentId);
+        command.Parameters.AddWithValue("$academicYearId", academicYearId);
+
+        var result = new List<AttendanceRecord>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            result.Add(new AttendanceRecord
+            {
+                AttendanceId = reader.GetInt32(0),
+                StudentId = reader.GetInt32(1),
+                Date = DateTime.Parse(reader.GetString(2)),
+                Status = ParseStatus(reader.GetString(3)),
+                AcademicYearId = reader.GetInt32(4)
+            });
+        }
+
+        return result;
+    }
+
+    public async Task<IReadOnlyList<AttendanceRecord>> GetByClassAndYearAsync(
+        int classId,
+        int academicYearId,
+        CancellationToken cancellationToken = default)
+    {
+        const string sql = @"
+SELECT a.AttendanceID, a.StudentID, a.AttendanceDate, a.Status, a.AcademicYearId
+FROM tbl_Attendance a
+INNER JOIN tbl_Students s ON a.StudentID = s.StudentID
+WHERE s.ClassID = $classId AND a.AcademicYearId = $academicYearId
+ORDER BY a.AttendanceDate;";
+
+        await using var connection = new SqliteConnection(connectionStringProvider.GetConnectionString());
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.AddWithValue("$classId", classId);
+        command.Parameters.AddWithValue("$academicYearId", academicYearId);
+
+        var result = new List<AttendanceRecord>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            result.Add(new AttendanceRecord
+            {
+                AttendanceId = reader.GetInt32(0),
+                StudentId = reader.GetInt32(1),
+                Date = DateTime.Parse(reader.GetString(2)),
+                Status = ParseStatus(reader.GetString(3)),
+                AcademicYearId = reader.GetInt32(4)
+            });
+        }
+
+        return result;
     }
 
     private static AttendanceStatus ParseStatus(string status) => status switch

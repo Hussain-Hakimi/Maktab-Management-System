@@ -26,7 +26,8 @@ public class SqliteRepositoryIntegrationTests : IDisposable
             Data: Path.Combine(_tempDir, "Data"),
             Logs: Path.Combine(_tempDir, "Logs"),
             Backups: Path.Combine(_tempDir, "Backups"),
-            Reports: Path.Combine(_tempDir, "Reports"));
+            Reports: Path.Combine(_tempDir, "Reports"),
+            Logos: Path.Combine(_tempDir, "Logos"));
 
         DirectoryBootstrapper.EnsureFoldersExist(_folders);
 

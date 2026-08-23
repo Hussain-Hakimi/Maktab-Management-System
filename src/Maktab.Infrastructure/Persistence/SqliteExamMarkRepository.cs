@@ -13,7 +13,7 @@ public sealed class SqliteExamMarkRepository(IConnectionStringProvider connectio
         CancellationToken cancellationToken = default)
     {
         const string sql = @"
-SELECT m.StudentID, m.SubjectID, m.MidtermScore, m.FinalScore
+SELECT m.StudentID, m.SubjectID, m.MidtermScore, m.FinalScore, m.AcademicYearId
 FROM tbl_ExamMarks m
 INNER JOIN tbl_Students s ON m.StudentID = s.StudentID
 WHERE s.ClassID = $classId AND m.SubjectID = $subjectId;";
@@ -35,7 +35,46 @@ WHERE s.ClassID = $classId AND m.SubjectID = $subjectId;";
                 StudentId = reader.GetInt32(0),
                 SubjectId = reader.GetInt32(1),
                 MidtermScore = Convert.ToDecimal(reader.GetDouble(2)),
-                FinalScore = Convert.ToDecimal(reader.GetDouble(3))
+                FinalScore = Convert.ToDecimal(reader.GetDouble(3)),
+                AcademicYearId = reader.GetInt32(4)
+            });
+        }
+
+        return result;
+    }
+
+    public async Task<IReadOnlyList<ExamMark>> GetMarksByClassSubjectAndYearAsync(
+        int classId,
+        int subjectId,
+        int academicYearId,
+        CancellationToken cancellationToken = default)
+    {
+        const string sql = @"
+SELECT m.StudentID, m.SubjectID, m.MidtermScore, m.FinalScore, m.AcademicYearId
+FROM tbl_ExamMarks m
+INNER JOIN tbl_Students s ON m.StudentID = s.StudentID
+WHERE s.ClassID = $classId AND m.SubjectID = $subjectId AND m.AcademicYearId = $academicYearId;";
+
+        await using var connection = new SqliteConnection(connectionStringProvider.GetConnectionString());
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.AddWithValue("$classId", classId);
+        command.Parameters.AddWithValue("$subjectId", subjectId);
+        command.Parameters.AddWithValue("$academicYearId", academicYearId);
+
+        var result = new List<ExamMark>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            result.Add(new ExamMark
+            {
+                StudentId = reader.GetInt32(0),
+                SubjectId = reader.GetInt32(1),
+                MidtermScore = Convert.ToDecimal(reader.GetDouble(2)),
+                FinalScore = Convert.ToDecimal(reader.GetDouble(3)),
+                AcademicYearId = reader.GetInt32(4)
             });
         }
 
@@ -47,7 +86,7 @@ WHERE s.ClassID = $classId AND m.SubjectID = $subjectId;";
         CancellationToken cancellationToken = default)
     {
         const string sql = @"
-SELECT StudentID, SubjectID, MidtermScore, FinalScore
+SELECT StudentID, SubjectID, MidtermScore, FinalScore, AcademicYearId
 FROM tbl_ExamMarks
 WHERE StudentID = $studentId;";
 
@@ -67,7 +106,43 @@ WHERE StudentID = $studentId;";
                 StudentId = reader.GetInt32(0),
                 SubjectId = reader.GetInt32(1),
                 MidtermScore = Convert.ToDecimal(reader.GetDouble(2)),
-                FinalScore = Convert.ToDecimal(reader.GetDouble(3))
+                FinalScore = Convert.ToDecimal(reader.GetDouble(3)),
+                AcademicYearId = reader.GetInt32(4)
+            });
+        }
+
+        return result;
+    }
+
+    public async Task<IReadOnlyList<ExamMark>> GetMarksByStudentAndYearAsync(
+        int studentId,
+        int academicYearId,
+        CancellationToken cancellationToken = default)
+    {
+        const string sql = @"
+SELECT StudentID, SubjectID, MidtermScore, FinalScore, AcademicYearId
+FROM tbl_ExamMarks
+WHERE StudentID = $studentId AND AcademicYearId = $academicYearId;";
+
+        await using var connection = new SqliteConnection(connectionStringProvider.GetConnectionString());
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.AddWithValue("$studentId", studentId);
+        command.Parameters.AddWithValue("$academicYearId", academicYearId);
+
+        var result = new List<ExamMark>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            result.Add(new ExamMark
+            {
+                StudentId = reader.GetInt32(0),
+                SubjectId = reader.GetInt32(1),
+                MidtermScore = Convert.ToDecimal(reader.GetDouble(2)),
+                FinalScore = Convert.ToDecimal(reader.GetDouble(3)),
+                AcademicYearId = reader.GetInt32(4)
             });
         }
 
@@ -79,7 +154,7 @@ WHERE StudentID = $studentId;";
         CancellationToken cancellationToken = default)
     {
         const string sql = @"
-SELECT m.StudentID, m.SubjectID, m.MidtermScore, m.FinalScore
+SELECT m.StudentID, m.SubjectID, m.MidtermScore, m.FinalScore, m.AcademicYearId
 FROM tbl_ExamMarks m
 INNER JOIN tbl_Students s ON m.StudentID = s.StudentID
 WHERE s.ClassID = $classId;";
@@ -100,7 +175,8 @@ WHERE s.ClassID = $classId;";
                 StudentId = reader.GetInt32(0),
                 SubjectId = reader.GetInt32(1),
                 MidtermScore = Convert.ToDecimal(reader.GetDouble(2)),
-                FinalScore = Convert.ToDecimal(reader.GetDouble(3))
+                FinalScore = Convert.ToDecimal(reader.GetDouble(3)),
+                AcademicYearId = reader.GetInt32(4)
             });
         }
 
@@ -117,12 +193,13 @@ WHERE s.ClassID = $classId;";
         CancellationToken cancellationToken = default)
     {
         const string upsertSql = @"
-INSERT INTO tbl_ExamMarks (StudentID, SubjectID, MidtermScore, FinalScore, TotalScore)
-VALUES ($studentId, $subjectId, $midtermScore, $finalScore, $totalScore)
+INSERT INTO tbl_ExamMarks (StudentID, SubjectID, MidtermScore, FinalScore, TotalScore, AcademicYearId)
+VALUES ($studentId, $subjectId, $midtermScore, $finalScore, $totalScore, $academicYearId)
 ON CONFLICT(StudentID, SubjectID) DO UPDATE SET
     MidtermScore = excluded.MidtermScore,
     FinalScore = excluded.FinalScore,
-    TotalScore = excluded.TotalScore;";
+    TotalScore = excluded.TotalScore,
+    AcademicYearId = excluded.AcademicYearId;";
 
         await using var connection = new SqliteConnection(connectionStringProvider.GetConnectionString());
         await connection.OpenAsync(cancellationToken);
@@ -142,6 +219,7 @@ ON CONFLICT(StudentID, SubjectID) DO UPDATE SET
                 command.Parameters.AddWithValue("$midtermScore", (double)mark.MidtermScore);
                 command.Parameters.AddWithValue("$finalScore", (double)mark.FinalScore);
                 command.Parameters.AddWithValue("$totalScore", (double)total);
+                command.Parameters.AddWithValue("$academicYearId", mark.AcademicYearId);
 
                 await command.ExecuteNonQueryAsync(cancellationToken);
             }

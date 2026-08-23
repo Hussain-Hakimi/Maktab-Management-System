@@ -10,15 +10,26 @@ public partial class FeesView : UserControl
 {
     private readonly IFeeService _feeService;
     private readonly IStudentService _studentService;
+    private readonly IAcademicYearService _academicYearService;
+    private readonly IAuditService _auditService;
+    private readonly ICurrentUserService _currentUserService;
 
     private readonly ObservableCollection<FeeDto> _fees = [];
     private readonly ObservableCollection<FeePaymentDto> _payments = [];
     private readonly List<Student> _students = [];
 
-    public FeesView(IFeeService feeService, IStudentService studentService)
+    public FeesView(
+        IFeeService feeService,
+        IStudentService studentService,
+        IAcademicYearService academicYearService,
+        IAuditService auditService,
+        ICurrentUserService currentUserService)
     {
         _feeService = feeService;
         _studentService = studentService;
+        _academicYearService = academicYearService;
+        _auditService = auditService;
+        _currentUserService = currentUserService;
 
         InitializeComponent();
 
@@ -132,7 +143,21 @@ public partial class FeesView : UserControl
 
         try
         {
-            await _feeService.AddFeeAsync(new SaveFeeDto(studentId, FeeTypeTextBox.Text.Trim(), amount, dueDate));
+            var activeYear = await _academicYearService.GetActiveAcademicYearAsync();
+            if (activeYear is null)
+            {
+                MessageBox.Show("سال تعلیمی فعال تعیین نشده است.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            await _feeService.AddFeeAsync(new SaveFeeDto(
+                StudentId: studentId,
+                FeeType: FeeTypeTextBox.Text.Trim(),
+                Amount: amount,
+                DueDate: dueDate,
+                AcademicYearId: activeYear.AcademicYearId));
+
+            await LogAuditAsync($"ثبت فیس برای شاگرد آیدی {studentId}");
             await LoadFeesAsync();
             ClearFeeForm();
             MessageBox.Show("فیس با موفقیت ثبت شد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -157,6 +182,7 @@ public partial class FeesView : UserControl
         try
         {
             await _feeService.DeleteFeeAsync(selected.FeeId);
+            await LogAuditAsync($"حذف فیس شماره {selected.FeeId}");
             await LoadFeesAsync();
             await LoadPaymentsAsync();
             MessageBox.Show("فیس حذف شد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -192,6 +218,7 @@ public partial class FeesView : UserControl
         try
         {
             await _feeService.RecordPaymentAsync(new RecordPaymentDto(feeId, amount, paymentDate));
+            await LogAuditAsync($"ثبت پرداخت برای فیس شماره {feeId}");
             await LoadFeesAsync();
             await LoadPaymentsAsync();
             ClearPaymentForm();
@@ -226,6 +253,19 @@ public partial class FeesView : UserControl
     private async void RefreshPaymentsButton_Click(object sender, RoutedEventArgs e)
     {
         await LoadPaymentsAsync();
+    }
+
+    private async Task LogAuditAsync(string action)
+    {
+        try
+        {
+            var userName = _currentUserService.CurrentUser?.Username ?? "Unknown";
+            await _auditService.LogAsync(userName, action);
+        }
+        catch
+        {
+            // Audit logging should not break fee operations
+        }
     }
 }
 

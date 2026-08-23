@@ -6,7 +6,8 @@ public sealed record SaveExamMarkDto(
     int StudentId,
     int SubjectId,
     decimal MidtermScore,
-    decimal FinalScore);
+    decimal FinalScore,
+    int AcademicYearId);
 
 public sealed class StudentExamMarkDto
 {

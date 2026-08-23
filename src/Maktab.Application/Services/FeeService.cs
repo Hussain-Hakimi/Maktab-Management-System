@@ -14,6 +14,7 @@ public sealed class FeeService(IFeeRepository repository) : IFeeService
         if (string.IsNullOrWhiteSpace(fee.FeeType)) throw new ArgumentException("Fee type is required.");
         if (fee.Amount <= 0m) throw new ArgumentOutOfRangeException(nameof(fee.Amount), "Amount must be greater than zero.");
         if (fee.DueDate == default) throw new ArgumentException("Due date is required.");
+        if (fee.AcademicYearId <= 0) throw new ArgumentOutOfRangeException(nameof(fee.AcademicYearId));
 
         var entity = new Fee
         {
@@ -21,7 +22,8 @@ public sealed class FeeService(IFeeRepository repository) : IFeeService
             FeeType = fee.FeeType.Trim(),
             Amount = fee.Amount,
             DueDate = fee.DueDate.Date,
-            CreatedDate = DateTime.Now
+            CreatedDate = DateTime.Now,
+            AcademicYearId = fee.AcademicYearId
         };
 
         return await repository.CreateFeeAsync(entity, cancellationToken);
@@ -53,9 +55,7 @@ public sealed class FeeService(IFeeRepository repository) : IFeeService
         var outstanding = fee.Amount - totalPaid;
 
         if (payment.Amount > outstanding)
-        {
             throw new InvalidOperationException($"Payment amount exceeds outstanding balance ({outstanding}).");
-        }
 
         var entity = new FeePayment
         {

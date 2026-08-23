@@ -59,7 +59,6 @@ public sealed class UserService(IUserRepository repository, IAppLogger logger) :
         if (existingUser is null)
             throw new InvalidOperationException("User not found.");
 
-        // If username changed, check uniqueness
         if (!string.Equals(existingUser.Username, user.Username.Trim(), StringComparison.OrdinalIgnoreCase))
         {
             var conflict = await repository.GetByUsernameAsync(user.Username.Trim(), cancellationToken);
@@ -88,6 +87,24 @@ public sealed class UserService(IUserRepository repository, IAppLogger logger) :
         if (userId <= 0) throw new ArgumentOutOfRangeException(nameof(userId));
         await repository.DeleteAsync(userId, cancellationToken);
         logger.LogInfo($"User ID {userId} deleted.");
+    }
+
+    public async Task ChangePasswordAsync(int userId, string oldPassword, string newPassword, CancellationToken cancellationToken = default)
+    {
+        if (userId <= 0) throw new ArgumentOutOfRangeException(nameof(userId));
+        if (string.IsNullOrWhiteSpace(oldPassword)) throw new ArgumentException("Old password is required.", nameof(oldPassword));
+        if (string.IsNullOrWhiteSpace(newPassword)) throw new ArgumentException("New password is required.", nameof(newPassword));
+
+        var user = await repository.GetByIdAsync(userId, cancellationToken);
+        if (user is null)
+            throw new InvalidOperationException("User not found.");
+
+        if (!PasswordHasher.VerifyPassword(oldPassword, user.PasswordHash))
+            throw new InvalidOperationException("Old password is incorrect.");
+
+        user.PasswordHash = PasswordHasher.HashPassword(newPassword);
+        await repository.UpdateAsync(user, cancellationToken);
+        logger.LogInfo($"User '{user.Username}' changed password.");
     }
 
     private static void ValidateUser(SaveUserDto user, bool isUpdate = false)

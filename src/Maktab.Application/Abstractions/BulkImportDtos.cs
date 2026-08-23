@@ -1,0 +1,18 @@
+namespace Maktab.Application.Abstractions;
+
+public sealed class BulkImportResultDto
+{
+    public int TotalRows { get; set; }
+    public int SuccessCount { get; set; }
+    public int FailureCount => TotalRows - SuccessCount;
+    public List<string> Errors { get; set; } = [];
+}
+
+public sealed class BulkImportStudentRowDto
+{
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string FatherName { get; set; } = string.Empty;
+    public string RollNumber { get; set; } = string.Empty;
+    public string ClassName { get; set; } = string.Empty;
+}

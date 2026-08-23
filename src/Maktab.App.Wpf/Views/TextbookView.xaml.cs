@@ -14,6 +14,8 @@ public partial class TextbookView : UserControl
     private readonly ITextbookService _textbookService;
     private readonly IClassSubjectService _classSubjectService;
     private readonly IStudentService _studentService;
+    private readonly IAuditService _auditService;
+    private readonly ICurrentUserService _currentUserService;
 
     private readonly ObservableCollection<TextbookDto> _textbooks = [];
     private readonly ObservableCollection<TextbookIssueDto> _issues = [];
@@ -23,11 +25,15 @@ public partial class TextbookView : UserControl
     public TextbookView(
         ITextbookService textbookService,
         IClassSubjectService classSubjectService,
-        IStudentService studentService)
+        IStudentService studentService,
+        IAuditService auditService,
+        ICurrentUserService currentUserService)
     {
         _textbookService = textbookService;
         _classSubjectService = classSubjectService;
         _studentService = studentService;
+        _auditService = auditService;
+        _currentUserService = currentUserService;
 
         InitializeComponent();
 
@@ -151,6 +157,7 @@ public partial class TextbookView : UserControl
         try
         {
             await _textbookService.AddTextbookAsync(textbookDto);
+            await LogAuditAsync($"افزودن کتاب درسی '{textbookDto.Title}'");
             await LoadTextbooksAsync();
             ClearTextbookForm();
             MessageBox.Show("کتاب درسی با موفقیت اضافه شد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -175,6 +182,7 @@ public partial class TextbookView : UserControl
         try
         {
             await _textbookService.UpdateTextbookAsync(selected.TextbookId, textbookDto);
+            await LogAuditAsync($"ویرایش کتاب درسی '{textbookDto.Title}'");
             await LoadTextbooksAsync();
             ClearTextbookForm();
             MessageBox.Show("کتاب درسی ویرایش شد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -200,6 +208,7 @@ public partial class TextbookView : UserControl
         try
         {
             await _textbookService.DeleteTextbookAsync(selected.TextbookId);
+            await LogAuditAsync($"حذف کتاب درسی '{selected.Title}'");
             await LoadTextbooksAsync();
             ClearTextbookForm();
             MessageBox.Show("کتاب درسی حذف شد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -232,6 +241,7 @@ public partial class TextbookView : UserControl
         try
         {
             await _textbookService.IssueTextbookAsync(new IssueTextbookDto(textbookId, studentId));
+            await LogAuditAsync($"امانت کتاب درسی با آیدی {textbookId} به شاگرد آیدی {studentId}");
             await LoadTextbooksAsync();
             await LoadIssuesAsync();
             MessageBox.Show("کتاب درسی با موفقیت امانت داده شد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -249,6 +259,7 @@ public partial class TextbookView : UserControl
             try
             {
                 await _textbookService.ReturnTextbookAsync(new ReturnTextbookDto(issueId));
+                await LogAuditAsync($"بازگشت کتاب درسی با شماره امانت {issueId}");
                 await LoadTextbooksAsync();
                 await LoadIssuesAsync();
                 MessageBox.Show("کتاب درسی با موفقیت بازگشت داده شد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -291,6 +302,19 @@ public partial class TextbookView : UserControl
             TotalCopies: totalCopies);
 
         return true;
+    }
+
+    private async Task LogAuditAsync(string action)
+    {
+        try
+        {
+            var userName = _currentUserService.CurrentUser?.Username ?? "Unknown";
+            await _auditService.LogAsync(userName, action);
+        }
+        catch
+        {
+            // Audit logging should not break textbook operations
+        }
     }
 }
 

@@ -28,6 +28,9 @@ public class ExamMarkServiceTests
             return Task.FromResult<IReadOnlyList<ExamMark>>(_marks.ToList());
         }
 
+        public Task<IReadOnlyList<ExamMark>> GetMarksByClassSubjectAndYearAsync(int classId, int subjectId, int academicYearId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<IReadOnlyList<ExamMark>> GetMarksByStudentAndYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+
         public Task SaveOrUpdateMarkAsync(ExamMark mark, CancellationToken cancellationToken = default)
         {
             return SaveOrUpdateMarksBatchAsync([mark], cancellationToken);
@@ -128,7 +131,7 @@ public class ExamMarkServiceTests
 
         var marks = new List<SaveExamMarkDto>
         {
-            new(StudentId: 1, SubjectId: 1, MidtermScore: 45m, FinalScore: 50m)
+            new(StudentId: 1, SubjectId: 1, MidtermScore: 45m, FinalScore: 50m, AcademicYearId: 1)
         };
 
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () =>
@@ -145,7 +148,7 @@ public class ExamMarkServiceTests
 
         var marks = new List<SaveExamMarkDto>
         {
-            new(StudentId: 1, SubjectId: 1, MidtermScore: 35m, FinalScore: 65m)
+            new(StudentId: 1, SubjectId: 1, MidtermScore: 35m, FinalScore: 65m, AcademicYearId: 1)
         };
 
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () =>
@@ -162,8 +165,8 @@ public class ExamMarkServiceTests
 
         var marks = new List<SaveExamMarkDto>
         {
-            new(StudentId: 1, SubjectId: 1, MidtermScore: 30m, FinalScore: 45m),
-            new(StudentId: 2, SubjectId: 1, MidtermScore: 20m, FinalScore: 35m)
+            new(StudentId: 1, SubjectId: 1, MidtermScore: 30m, FinalScore: 45m, AcademicYearId: 1),
+            new(StudentId: 2, SubjectId: 1, MidtermScore: 20m, FinalScore: 35m, AcademicYearId: 1)
         };
 
         await service.SaveMarksBatchAsync(marks);

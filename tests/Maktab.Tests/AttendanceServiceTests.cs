@@ -48,6 +48,10 @@ public class AttendanceServiceTests
             return Task.FromResult(count);
         }
 
+        public Task<int> GetAbsenceDaysByStudentAndYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<IReadOnlyList<AttendanceRecord>> GetByStudentAndYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<IReadOnlyList<AttendanceRecord>> GetByClassAndYearAsync(int classId, int academicYearId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+
         private readonly Dictionary<int, int> _studentsClassMap = new()
         {
             { 1, 1 },
@@ -96,7 +100,7 @@ public class AttendanceServiceTests
         var date = new DateTime(2025, 5, 10);
         await service.SaveAttendanceBatchAsync(new[]
         {
-            new SaveAttendanceDto(1, date, AttendanceStatus.Absent)
+            new SaveAttendanceDto(1, date, AttendanceStatus.Absent, 1)
         });
 
         var result = await service.GetClassAttendanceForDateAsync(1, date);
@@ -122,9 +126,9 @@ public class AttendanceServiceTests
 
         await service.SaveAttendanceBatchAsync(new[]
         {
-            new SaveAttendanceDto(1, date1, AttendanceStatus.Absent),
-            new SaveAttendanceDto(1, date2, AttendanceStatus.Absent),
-            new SaveAttendanceDto(1, date3, AttendanceStatus.Present)
+            new SaveAttendanceDto(1, date1, AttendanceStatus.Absent, 1),
+            new SaveAttendanceDto(1, date2, AttendanceStatus.Absent, 1),
+            new SaveAttendanceDto(1, date3, AttendanceStatus.Present, 1)
         });
 
         var absenceDays = await service.GetStudentAbsenceDaysAsync(1, "۱۴۰۳ - ۱۴۰۴");

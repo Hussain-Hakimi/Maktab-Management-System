@@ -18,6 +18,38 @@ CREATE TABLE IF NOT EXISTS tbl_Users (
     FullName TEXT NOT NULL,
     Role TEXT NOT NULL CHECK (Role IN ('Admin', 'Teacher', 'Librarian', 'Accountant')),
     IsActive INTEGER NOT NULL CHECK (IsActive IN (0, 1))
+);"),
+            new(3, @"
+CREATE TABLE IF NOT EXISTS tbl_Settings (
+    SettingID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Key TEXT NOT NULL UNIQUE,
+    Value TEXT NOT NULL
+);"),
+            new(4, @"
+CREATE TABLE IF NOT EXISTS tbl_AcademicYears (
+    AcademicYearID INTEGER PRIMARY KEY AUTOINCREMENT,
+    YearName TEXT NOT NULL UNIQUE,
+    StartDate TEXT NOT NULL,
+    EndDate TEXT NOT NULL,
+    IsActive INTEGER NOT NULL CHECK (IsActive IN (0, 1))
+);
+ALTER TABLE tbl_ExamMarks ADD COLUMN AcademicYearId INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE tbl_Attendance ADD COLUMN AcademicYearId INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE tbl_Fees ADD COLUMN AcademicYearId INTEGER NOT NULL DEFAULT 0;
+"),
+            new(5, @"
+CREATE TABLE IF NOT EXISTS tbl_StudentPromotionHistory (
+    PromotionID INTEGER PRIMARY KEY AUTOINCREMENT,
+    StudentID INTEGER NOT NULL,
+    FromClassID INTEGER NOT NULL,
+    ToClassID INTEGER,
+    AcademicYearID INTEGER NOT NULL,
+    Result TEXT NOT NULL,
+    PromotionDate TEXT NOT NULL,
+    FOREIGN KEY (StudentID) REFERENCES tbl_Students(StudentID) ON DELETE CASCADE,
+    FOREIGN KEY (FromClassID) REFERENCES tbl_Classes(ClassID) ON DELETE RESTRICT,
+    FOREIGN KEY (ToClassID) REFERENCES tbl_Classes(ClassID) ON DELETE RESTRICT,
+    FOREIGN KEY (AcademicYearID) REFERENCES tbl_AcademicYears(AcademicYearID) ON DELETE RESTRICT
 );
 ")
         };

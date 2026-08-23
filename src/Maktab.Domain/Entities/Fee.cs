@@ -8,4 +8,5 @@ public sealed class Fee
     public decimal Amount { get; set; }
     public DateTime DueDate { get; set; }
     public DateTime CreatedDate { get; set; }
+    public int AcademicYearId { get; set; }
 }

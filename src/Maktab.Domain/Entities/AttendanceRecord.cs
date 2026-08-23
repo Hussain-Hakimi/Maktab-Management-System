@@ -8,4 +8,5 @@ public sealed class AttendanceRecord
     public int StudentId { get; set; }
     public DateTime Date { get; set; }
     public AttendanceStatus Status { get; set; }
+    public int AcademicYearId { get; set; }
 }

@@ -14,17 +14,23 @@ public partial class BackupSettingsView : UserControl
     private readonly IBackupService _backupService;
     private readonly IAppLogger _logger;
     private readonly AppFolders _appFolders;
+    private readonly IAuditService _auditService;
+    private readonly ICurrentUserService _currentUserService;
 
     private readonly ObservableCollection<BackupInfoDto> _backups = [];
 
     public BackupSettingsView(
         IBackupService backupService,
         IAppLogger logger,
-        AppFolders appFolders)
+        AppFolders appFolders,
+        IAuditService auditService,
+        ICurrentUserService currentUserService)
     {
         _backupService = backupService;
         _logger = logger;
         _appFolders = appFolders;
+        _auditService = auditService;
+        _currentUserService = currentUserService;
 
         InitializeComponent();
 
@@ -80,6 +86,7 @@ public partial class BackupSettingsView : UserControl
         try
         {
             var path = await _backupService.CreateBackupAsync();
+            await LogAuditAsync("تهیه نسخه پشتیبان دستی");
             StatusTextBlock.Text = $"✅ نسخه پشتیبان جدید ایجاد شد: {Path.GetFileName(path)} ({DateTime.Now:HH:mm:ss})";
             await RefreshBackupsAsync();
             await RefreshLogsAsync();
@@ -142,6 +149,7 @@ public partial class BackupSettingsView : UserControl
         try
         {
             await _backupService.RestoreBackupAsync(filePath);
+            await LogAuditAsync($"بازیابی دیتابیس از فایل {Path.GetFileName(filePath)}");
             StatusTextBlock.Text = $"✅ دیتابیس با موفقیت از «{Path.GetFileName(filePath)}» بازیابی شد. لطفاً برنامه را مجدداً بارگذاری کنید.";
             await RefreshBackupsAsync();
             await RefreshLogsAsync();
@@ -175,5 +183,18 @@ public partial class BackupSettingsView : UserControl
     private async void RefreshLogsButton_Click(object sender, RoutedEventArgs e)
     {
         await RefreshLogsAsync();
+    }
+
+    private async Task LogAuditAsync(string action)
+    {
+        try
+        {
+            var userName = _currentUserService.CurrentUser?.Username ?? "Unknown";
+            await _auditService.LogAsync(userName, action);
+        }
+        catch
+        {
+            // Audit logging should not break backup operations
+        }
     }
 }
