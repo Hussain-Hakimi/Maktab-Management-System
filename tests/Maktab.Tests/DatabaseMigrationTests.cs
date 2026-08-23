@@ -17,7 +17,8 @@ public class DatabaseMigrationTests : IDisposable
             Data: Path.Combine(_tempDir, "Data"),
             Logs: Path.Combine(_tempDir, "Logs"),
             Backups: Path.Combine(_tempDir, "Backups"),
-            Reports: Path.Combine(_tempDir, "Reports"));
+            Reports: Path.Combine(_tempDir, "Reports"),
+            Logos: Path.Combine(_tempDir, "Logos"));
 
         DirectoryBootstrapper.EnsureFoldersExist(_folders);
         _connectionStringProvider = new ConnectionStringProvider(_folders);
@@ -38,18 +39,19 @@ public class DatabaseMigrationTests : IDisposable
         await using var connection = new SqliteConnection(_connectionStringProvider.GetConnectionString());
         await connection.OpenAsync();
 
-        // Verify user_version is at least 1 (baseline)
+        // Verify user_version is at least 3 (baseline + two migrations)
         await using (var cmd = connection.CreateCommand())
         {
             cmd.CommandText = "PRAGMA user_version;";
             var version = Convert.ToInt32(await cmd.ExecuteScalarAsync());
-            Assert.True(version >= 1);
+            Assert.True(version >= 3);
         }
 
-        // Verify all V1.1 tables exist
+        // Verify all V1.2 tables exist
         var tables = new[] { "tbl_Classes", "tbl_Subjects", "tbl_Students", "tbl_ExamMarks",
                              "tbl_Attendance", "tbl_Books", "tbl_BookIssues",
-                             "tbl_Textbooks", "tbl_TextbookIssues", "tbl_Fees", "tbl_FeePayments" };
+                             "tbl_Textbooks", "tbl_TextbookIssues", "tbl_Fees", "tbl_FeePayments",
+                             "tbl_Users", "tbl_Settings" };
         foreach (var table in tables)
         {
             await using var cmd = connection.CreateCommand();
@@ -64,7 +66,7 @@ public class DatabaseMigrationTests : IDisposable
     {
         var initializer = new SqliteDatabaseInitializer(_connectionStringProvider);
         await initializer.InitializeAsync();
-        await initializer.InitializeAsync(); // second call should be idempotent
+        await initializer.InitializeAsync();
 
         await using var connection = new SqliteConnection(_connectionStringProvider.GetConnectionString());
         await connection.OpenAsync();
