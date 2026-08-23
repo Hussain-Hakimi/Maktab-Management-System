@@ -22,6 +22,7 @@ public static class DependencyInjection
         services.AddSingleton<ISettingService, SettingService>();
         services.AddSingleton<IBulkImportService, BulkImportService>();
         services.AddSingleton<ISchoolSettingsService, SchoolSettingsService>();
+        services.AddSingleton<IAcademicYearService, AcademicYearService>();
         return services;
     }
 }
