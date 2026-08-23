@@ -53,24 +53,29 @@ public partial class DashboardView : UserControl
             var classes = await _classSubjectService.GetClassesAsync();
             TotalClassesTextBlock.Text = classes.Count.ToString();
 
-            // Today's attendance
+            // Today's attendance (with absence rate)
             try
             {
                 var today = DateTime.Today;
-                // We need to count attendance for all classes, but we can simply sum if we iterate classes.
-                // For simplicity, we show overall count from all classes.
                 int totalStudents = students.Count;
                 int presentCount = 0;
+                int absentCount = 0;
+
                 foreach (var cls in classes)
                 {
                     var attendance = await _attendanceService.GetClassAttendanceForDateAsync(cls.ClassId, today);
                     presentCount += attendance.Count(a => a.Status == AttendanceStatus.Present);
+                    absentCount += attendance.Count(a => a.Status == AttendanceStatus.Absent);
                 }
+
                 TodayAttendanceTextBlock.Text = $"{presentCount}/{totalStudents}";
+                decimal absenceRate = totalStudents > 0 ? Math.Round((decimal)absentCount / totalStudents * 100, 2) : 0m;
+                TodayAbsenceRateTextBlock.Text = $"غیبت: {absenceRate}%";
             }
             catch
             {
                 TodayAttendanceTextBlock.Text = "نامشخص";
+                TodayAbsenceRateTextBlock.Text = "غیبت: نامشخص";
             }
 
             // Outstanding fees
