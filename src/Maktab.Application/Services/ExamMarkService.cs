@@ -109,21 +109,18 @@ public sealed class ExamMarkService(
             if (m.SubjectId <= 0) throw new ArgumentOutOfRangeException(nameof(m.SubjectId));
 
             if (m.MidtermScore < 0m || m.MidtermScore > GradingPolicy.MidtermMax)
-            {
                 throw new ArgumentOutOfRangeException(nameof(m.MidtermScore), $"نمره صنفی/چهارونیم‌ماهه باید بین ۰ و {GradingPolicy.MidtermMax} باشد.");
-            }
 
             if (m.FinalScore < 0m || m.FinalScore > GradingPolicy.FinalMax)
-            {
                 throw new ArgumentOutOfRangeException(nameof(m.FinalScore), $"نمره سالانه باید بین ۰ و {GradingPolicy.FinalMax} باشد.");
-            }
 
             domainMarks.Add(new ExamMark
             {
                 StudentId = m.StudentId,
                 SubjectId = m.SubjectId,
                 MidtermScore = m.MidtermScore,
-                FinalScore = m.FinalScore
+                FinalScore = m.FinalScore,
+                AcademicYearId = m.AcademicYearId
             });
         }
 
