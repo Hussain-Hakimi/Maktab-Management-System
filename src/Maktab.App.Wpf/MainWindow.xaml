@@ -107,6 +107,7 @@
                     <ListBoxItem Content="📥 ورود اطلاعات دسته‌جمعی (Admin)" />
                     <ListBoxItem Content="📋 گزارش وقایع (Admin)" />
                     <ListBoxItem Content="🏫 تنظیمات عمومی (Admin)" />
+                    <ListBoxItem Content="📅 سال‌های تعلیمی (Admin)" />
                 </ListBox>
             </Border>
 
