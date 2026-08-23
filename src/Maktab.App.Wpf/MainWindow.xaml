@@ -61,7 +61,7 @@
                     <TextBlock Text="📘" FontSize="24" VerticalAlignment="Center" Margin="0,0,8,0" />
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="سیستم مدیریت مکتب" FontSize="20" FontWeight="Bold" Foreground="White" />
-                        <TextBlock Text="Afghan School Management System — V1.2.0" FontSize="11" Foreground="#94A3B8" Margin="0,2,0,0" FlowDirection="LeftToRight" />
+                        <TextBlock Text="Afghan School Management System — V1.3.0" FontSize="11" Foreground="#94A3B8" Margin="0,2,0,0" FlowDirection="LeftToRight" />
                     </StackPanel>
                 </StackPanel>
 
@@ -125,7 +125,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <TextBlock x:Name="StatusBarText" Text="آماده" FontSize="12" Foreground="#94A3B8" VerticalAlignment="Center" />
-                <TextBlock Grid.Column="1" Text="نسخه ۱.۲.۰ — ساخته‌شده با ❤️ برای مکاتب افغانستان" FontSize="11" Foreground="#64748B" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="نسخه ۱.۳.۰ — ساخته‌شده با ❤️ برای مکاتب افغانستان" FontSize="11" Foreground="#64748B" VerticalAlignment="Center" />
             </Grid>
         </Border>
     </Grid>
