@@ -27,7 +27,7 @@ public sealed class ReportService(
 
         foreach (var subject in subjects)
         {
-            var marks = await examMarkRepository.GetMarksByClassAndSubjectAsync(classId, subject.SubjectId, cancellationToken);
+            var marks = await examMarkRepository.GetMarksByClassSubjectAndYearAsync(classId, subject.SubjectId, academicYearId, cancellationToken);
             var scores = marks.Select(m => GradingPolicy.CalculateTotal(m.MidtermScore, m.FinalScore)).ToList();
             decimal avg = scores.Count > 0 ? scores.Average() : 0m;
             int pass = scores.Count(s => s >= GradingPolicy.PassingMark);
@@ -116,7 +116,7 @@ public sealed class ReportService(
 
     public async Task<IReadOnlyList<MarkExportRowDto>> GetMarkExportDataAsync(int classId, int subjectId, int academicYearId, CancellationToken cancellationToken = default)
     {
-        var marks = await examMarkRepository.GetMarksByClassAndSubjectAsync(classId, subjectId, cancellationToken);
+        var marks = await examMarkRepository.GetMarksByClassSubjectAndYearAsync(classId, subjectId, academicYearId, cancellationToken);
         var students = await studentRepository.GetStudentsByClassAsync(classId, cancellationToken);
         var subjectName = (await classSubjectRepository.GetSubjectsByClassAsync(classId, cancellationToken)).FirstOrDefault(s => s.SubjectId == subjectId)?.SubjectName ?? "مضمون";
         var studentDict = students.ToDictionary(s => s.StudentId);
@@ -174,7 +174,7 @@ public sealed class ReportService(
         var fees = await feeRepository.GetFeesAsync(cancellationToken);
         var result = new List<FeeExportRowDto>();
 
-        foreach (var fee in fees.Where(f => students.Any(s => s.StudentId == f.StudentId)))
+        foreach (var fee in fees.Where(f => f.AcademicYearId == academicYearId && students.Any(s => s.StudentId == f.StudentId)))
         {
             result.Add(new FeeExportRowDto
             {
