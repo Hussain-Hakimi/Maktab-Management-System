@@ -36,7 +36,9 @@ public partial class MainWindow : Window
     private readonly BulkImportView _bulkImportView;
     private readonly AuditLogView _auditLogView;
     private readonly SchoolSettingsView _schoolSettingsView;
+    private readonly AcademicYearView _academicYearView;
 
+    // Allowed roles per sidebar item index (matching order in XAML)
     private static readonly UserRole[][] SidebarItemRoles =
     [
         [UserRole.Admin, UserRole.Teacher, UserRole.Librarian, UserRole.Accountant], // Dashboard
@@ -53,7 +55,8 @@ public partial class MainWindow : Window
         [UserRole.Admin],                                                             // Promotion Settings
         [UserRole.Admin],                                                             // Bulk Import
         [UserRole.Admin],                                                             // Audit Logs
-        [UserRole.Admin]                                                              // School Settings
+        [UserRole.Admin],                                                             // School Settings
+        [UserRole.Admin]                                                              // Academic Years
     ];
 
     public MainWindow(
@@ -72,6 +75,7 @@ public partial class MainWindow : Window
         BulkImportView bulkImportView,
         AuditLogView auditLogView,
         SchoolSettingsView schoolSettingsView,
+        AcademicYearView academicYearView,
         IUserService userService,
         IAuditService auditService,
         ICurrentUserService currentUserService)
@@ -94,6 +98,7 @@ public partial class MainWindow : Window
         _bulkImportView = bulkImportView;
         _auditLogView = auditLogView;
         _schoolSettingsView = schoolSettingsView;
+        _academicYearView = academicYearView;
 
         _userService = userService;
         _auditService = auditService;
@@ -202,6 +207,7 @@ public partial class MainWindow : Window
             case 12: _navigationService.Navigate(_bulkImportView); break;
             case 13: _navigationService.Navigate(_auditLogView); break;
             case 14: _navigationService.Navigate(_schoolSettingsView); break;
+            case 15: _navigationService.Navigate(_academicYearView); break;
         }
     }
 }
