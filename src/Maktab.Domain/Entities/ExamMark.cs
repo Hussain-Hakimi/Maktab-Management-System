@@ -6,4 +6,5 @@ public sealed class ExamMark
     public int SubjectId { get; set; }
     public decimal MidtermScore { get; set; }
     public decimal FinalScore { get; set; }
+    public int AcademicYearId { get; set; }
 }
