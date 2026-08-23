@@ -10,6 +10,7 @@ public partial class FeesView : UserControl
 {
     private readonly IFeeService _feeService;
     private readonly IStudentService _studentService;
+    private readonly IAcademicYearService _academicYearService;
     private readonly IAuditService _auditService;
     private readonly ICurrentUserService _currentUserService;
 
@@ -20,11 +21,13 @@ public partial class FeesView : UserControl
     public FeesView(
         IFeeService feeService,
         IStudentService studentService,
+        IAcademicYearService academicYearService,
         IAuditService auditService,
         ICurrentUserService currentUserService)
     {
         _feeService = feeService;
         _studentService = studentService;
+        _academicYearService = academicYearService;
         _auditService = auditService;
         _currentUserService = currentUserService;
 
@@ -140,7 +143,20 @@ public partial class FeesView : UserControl
 
         try
         {
-            await _feeService.AddFeeAsync(new SaveFeeDto(studentId, FeeTypeTextBox.Text.Trim(), amount, dueDate));
+            var activeYear = await _academicYearService.GetActiveAcademicYearAsync();
+            if (activeYear is null)
+            {
+                MessageBox.Show("سال تعلیمی فعال تعیین نشده است.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            await _feeService.AddFeeAsync(new SaveFeeDto(
+                StudentId: studentId,
+                FeeType: FeeTypeTextBox.Text.Trim(),
+                Amount: amount,
+                DueDate: dueDate,
+                AcademicYearId: activeYear.AcademicYearId));
+
             await LogAuditAsync($"ثبت فیس برای شاگرد آیدی {studentId}");
             await LoadFeesAsync();
             ClearFeeForm();
