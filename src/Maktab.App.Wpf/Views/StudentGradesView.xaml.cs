@@ -97,8 +97,9 @@ public partial class StudentGradesView : UserControl
     private readonly IClassSubjectService _classSubjectService;
     private readonly IAcademicYearService _academicYearService;
     private readonly IExamMarkService _examMarkService;
-    private readonly IAuditService _auditService;
+    private readonly ITeacherAssignmentService _teacherAssignmentService;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IAuditService _auditService;
 
     private readonly ObservableCollection<StudentGradeRowItem> _rows = [];
     private List<Student> _students = [];
@@ -108,15 +109,17 @@ public partial class StudentGradesView : UserControl
         IClassSubjectService classSubjectService,
         IAcademicYearService academicYearService,
         IExamMarkService examMarkService,
-        IAuditService auditService,
-        ICurrentUserService currentUserService)
+        ITeacherAssignmentService teacherAssignmentService,
+        ICurrentUserService currentUserService,
+        IAuditService auditService)
     {
         _studentService = studentService;
         _classSubjectService = classSubjectService;
         _academicYearService = academicYearService;
         _examMarkService = examMarkService;
-        _auditService = auditService;
+        _teacherAssignmentService = teacherAssignmentService;
         _currentUserService = currentUserService;
+        _auditService = auditService;
 
         InitializeComponent();
         GradesDataGrid.ItemsSource = _rows;
@@ -133,9 +136,29 @@ public partial class StudentGradesView : UserControl
     {
         try
         {
-            var classes = await _classSubjectService.GetClassesAsync();
-            ClassComboBox.ItemsSource = classes;
-            if (classes.Count > 0) ClassComboBox.SelectedIndex = 0;
+            var allClasses = await _classSubjectService.GetClassesAsync();
+            var currentUser = _currentUserService.CurrentUser;
+
+            if (currentUser?.Role == Domain.Enums.UserRole.Admin)
+            {
+                ClassComboBox.ItemsSource = allClasses;
+            }
+            else if (currentUser is not null)
+            {
+                var assignments = await _teacherAssignmentService.GetMyTeacherSubjectsAsync(currentUser.UserId);
+                var guardianships = await _teacherAssignmentService.GetClassGuardiansAsync(currentUser.UserId);
+                var allowedClassIds = assignments.Select(a => a.ClassId)
+                    .Union(guardianships.Select(g => g.ClassId))
+                    .ToHashSet();
+                ClassComboBox.ItemsSource = allClasses.Where(c => allowedClassIds.Contains(c.ClassId)).ToList();
+            }
+            else
+            {
+                ClassComboBox.ItemsSource = null;
+            }
+
+            if (ClassComboBox.Items.Count > 0)
+                ClassComboBox.SelectedIndex = 0;
         }
         catch (Exception ex)
         {
@@ -207,6 +230,25 @@ public partial class StudentGradesView : UserControl
         try
         {
             var marks = await _examMarkService.GetStudentMarksForYearAsync(studentId, yearId);
+
+            var currentUser = _currentUserService.CurrentUser;
+            if (currentUser?.Role == Domain.Enums.UserRole.Teacher)
+            {
+                int classId = (int)ClassComboBox.SelectedValue;
+                var assignments = await _teacherAssignmentService.GetMyTeacherSubjectsAsync(currentUser.UserId);
+                var assignedSubjectIds = assignments
+                    .Where(a => a.ClassId == classId)
+                    .Select(a => a.SubjectId)
+                    .ToHashSet();
+
+                // Filter marks to show only assigned subjects, but if guardian show all
+                bool isGuardian = await _teacherAssignmentService.IsClassGuardianAsync(currentUser.UserId, classId);
+                if (!isGuardian)
+                {
+                    marks = marks.Where(m => assignedSubjectIds.Contains(m.SubjectId)).ToList();
+                }
+            }
+
             _rows.Clear();
             foreach (var m in marks)
             {
@@ -277,6 +319,25 @@ public partial class StudentGradesView : UserControl
 
         try
         {
+            // Permission check
+            var currentUser = _currentUserService.CurrentUser;
+            if (currentUser?.Role == Domain.Enums.UserRole.Teacher)
+            {
+                int classId = (int)ClassComboBox.SelectedValue;
+                var assignments = await _teacherAssignmentService.GetMyTeacherSubjectsAsync(currentUser.UserId);
+                var assignedSubjectIds = assignments.Where(a => a.ClassId == classId).Select(a => a.SubjectId).ToHashSet();
+                bool isGuardian = await _teacherAssignmentService.IsClassGuardianAsync(currentUser.UserId, classId);
+
+                foreach (var row in _rows)
+                {
+                    if (!assignedSubjectIds.Contains(row.SubjectId) && !isGuardian)
+                    {
+                        MessageBox.Show("شما اجازه ویرایش نمرات این مضمون را ندارید.", "دسترسی محدود", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+                }
+            }
+
             var dtos = _rows.Select(r => new SaveExamMarkDto(
                 StudentId: studentId,
                 SubjectId: r.SubjectId,
