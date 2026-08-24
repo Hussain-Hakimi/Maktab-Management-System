@@ -66,6 +66,35 @@ ORDER BY SubjectName;";
         return result;
     }
 
+    public async Task<IReadOnlyList<Subject>> GetAllSubjectsAsync(CancellationToken cancellationToken = default)
+    {
+        const string sql = @"
+SELECT SubjectID, SubjectName, ClassID
+FROM tbl_Subjects
+ORDER BY SubjectName;";
+
+        await using var connection = new SqliteConnection(connectionStringProvider.GetConnectionString());
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+
+        var result = new List<Subject>();
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            result.Add(new Subject
+            {
+                SubjectId = reader.GetInt32(0),
+                SubjectName = reader.GetString(1),
+                ClassId = reader.GetInt32(2)
+            });
+        }
+
+        return result;
+    }
+
     public async Task<int> CreateClassAsync(SchoolClass schoolClass, CancellationToken cancellationToken = default)
     {
         const string sql = @"
