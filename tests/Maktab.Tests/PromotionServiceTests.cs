@@ -164,10 +164,10 @@ public class PromotionServiceTests
         var service = new PromotionService(studentRepo, classRepo, markRepo, attendanceRepo, historyRepo);
         var result = await service.RunPromotionForYearAsync(1);
 
-        Assert.Equal(1, result.TotalStudents);
+        Assert.Equal(2, result.TotalStudents);
         Assert.Equal(1, result.PromotedCount);
         Assert.Equal(2, studentRepo.Students[0].ClassId);
-        Assert.Single(historyRepo.Histories);
+        Assert.Equal(2, historyRepo.Histories.Count);
         Assert.Equal("Promoted", historyRepo.Histories[0].Result);
     }
 

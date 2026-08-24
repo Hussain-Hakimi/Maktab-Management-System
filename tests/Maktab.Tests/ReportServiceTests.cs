@@ -142,7 +142,6 @@ public class ReportServiceTests
 
         Assert.Equal(2, result.TotalStudents);
         Assert.Equal(2, result.SubjectPerformances.Count);
-        Assert.Equal(77.5m, result.SubjectPerformances[0].AverageScore); // Math avg (85+50)/2 = 67.5? Wait 85+50=135/2=67.5
         // Actually Math scores: 85 and 50 => average 67.5
         Assert.Equal(67.5m, result.SubjectPerformances[0].AverageScore);
     }
