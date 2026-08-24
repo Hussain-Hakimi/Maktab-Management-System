@@ -54,6 +54,7 @@ public partial class App : System.Windows.Application
                     services.AddSingleton<PromotionHistoryView>();
                     services.AddSingleton<MainWindow>();
                     services.AddSingleton<TeacherAssignmentView>();
+                    services.AddSingleton<TeacherMySubjectsView>();
                 })
                 .Build();
 
