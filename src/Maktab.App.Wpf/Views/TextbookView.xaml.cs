@@ -46,6 +46,7 @@ public partial class TextbookView : UserControl
     {
         await LoadClassesAsync();
         await LoadStudentsAsync();
+        await LoadSubjectsAsync();
         await LoadTextbooksAsync();
         await LoadIssuesAsync();
     }
@@ -54,6 +55,7 @@ public partial class TextbookView : UserControl
     {
         await LoadClassesAsync();
         await LoadStudentsAsync();
+        await LoadSubjectsAsync();
         await LoadTextbooksAsync();
         await LoadIssuesAsync();
     }
@@ -89,6 +91,19 @@ public partial class TextbookView : UserControl
         catch (Exception ex)
         {
             MessageBox.Show($"خطا در دریافت شاگردان:\n{ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private async Task LoadSubjectsAsync()
+    {
+        try
+        {
+            var subjects = await _classSubjectService.GetAllSubjectsAsync();
+            SubjectNameComboBox.ItemsSource = subjects;
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"خطا در دریافت مضامین:\n{ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -136,7 +151,7 @@ public partial class TextbookView : UserControl
         if (selected is null) return;
 
         TextbookTitleTextBox.Text = selected.Title;
-        TextbookSubjectTextBox.Text = selected.Subject ?? string.Empty;
+        SubjectNameComboBox.SelectedValue = selected.Subject;
         TextbookClassComboBox.SelectedValue = selected.ClassId;
         TextbookTotalCopiesTextBox.Text = selected.TotalCopies.ToString();
     }
@@ -144,7 +159,7 @@ public partial class TextbookView : UserControl
     private void ClearTextbookForm()
     {
         TextbookTitleTextBox.Clear();
-        TextbookSubjectTextBox.Clear();
+        SubjectNameComboBox.SelectedIndex = -1;
         TextbookClassComboBox.SelectedIndex = -1;
         TextbookTotalCopiesTextBox.Clear();
         TextbooksDataGrid.SelectedItem = null;
@@ -287,6 +302,13 @@ public partial class TextbookView : UserControl
             return false;
         }
 
+        if (SubjectNameComboBox.SelectedValue is not string subjectName || string.IsNullOrWhiteSpace(subjectName))
+        {
+            MessageBox.Show("لطفاً مضمون را انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+            SubjectNameComboBox.Focus();
+            return false;
+        }
+
         if (!int.TryParse(TextbookTotalCopiesTextBox.Text, out var totalCopies) || totalCopies <= 0)
         {
             MessageBox.Show("تعداد کل نسخه‌ها باید یک عدد مثبت باشد.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -297,7 +319,7 @@ public partial class TextbookView : UserControl
         int? classId = TextbookClassComboBox.SelectedValue as int?;
         textbook = new SaveTextbookDto(
             Title: TextbookTitleTextBox.Text.Trim(),
-            Subject: string.IsNullOrWhiteSpace(TextbookSubjectTextBox.Text) ? null : TextbookSubjectTextBox.Text.Trim(),
+            Subject: subjectName,
             ClassId: classId,
             TotalCopies: totalCopies);
 
