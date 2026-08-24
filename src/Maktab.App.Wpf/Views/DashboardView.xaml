@@ -114,6 +114,18 @@
                         <lvc:CartesianChart x:Name="GradeChart" Grid.Row="1" Margin="0,8,0,0" />
                     </Grid>
                 </Border>
+
+                <!-- Attendance Trend Chart Card -->
+                <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,12,0,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="220" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="📈 روند حاضری (۷ روز اخیر)" FontSize="14" FontWeight="SemiBold" Foreground="#334155" />
+                        <lvc:CartesianChart x:Name="AttendanceTrendChart" Grid.Row="1" Margin="0,8,0,0" />
+                    </Grid>
+                </Border>
             </StackPanel>
         </ScrollViewer>
     </Grid>
