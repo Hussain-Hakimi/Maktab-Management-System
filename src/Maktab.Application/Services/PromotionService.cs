@@ -85,6 +85,14 @@ public sealed class PromotionService(
         return result;
     }
 
+    public Task<IReadOnlyList<PromotionHistoryDto>> GetPromotionHistoryAsync(
+        int? academicYearId = null,
+        int? studentId = null,
+        CancellationToken cancellationToken = default)
+    {
+        return historyRepository.GetHistoryAsync(academicYearId, studentId, cancellationToken);
+    }
+
     private async Task<PromotionOutcome> DeterminePromotionAsync(
         Student student,
         int classId,

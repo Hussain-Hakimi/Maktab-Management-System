@@ -27,6 +27,12 @@ public sealed class PreviewMarkItem
     public string IsPassText { get; set; } = string.Empty;
 }
 
+public sealed class TemplateItem
+{
+    public string Name { get; set; } = string.Empty;
+    public ReportCardTemplateType Value { get; set; }
+}
+
 public partial class ReportCardsView : UserControl
 {
     private readonly IReportCardService _reportCardService;
@@ -54,7 +60,20 @@ public partial class ReportCardsView : UserControl
 
         AcademicYearTextBox.Text = AcademicYearProvider.GetCurrentAcademicYear();
         PreviewMarksDataGrid.ItemsSource = _previewMarks;
+
+        LoadTemplateComboBox();
         Loaded += ReportCardsView_Loaded;
+    }
+
+    private void LoadTemplateComboBox()
+    {
+        TemplateComboBox.ItemsSource = new List<TemplateItem>
+        {
+            new() { Name = "ساده", Value = ReportCardTemplateType.Simple },
+            new() { Name = "استاندارد", Value = ReportCardTemplateType.Standard },
+            new() { Name = "تفصیلی", Value = ReportCardTemplateType.Detailed }
+        };
+        TemplateComboBox.SelectedIndex = 1; // Standard default
     }
 
     private async void ReportCardsView_Loaded(object sender, RoutedEventArgs e)
@@ -162,19 +181,19 @@ public partial class ReportCardsView : UserControl
             switch (data.PromotionOutcome)
             {
                 case PromotionOutcome.Promoted:
-                    PromotionBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(240, 253, 244)); // Green
+                    PromotionBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(240, 253, 244));
                     PromotionBadgeBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(34, 197, 94));
                     PromotionStatusTitleTextBlock.Text = "وضعیت ارتقاء: ✅ ارتقاء به صنف بالا (کامیاب)";
                     PromotionStatusTitleTextBlock.Foreground = new SolidColorBrush(Color.FromRgb(22, 163, 74));
                     break;
                 case PromotionOutcome.Conditional:
-                    PromotionBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(254, 252, 232)); // Yellow
+                    PromotionBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(254, 252, 232));
                     PromotionBadgeBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(234, 179, 8));
                     PromotionStatusTitleTextBlock.Text = "وضعیت ارتقاء: 🟡 مشروط (نیاز به بازنگری)";
                     PromotionStatusTitleTextBlock.Foreground = new SolidColorBrush(Color.FromRgb(202, 138, 4));
                     break;
-                default: // Repeat
-                    PromotionBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(254, 242, 242)); // Red
+                default:
+                    PromotionBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(254, 242, 242));
                     PromotionBadgeBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(239, 68, 68));
                     PromotionStatusTitleTextBlock.Text = "وضعیت ارتقاء: ❌ تکرار صنف (ناکام)";
                     PromotionStatusTitleTextBlock.Foreground = new SolidColorBrush(Color.FromRgb(220, 38, 38));
@@ -221,6 +240,11 @@ public partial class ReportCardsView : UserControl
         _previewMarks.Clear();
     }
 
+    private ReportCardTemplateType GetSelectedTemplate()
+    {
+        return (TemplateComboBox.SelectedItem as TemplateItem)?.Value ?? ReportCardTemplateType.Standard;
+    }
+
     private async void GenerateSinglePdfButton_Click(object sender, RoutedEventArgs e)
     {
         if (StudentComboBox.SelectedValue is not int studentId || studentId <= 0)
@@ -232,7 +256,8 @@ public partial class ReportCardsView : UserControl
         try
         {
             var year = GetAcademicYear();
-            var filePath = await _reportCardService.GenerateStudentReportCardPdfAsync(studentId, year, _appFolders.Reports);
+            var templateType = GetSelectedTemplate();
+            var filePath = await _reportCardService.GenerateStudentReportCardPdfAsync(studentId, year, _appFolders.Reports, templateType);
 
             _lastGeneratedPdfPath = filePath;
             OpenGeneratedPdfButton.IsEnabled = true;
@@ -267,7 +292,8 @@ public partial class ReportCardsView : UserControl
         try
         {
             var year = GetAcademicYear();
-            var paths = await _reportCardService.GenerateClassReportCardsPdfAsync(classId, year, _appFolders.Reports);
+            var templateType = GetSelectedTemplate();
+            var paths = await _reportCardService.GenerateClassReportCardsPdfAsync(classId, year, _appFolders.Reports, templateType);
 
             StatusTextBlock.Text = $"✅ تعداد {paths.Count} فایل کارنامه PDF برای این صنف صادر گردید.";
             MessageBox.Show($"تعداد {paths.Count} کارنامه PDF با موفقیت در پوشه Reports ایجاد گردید.", "صدور دسته‌جمعی موفق", MessageBoxButton.OK, MessageBoxImage.Information);

@@ -141,4 +141,25 @@ public sealed class SqliteBackupService(
         if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
         return $"{bytes / (1024.0 * 1024.0):F2} MB";
     }
+    public Task<DateTime?> GetLastBackupDateAsync(CancellationToken cancellationToken = default)
+{
+    if (!Directory.Exists(folders.Backups))
+        return Task.FromResult<DateTime?>(null);
+
+    var files = Directory.GetFiles(folders.Backups, "*.db");
+    if (files.Length == 0)
+        return Task.FromResult<DateTime?>(null);
+
+    var latest = files.Max(f => File.GetCreationTime(f));
+    return Task.FromResult<DateTime?>(latest);
+}
+
+public Task<IReadOnlyList<string>> GetRemovableDrivePathsAsync()
+{
+    return Task.FromResult<IReadOnlyList<string>>(
+        DriveInfo.GetDrives()
+            .Where(d => d.DriveType == DriveType.Removable && d.IsReady)
+            .Select(d => d.RootDirectory.FullName)
+            .ToList());
+}
 }

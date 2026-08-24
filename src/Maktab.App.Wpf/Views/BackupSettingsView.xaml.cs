@@ -99,6 +99,44 @@ public partial class BackupSettingsView : UserControl
         }
     }
 
+    private async void CopyBackupToUsbButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            // Get USB drives
+            var usbDrives = await _backupService.GetRemovableDrivePathsAsync();
+            if (usbDrives.Count == 0)
+            {
+                MessageBox.Show("هیچ فلش USB متصل و آماده‌ای شناسایی نشد.", "فلش یافت نشد", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Get latest backup
+            var backups = await _backupService.GetBackupsListAsync();
+            if (backups.Count == 0)
+            {
+                MessageBox.Show("هیچ نسخه پشتیبانی وجود ندارد. ابتدا یک نسخه پشتیبان تهیه کنید.", "بدون پشتیبان", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var latestBackup = backups[0];
+            var destinationDir = Path.Combine(usbDrives[0], "MaktabBackups");
+            Directory.CreateDirectory(destinationDir);
+            var destinationPath = Path.Combine(destinationDir, latestBackup.FileName);
+
+            File.Copy(latestBackup.FilePath, destinationPath, overwrite: true);
+
+            await LogAuditAsync($"کپی پشتیبان به فلش USB: {Path.GetFileName(destinationPath)}");
+            StatusTextBlock.Text = $"✅ نسخه پشتیبان به فلش USB کپی شد: {destinationPath}";
+
+            MessageBox.Show($"نسخه پشتیبان با موفقیت به فلش USB کپی شد.\nمسیر مقصد:\n{destinationPath}", "کپی موفق", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"خطا در کپی به فلش USB:\n{ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
     private async void RestoreSelectedButton_Click(object sender, RoutedEventArgs e)
     {
         if (BackupsDataGrid.SelectedItem is not BackupInfoDto selected)

@@ -131,7 +131,9 @@ public partial class StudentManagementView : UserControl
                 s.FirstName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
                 s.LastName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
                 s.FatherName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                s.RollNumber.Contains(search, StringComparison.OrdinalIgnoreCase));
+                s.RollNumber.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                s.StudentId.ToString().Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                s.ClassName.Contains(search, StringComparison.OrdinalIgnoreCase));
         }
 
         _displayedStudents.Clear();

@@ -1,3 +1,5 @@
+using Maktab.Domain.Enums;
+
 namespace Maktab.Application.Abstractions;
 
 public interface IReportCardService
@@ -16,11 +18,13 @@ public interface IReportCardService
         int studentId,
         string academicYear,
         string outputDirectory,
+        ReportCardTemplateType templateType,
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<string>> GenerateClassReportCardsPdfAsync(
         int classId,
         string academicYear,
         string outputDirectory,
+        ReportCardTemplateType templateType,
         CancellationToken cancellationToken = default);
 }

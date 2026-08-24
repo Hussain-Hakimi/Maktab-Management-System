@@ -62,7 +62,6 @@ public sealed class ReportCardService(
         var avgPercentage = totalMaxScore > 0 ? Math.Round((totalObtained / totalMaxScore) * 100m, 2) : 0m;
         var overallGrade = GradingPolicy.ResolveLetterGrade(avgPercentage);
 
-        // Get actual absence days for the given academic year
         var absenceDays = await attendanceService.GetStudentAbsenceDaysAsync(studentId, academicYear, cancellationToken);
 
         var outcome = PromotionPolicy.GetPromotionOutcome(avgPercentage, failedCount, absenceDays);
@@ -137,6 +136,7 @@ public sealed class ReportCardService(
         int studentId,
         string academicYear,
         string outputDirectory,
+        ReportCardTemplateType templateType,
         CancellationToken cancellationToken = default)
     {
         var data = await GetStudentReportCardDataAsync(studentId, academicYear, cancellationToken);
@@ -147,7 +147,7 @@ public sealed class ReportCardService(
         var fileName = $"{safeName}_{data.StudentId:D4}_{safeYear}.pdf";
         var filePath = Path.Combine(outputDirectory, fileName);
 
-        await pdfGenerator.GeneratePdfReportAsync(data, filePath, cancellationToken);
+        await pdfGenerator.GeneratePdfReportAsync(data, filePath, templateType, cancellationToken);
         return filePath;
     }
 
@@ -155,6 +155,7 @@ public sealed class ReportCardService(
         int classId,
         string academicYear,
         string outputDirectory,
+        ReportCardTemplateType templateType,
         CancellationToken cancellationToken = default)
     {
         var reports = await GetClassReportCardsDataAsync(classId, academicYear, cancellationToken);
@@ -168,7 +169,7 @@ public sealed class ReportCardService(
             var fileName = $"{safeName}_{data.StudentId:D4}_{safeYear}.pdf";
             var filePath = Path.Combine(outputDirectory, fileName);
 
-            await pdfGenerator.GeneratePdfReportAsync(data, filePath, cancellationToken);
+            await pdfGenerator.GeneratePdfReportAsync(data, filePath, templateType, cancellationToken);
             generatedPaths.Add(filePath);
         }
 
