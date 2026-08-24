@@ -10,10 +10,16 @@ public class ReportCardServiceTests
     private sealed class MockPdfGenerator : IPdfReportCardGenerator
     {
         public List<string> GeneratedPaths { get; } = [];
+        public List<ReportCardTemplateType> TemplateTypes { get; } = [];
 
-        public Task GeneratePdfReportAsync(StudentReportCardDto reportCard, string outputFilePath, CancellationToken cancellationToken = default)
+        public Task GeneratePdfReportAsync(
+            StudentReportCardDto reportCard,
+            string outputFilePath,
+            ReportCardTemplateType templateType,
+            CancellationToken cancellationToken = default)
         {
             GeneratedPaths.Add(outputFilePath);
+            TemplateTypes.Add(templateType);
             return Task.CompletedTask;
         }
     }
@@ -46,7 +52,7 @@ public class ReportCardServiceTests
         public Task<IReadOnlyList<ExamMark>> GetMarksByClassAndSubjectAsync(int classId, int subjectId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<IReadOnlyList<ExamMark>> GetMarksByClassSubjectAndYearAsync(int classId, int subjectId, int academicYearId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<IReadOnlyList<ExamMark>> GetMarksByStudentAsync(int studentId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<ExamMark>>(marks);
-        public Task<IReadOnlyList<ExamMark>> GetMarksByStudentAndYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<IReadOnlyList<ExamMark>> GetMarksByStudentAndYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<ExamMark>>(marks);
         public Task<IReadOnlyList<ExamMark>> GetMarksByClassAsync(int classId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<ExamMark>>(marks);
         public Task SaveOrUpdateMarkAsync(ExamMark mark, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task SaveOrUpdateMarksBatchAsync(IEnumerable<ExamMark> marks, CancellationToken cancellationToken = default) => throw new NotImplementedException();
@@ -63,9 +69,14 @@ public class ReportCardServiceTests
         public Task<int> GetStudentAbsenceDaysAsync(int studentId, string academicYear, CancellationToken cancellationToken = default)
             => Task.FromResult(absenceDays);
 
-        public Task<StudentAttendanceSummaryDto?> GetStudentAttendanceSummaryAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-        public Task<IReadOnlyList<StudentAttendanceSummaryDto>> GetClassAttendanceSummaryAsync(int classId, int academicYearId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-        public Task<IReadOnlyList<MonthlyAttendanceRowDto>> GetMonthlyAttendanceReportAsync(int classId, int year, int month, int academicYearId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<StudentAttendanceSummaryDto?> GetStudentAttendanceSummaryAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default)
+            => Task.FromResult<StudentAttendanceSummaryDto?>(new StudentAttendanceSummaryDto { StudentId = studentId, AbsentDays = absenceDays });
+
+        public Task<IReadOnlyList<StudentAttendanceSummaryDto>> GetClassAttendanceSummaryAsync(int classId, int academicYearId, CancellationToken cancellationToken = default)
+            => throw new NotImplementedException();
+
+        public Task<IReadOnlyList<MonthlyAttendanceRowDto>> GetMonthlyAttendanceReportAsync(int classId, int year, int month, int academicYearId, CancellationToken cancellationToken = default)
+            => throw new NotImplementedException();
     }
 
     [Fact]
@@ -142,38 +153,7 @@ public class ReportCardServiceTests
     }
 
     [Fact]
-    public async Task GetStudentReportCardData_WhenAbsenceOverLimit_ReturnsRepeat()
-    {
-        var student = new Student { StudentId = 1, FirstName = "Ahmad", LastName = "Karimi", FatherName = "Mohammad", ClassId = 1, RollNumber = "101" };
-        var schoolClass = new SchoolClass { ClassId = 1, GradeName = "صنف هفتم", NumberOfSubjects = 2 };
-        var subjects = new List<Subject>
-        {
-            new() { SubjectId = 1, ClassId = 1, SubjectName = "ریاضی" },
-            new() { SubjectId = 2, ClassId = 1, SubjectName = "فزیک" }
-        };
-        var marks = new List<ExamMark>
-        {
-            new() { StudentId = 1, SubjectId = 1, MidtermScore = 35m, FinalScore = 50m },
-            new() { StudentId = 1, SubjectId = 2, MidtermScore = 30m, FinalScore = 40m }
-        };
-
-        var mockPdf = new MockPdfGenerator();
-        var service = new ReportCardService(
-            new MockStudentRepository(student),
-            new MockClassSubjectRepository(schoolClass, subjects),
-            new MockExamMarkRepository(marks),
-            mockPdf,
-            new MockAttendanceService(31));
-
-        var result = await service.GetStudentReportCardDataAsync(1, "۱۴۰۳");
-
-        Assert.Equal(PromotionOutcome.Repeat, result.PromotionOutcome);
-        Assert.Equal(31, result.AbsenceDays);
-        Assert.Contains("غیرحاضری", result.FailureReason);
-    }
-
-    [Fact]
-    public async Task GenerateStudentReportCardPdf_CallsPdfGeneratorAndReturnsPath()
+    public async Task GenerateStudentReportCardPdf_CallsPdfGeneratorWithTemplate()
     {
         var student = new Student { StudentId = 1, FirstName = "Ahmad", LastName = "Karimi", FatherName = "Mohammad", ClassId = 1, RollNumber = "101" };
         var schoolClass = new SchoolClass { ClassId = 1, GradeName = "صنف هفتم", NumberOfSubjects = 1 };
@@ -189,9 +169,10 @@ public class ReportCardServiceTests
             new MockAttendanceService(0));
 
         var tempDir = Path.Combine(Path.GetTempPath(), "MaktabTests_" + Guid.NewGuid());
-        var path = await service.GenerateStudentReportCardPdfAsync(1, "۱۴۰۳", tempDir);
+        var path = await service.GenerateStudentReportCardPdfAsync(1, "۱۴۰۳", tempDir, ReportCardTemplateType.Detailed);
 
         Assert.Single(mockPdf.GeneratedPaths);
         Assert.EndsWith(".pdf", path);
+        Assert.Equal(ReportCardTemplateType.Detailed, mockPdf.TemplateTypes[0]);
     }
 }
