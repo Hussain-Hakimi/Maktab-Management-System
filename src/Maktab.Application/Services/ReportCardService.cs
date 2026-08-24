@@ -109,7 +109,8 @@ public sealed class ReportCardService(
             AbsenceDays = absenceDays,
             PromotionOutcome = outcome,
             PromotionStatusText = promoText,
-            FailureReason = failureReason
+            FailureReason = failureReason,
+            ReportType = ReportCardType.Annual // default; set explicitly in generation methods
         };
     }
 
@@ -136,18 +137,19 @@ public sealed class ReportCardService(
         int studentId,
         string academicYear,
         string outputDirectory,
-        ReportCardTemplateType templateType,
+        ReportCardType reportType = ReportCardType.Annual,
         CancellationToken cancellationToken = default)
     {
         var data = await GetStudentReportCardDataAsync(studentId, academicYear, cancellationToken);
+        data.ReportType = reportType;
         Directory.CreateDirectory(outputDirectory);
 
         var safeYear = data.AcademicYear.Replace(" ", "").Replace("-", "_").Replace("/", "_");
         var safeName = $"{data.FirstName}_{data.LastName}".Replace(" ", "_");
-        var fileName = $"{safeName}_{data.StudentId:D4}_{safeYear}.pdf";
+        var fileName = $"{safeName}_{data.StudentId:D4}_{safeYear}_{reportType}.pdf";
         var filePath = Path.Combine(outputDirectory, fileName);
 
-        await pdfGenerator.GeneratePdfReportAsync(data, filePath, templateType, cancellationToken);
+        await pdfGenerator.GeneratePdfReportAsync(data, filePath, reportType, cancellationToken);
         return filePath;
     }
 
@@ -155,7 +157,7 @@ public sealed class ReportCardService(
         int classId,
         string academicYear,
         string outputDirectory,
-        ReportCardTemplateType templateType,
+        ReportCardType reportType = ReportCardType.Annual,
         CancellationToken cancellationToken = default)
     {
         var reports = await GetClassReportCardsDataAsync(classId, academicYear, cancellationToken);
@@ -164,12 +166,13 @@ public sealed class ReportCardService(
         var generatedPaths = new List<string>();
         foreach (var data in reports)
         {
+            data.ReportType = reportType;
             var safeYear = data.AcademicYear.Replace(" ", "").Replace("-", "_").Replace("/", "_");
             var safeName = $"{data.FirstName}_{data.LastName}".Replace(" ", "_");
-            var fileName = $"{safeName}_{data.StudentId:D4}_{safeYear}.pdf";
+            var fileName = $"{safeName}_{data.StudentId:D4}_{safeYear}_{reportType}.pdf";
             var filePath = Path.Combine(outputDirectory, fileName);
 
-            await pdfGenerator.GeneratePdfReportAsync(data, filePath, templateType, cancellationToken);
+            await pdfGenerator.GeneratePdfReportAsync(data, filePath, reportType, cancellationToken);
             generatedPaths.Add(filePath);
         }
 
