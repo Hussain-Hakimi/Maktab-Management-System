@@ -261,6 +261,26 @@ Maktab-Management-System/
 | **1.0.1** | ✓ | Core MVP — classes, students, marks, grading, reports |
 
 ---
+### Version 1.6.0 — Role Assignment & Simplified Navigation
+
+Added:
+- Top main tabs with side sub-menus (simplified UI)
+- TeacherSubject and ClassGuardian assignment (Admin)
+- Database migration v6
+- Teacher assignment service/repository
+- UI for assigning teachers to subjects and designating class guardians
+
+---
+ ### Version 1.7.0 — Teacher Exam Workflow & Restricted Marks
+
+Added:
+- Exam entity and table (Midterm, Final)
+- Exam creation restricted to assigned teachers
+- Teacher sees only their assigned classes/subjects in mark entry
+- Class guardians can view all subjects in their class but edit only their own
+- “My Subjects” view for teachers
+- Database migration v7
+
 
 ## 🗺️ Roadmap
 
