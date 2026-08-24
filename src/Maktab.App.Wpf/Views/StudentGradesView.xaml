@@ -92,7 +92,7 @@
 
                 <TextBlock x:Name="SaveStatusTextBlock" VerticalAlignment="Center" FontWeight="Bold" FontSize="14" Foreground="#16A34A" Text="" />
 
-                <Button Grid.Column="1" Content="💾 ذخیره نمرات" Height="38" Padding="20,0" Background="#16A34A" Foreground="White" FontWeight="Bold" FontSize="14" Click="SaveButton_Click" />
+                <Button x:Name="SaveButton" Grid.Column="1" Content="💾 ذخیره نمرات" Height="38" Padding="20,0" Background="#16A34A" Foreground="White" FontWeight="Bold" FontSize="14" Click="SaveButton_Click" />
             </Grid>
         </Border>
     </Grid>

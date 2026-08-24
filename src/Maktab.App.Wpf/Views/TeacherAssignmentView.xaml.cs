@@ -16,7 +16,7 @@ public partial class TeacherAssignmentView : UserControl
 
     private readonly ObservableCollection<TeacherSubjectAssignmentDto> _teacherSubjects = [];
     private readonly ObservableCollection<ClassGuardianDto> _guardians = [];
-    private List<Maktab.Domain.Entities.User> _teachers = [];
+    private List<UserDto> _teachers = [];
 
     public TeacherAssignmentView(
         ITeacherAssignmentService assignmentService,
@@ -49,14 +49,7 @@ public partial class TeacherAssignmentView : UserControl
         try
         {
             var users = await _userService.GetAllUsersAsync();
-            _teachers = users.Where(u => u.Role == Domain.Enums.UserRole.Teacher).Select(u => new Domain.Entities.User
-            {
-                UserId = u.UserId,
-                FullName = u.FullName,
-                Username = u.Username,
-                Role = u.Role,
-                IsActive = u.IsActive
-            }).ToList();
+            _teachers = users.Where(u => u.Role == Domain.Enums.UserRole.Teacher).ToList();
 
             TeacherComboBox.ItemsSource = _teachers;
             GuardianTeacherComboBox.ItemsSource = _teachers;
