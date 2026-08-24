@@ -19,7 +19,6 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
         ReportCardTemplateType templateType,
         CancellationToken cancellationToken = default)
     {
-        // Note: The report type is passed via reportCard.ReportType
         var doc = Document.Create(container =>
         {
             container.Page(page =>
@@ -42,10 +41,45 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
     {
         container.Column(col =>
         {
-            col.Item().AlignCenter().Text(reportCard.ReportType == ReportCardType.Midterm
+            // Optional school logo
+            if (!string.IsNullOrWhiteSpace(reportCard.SchoolLogoPath) && File.Exists(reportCard.SchoolLogoPath))
+            {
+                var logoBytes = File.ReadAllBytes(reportCard.SchoolLogoPath);
+                col.Item().AlignCenter().MaxHeight(70).Image(logoBytes).FitHeight();
+            }
+
+            // Government title
+            col.Item().AlignCenter().Text(reportCard.GovernmentTitle)
+                .FontSize(12).Bold().FontColor(Colors.Black);
+
+            // Provincial education header
+            if (!string.IsNullOrWhiteSpace(reportCard.ProvincialEducationHeader))
+            {
+                col.Item().AlignCenter().Text(reportCard.ProvincialEducationHeader)
+                    .FontSize(11).FontColor(Colors.Grey.Darken2);
+            }
+
+            // District education header
+            if (!string.IsNullOrWhiteSpace(reportCard.DistrictEducationHeader))
+            {
+                col.Item().AlignCenter().Text(reportCard.DistrictEducationHeader)
+                    .FontSize(10).FontColor(Colors.Grey.Darken1);
+            }
+
+            // School name (optional but use class name as fallback)
+            var schoolName = reportCard.ClassName; // placeholder if not present
+            if (!string.IsNullOrWhiteSpace(schoolName))
+            {
+                col.Item().AlignCenter().Text(schoolName)
+                    .FontSize(13).Bold().FontColor(Colors.Black);
+            }
+
+            // Report card title
+            col.Item().PaddingTop(6).AlignCenter().Text(
+                reportCard.ReportType == ReportCardType.Midterm
                     ? "اطلاع‌نامه امتحانات چهارماهه"
                     : "اطلاع‌نامه نمرات سالانه شاگرد")
-                .FontSize(16).Bold();
+                .FontSize(16).Bold().FontColor(Colors.Blue.Darken3);
 
             col.Item().AlignCenter().Text($"سال تعلیمی: {reportCard.AcademicYear}").FontSize(10).FontColor(Colors.Grey.Darken1);
             col.Item().AlignCenter().Text($"تاریخ صدور: {reportCard.IssueDate}").FontSize(10).FontColor(Colors.Grey.Darken1);
@@ -83,10 +117,10 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
             {
                 table.ColumnsDefinition(columns =>
                 {
-                    columns.ConstantColumn(30);   // No
-                    columns.RelativeColumn(3);    // Subject
-                    columns.RelativeColumn(2);    // Midterm Score (40)
-                    columns.RelativeColumn(2);    // Percentage
+                    columns.ConstantColumn(30);
+                    columns.RelativeColumn(3);
+                    columns.RelativeColumn(2);
+                    columns.RelativeColumn(2);
                 });
 
                 table.Header(header =>
@@ -109,8 +143,6 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
                     idx++;
                 }
             });
-
-            // No promotion outcome block for midterm
         });
     }
 
@@ -122,12 +154,12 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
             {
                 table.ColumnsDefinition(columns =>
                 {
-                    columns.ConstantColumn(30);   // No
-                    columns.RelativeColumn(3);    // Subject
-                    columns.RelativeColumn(2);    // Midterm (40)
-                    columns.RelativeColumn(2);    // Final (60)
-                    columns.RelativeColumn(2);    // Total (100)
-                    columns.RelativeColumn(2);    // Pass/Fail
+                    columns.ConstantColumn(30);
+                    columns.RelativeColumn(3);
+                    columns.RelativeColumn(2);
+                    columns.RelativeColumn(2);
+                    columns.RelativeColumn(2);
+                    columns.RelativeColumn(2);
                 });
 
                 table.Header(header =>
