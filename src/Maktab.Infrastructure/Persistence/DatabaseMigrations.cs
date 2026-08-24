@@ -72,6 +72,21 @@ CREATE TABLE IF NOT EXISTS tbl_ClassGuardians (
     FOREIGN KEY (ClassID) REFERENCES tbl_Classes(ClassID) ON DELETE CASCADE,
     UNIQUE (TeacherUserID, ClassID)
 );
+"),
+            new(7, @"
+CREATE TABLE IF NOT EXISTS tbl_Exams (
+    ExamID INTEGER PRIMARY KEY AUTOINCREMENT,
+    SubjectID INTEGER NOT NULL,
+    ClassID INTEGER NOT NULL,
+    AcademicYearID INTEGER NOT NULL,
+    ExamType TEXT NOT NULL CHECK (ExamType IN ('Midterm', 'Final')),
+    ExamDate TEXT NOT NULL,
+    CreatedByTeacherUserID INTEGER NOT NULL,
+    FOREIGN KEY (SubjectID) REFERENCES tbl_Subjects(SubjectID) ON DELETE CASCADE,
+    FOREIGN KEY (ClassID) REFERENCES tbl_Classes(ClassID) ON DELETE CASCADE,
+    FOREIGN KEY (AcademicYearID) REFERENCES tbl_AcademicYears(AcademicYearID) ON DELETE CASCADE,
+    FOREIGN KEY (CreatedByTeacherUserID) REFERENCES tbl_Users(UserID) ON DELETE CASCADE
+);
 ")
         };
     }
