@@ -1,10 +1,10 @@
 <UserControl x:Class="Maktab.App.Wpf.Views.TextbookView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:Maktab.App.Wpf.Views"
-             mc:Ignorable="d" 
+             mc:Ignorable="d"
              d:DesignHeight="650" d:DesignWidth="1000"
              FlowDirection="RightToLeft">
     <UserControl.Resources>
@@ -16,7 +16,6 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Header -->
         <Border Grid.Row="0" Background="#B45309" Padding="14" CornerRadius="6" Margin="0,0,0,12">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="📦 مدیریت کتاب‌های درسی" FontSize="20" FontWeight="Bold" Foreground="White" />
@@ -24,9 +23,7 @@
             </StackPanel>
         </Border>
 
-        <!-- Main Tabs -->
         <TabControl Grid.Row="1" BorderThickness="0" Background="Transparent">
-            <!-- Textbooks Tab -->
             <TabItem Header="📖 کتاب‌های درسی">
                 <Grid Margin="0,10,0,0">
                     <Grid.ColumnDefinitions>
@@ -44,8 +41,12 @@
                                 <TextBlock Text="عنوان (Title) *" FontWeight="SemiBold" Margin="0,0,0,4" />
                                 <TextBox x:Name="TextbookTitleTextBox" Height="32" Margin="0,0,0,10" MaxLength="100" />
 
-                                <TextBlock Text="مضمون (Subject)" FontWeight="SemiBold" Margin="0,0,0,4" />
-                                <TextBox x:Name="TextbookSubjectTextBox" Height="32" Margin="0,0,0,10" MaxLength="50" />
+                                <TextBlock Text="مضمون (Subject) *" FontWeight="SemiBold" Margin="0,0,0,4" />
+                                <ComboBox x:Name="SubjectNameComboBox"
+                                          Height="32"
+                                          Margin="0,0,0,10"
+                                          DisplayMemberPath="SubjectName"
+                                          SelectedValuePath="SubjectName" />
 
                                 <TextBlock Text="صنف (Class) - اختیاری" FontWeight="SemiBold" Margin="0,0,0,4" />
                                 <ComboBox x:Name="TextbookClassComboBox" Height="32" Margin="0,0,0,10" DisplayMemberPath="GradeName" SelectedValuePath="ClassId" />
@@ -104,7 +105,6 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <!-- Issue Form -->
                     <Border Grid.Row="0" Background="#F0FDF4" BorderBrush="#BBF7D0" BorderThickness="1" Padding="10" CornerRadius="6" Margin="0,0,0,12">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -128,7 +128,6 @@
                         </Grid>
                     </Border>
 
-                    <!-- Issues DataGrid -->
                     <Border Grid.Row="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="8">
                         <Grid>
                             <Grid.RowDefinitions>
