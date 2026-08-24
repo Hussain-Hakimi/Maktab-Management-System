@@ -100,6 +100,7 @@ public partial class StudentGradesView : UserControl
     private readonly ITeacherAssignmentService _teacherAssignmentService;
     private readonly ICurrentUserService _currentUserService;
     private readonly IAuditService _auditService;
+    private readonly IFinalizationService _finalizationService;
 
     private readonly ObservableCollection<StudentGradeRowItem> _rows = [];
     private List<Student> _students = [];
@@ -111,7 +112,8 @@ public partial class StudentGradesView : UserControl
         IExamMarkService examMarkService,
         ITeacherAssignmentService teacherAssignmentService,
         ICurrentUserService currentUserService,
-        IAuditService auditService)
+        IAuditService auditService,
+        IFinalizationService finalizationService)
     {
         _studentService = studentService;
         _classSubjectService = classSubjectService;
@@ -120,6 +122,7 @@ public partial class StudentGradesView : UserControl
         _teacherAssignmentService = teacherAssignmentService;
         _currentUserService = currentUserService;
         _auditService = auditService;
+        _finalizationService = finalizationService;
 
         InitializeComponent();
         GradesDataGrid.ItemsSource = _rows;
@@ -241,7 +244,6 @@ public partial class StudentGradesView : UserControl
                     .Select(a => a.SubjectId)
                     .ToHashSet();
 
-                // Filter marks to show only assigned subjects, but if guardian show all
                 bool isGuardian = await _teacherAssignmentService.IsClassGuardianAsync(currentUser.UserId, classId);
                 if (!isGuardian)
                 {
@@ -263,7 +265,22 @@ public partial class StudentGradesView : UserControl
                 row.Recalculate();
                 _rows.Add(row);
             }
-            SaveStatusTextBlock.Text = string.Empty;
+
+            // Check finalization
+            if (ClassComboBox.SelectedValue is int classIdFinal && AcademicYearComboBox.SelectedValue is int yearIdFinal)
+            {
+                bool isFinalized = await _finalizationService.IsClassFinalizedAsync(classIdFinal, yearIdFinal);
+                if (isFinalized)
+                {
+                    SaveButton.IsEnabled = false;
+                    SaveStatusTextBlock.Text = "🔒 نتایج این صنف نهایی شده است و قابل ویرایش نیست.";
+                }
+                else
+                {
+                    SaveButton.IsEnabled = true;
+                    SaveStatusTextBlock.Text = string.Empty;
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -321,9 +338,9 @@ public partial class StudentGradesView : UserControl
         {
             // Permission check
             var currentUser = _currentUserService.CurrentUser;
+            int classId = (int)ClassComboBox.SelectedValue;
             if (currentUser?.Role == Domain.Enums.UserRole.Teacher)
             {
-                int classId = (int)ClassComboBox.SelectedValue;
                 var assignments = await _teacherAssignmentService.GetMyTeacherSubjectsAsync(currentUser.UserId);
                 var assignedSubjectIds = assignments.Where(a => a.ClassId == classId).Select(a => a.SubjectId).ToHashSet();
                 bool isGuardian = await _teacherAssignmentService.IsClassGuardianAsync(currentUser.UserId, classId);
@@ -336,6 +353,14 @@ public partial class StudentGradesView : UserControl
                         return;
                     }
                 }
+            }
+
+            // Finalization check
+            bool isFinalized = await _finalizationService.IsClassFinalizedAsync(classId, yearId);
+            if (isFinalized)
+            {
+                MessageBox.Show("نتایج این صنف نهایی شده است و قابل ویرایش نیست.", "دسترسی محدود", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
             }
 
             var dtos = _rows.Select(r => new SaveExamMarkDto(
