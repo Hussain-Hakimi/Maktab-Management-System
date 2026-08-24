@@ -82,7 +82,7 @@ public sealed class StudentService(IStudentRepository repository) : IStudentServ
             FatherName = fatherName.Trim(),
             ClassId = classId,
             RollNumber = rollNumber.Trim(),
-            RegistrationDate = existing.RegistrationDate  // preserve original registration date
+            RegistrationDate = existing.RegistrationDate
         };
 
         await repository.UpdateStudentAsync(student, cancellationToken);
@@ -92,6 +92,24 @@ public sealed class StudentService(IStudentRepository repository) : IStudentServ
     {
         if (studentId <= 0) throw new ArgumentOutOfRangeException(nameof(studentId));
         return repository.DeleteStudentAsync(studentId, cancellationToken);
+    }
+
+    public async Task<int> GetNextRollNumberAsync(int classId, CancellationToken cancellationToken = default)
+    {
+        if (classId <= 0) throw new ArgumentOutOfRangeException(nameof(classId));
+
+        var students = await repository.GetStudentsByClassAsync(classId, cancellationToken);
+
+        int max = 0;
+        foreach (var student in students)
+        {
+            if (int.TryParse(student.RollNumber, out var num))
+            {
+                if (num > max) max = num;
+            }
+        }
+
+        return max + 1;
     }
 
     private static void ValidateStudentInfo(
