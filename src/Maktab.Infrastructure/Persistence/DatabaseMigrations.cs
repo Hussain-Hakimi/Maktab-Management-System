@@ -87,6 +87,20 @@ CREATE TABLE IF NOT EXISTS tbl_Exams (
     FOREIGN KEY (AcademicYearID) REFERENCES tbl_AcademicYears(AcademicYearID) ON DELETE CASCADE,
     FOREIGN KEY (CreatedByTeacherUserID) REFERENCES tbl_Users(UserID) ON DELETE CASCADE
 );
+"),
+            new(8, @"
+CREATE TABLE IF NOT EXISTS tbl_ClassFinalizations (
+    ClassFinalizationID INTEGER PRIMARY KEY AUTOINCREMENT,
+    ClassID INTEGER NOT NULL,
+    AcademicYearID INTEGER NOT NULL,
+    IsFinalized INTEGER NOT NULL CHECK (IsFinalized IN (0, 1)),
+    FinalizedByTeacherUserID INTEGER NOT NULL,
+    FinalizationDate TEXT NOT NULL,
+    FOREIGN KEY (ClassID) REFERENCES tbl_Classes(ClassID) ON DELETE CASCADE,
+    FOREIGN KEY (AcademicYearID) REFERENCES tbl_AcademicYears(AcademicYearID) ON DELETE CASCADE,
+    FOREIGN KEY (FinalizedByTeacherUserID) REFERENCES tbl_Users(UserID) ON DELETE CASCADE,
+    UNIQUE (ClassID, AcademicYearID)
+);
 ")
         };
     }
