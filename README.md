@@ -88,6 +88,18 @@ Added:
 - Bulk import (students via CSV)
 
 ---
+### Version 1.4.0 — Alerts & Dashboard Enhancement Release
+
+Added:
+- Promotion History Viewer
+- Alerts Center (overdue books, outstanding fees, high absence)
+- Bulk Import for Marks & Attendance (CSV)
+- Enhanced Dashboard with charts:
+  - Grade distribution bar chart
+  - Attendance trend line chart (last 7 days)
+  - Fee collection progress bar
+ 
+---
 
 ## 🏗️ Technology Stack
 
@@ -282,7 +294,7 @@ No internet required for core functionality.
 Simple, offline, reliable, maintainable, localized, extensible.
 
 📌 Current Status
-Version: 1.2.0 — Administration & Security Release
+Version: 1.4.0 — Administration & Security Release
 
 The system includes all V1.2 features and is ready for production use.
 
