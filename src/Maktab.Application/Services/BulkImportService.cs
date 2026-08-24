@@ -11,33 +11,82 @@ public sealed class BulkImportService(
     IStudentService studentService,
     IClassSubjectService classSubjectService,
     IExamMarkService examMarkService,
-    IAttendanceService attendanceService) : IBulkImportService
+    IAttendanceService attendanceService,
+    IExcelReader excelReader) : IBulkImportService
 {
-    public async Task<BulkImportResultDto> ImportStudentsFromCsvAsync(
+    // ---------- CSV (text) entry points ----------
+
+    public Task<BulkImportResultDto> ImportStudentsFromCsvAsync(string csvText, CancellationToken cancellationToken = default)
+    {
+        var rows = ParseCsvRows(csvText);
+        return ImportStudentsFromRowsAsync(rows, cancellationToken);
+    }
+
+    public Task<BulkImportResultDto> ImportMarksFromCsvAsync(
         string csvText,
+        int classId,
+        int subjectId,
+        int academicYearId,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(csvText))
-            throw new ArgumentException("CSV content is empty.", nameof(csvText));
+        var rows = ParseCsvRows(csvText);
+        return ImportMarksFromRowsAsync(rows, classId, subjectId, academicYearId, cancellationToken);
+    }
 
-        var lines = csvText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-        if (lines.Length == 0)
-            return new BulkImportResultDto();
+    public Task<BulkImportResultDto> ImportAttendanceFromCsvAsync(
+        string csvText,
+        int classId,
+        int academicYearId,
+        CancellationToken cancellationToken = default)
+    {
+        var rows = ParseCsvRows(csvText);
+        return ImportAttendanceFromRowsAsync(rows, classId, academicYearId, cancellationToken);
+    }
 
-        var dataLines = lines.Skip(1).ToList();
-        var result = new BulkImportResultDto { TotalRows = dataLines.Count };
+    // ---------- File (auto-detect) entry points ----------
 
+    public async Task<BulkImportResultDto> ImportStudentsFromFileAsync(string filePath, CancellationToken cancellationToken = default)
+    {
+        var rows = ReadRowsFromFile(filePath);
+        return await ImportStudentsFromRowsAsync(rows, cancellationToken);
+    }
+
+    public async Task<BulkImportResultDto> ImportMarksFromFileAsync(
+        string filePath,
+        int classId,
+        int subjectId,
+        int academicYearId,
+        CancellationToken cancellationToken = default)
+    {
+        var rows = ReadRowsFromFile(filePath);
+        return await ImportMarksFromRowsAsync(rows, classId, subjectId, academicYearId, cancellationToken);
+    }
+
+    public async Task<BulkImportResultDto> ImportAttendanceFromFileAsync(
+        string filePath,
+        int classId,
+        int academicYearId,
+        CancellationToken cancellationToken = default)
+    {
+        var rows = ReadRowsFromFile(filePath);
+        return await ImportAttendanceFromRowsAsync(rows, classId, academicYearId, cancellationToken);
+    }
+
+    // ---------- Core row processing ----------
+
+    private async Task<BulkImportResultDto> ImportStudentsFromRowsAsync(
+        IEnumerable<string[]> rows,
+        CancellationToken cancellationToken)
+    {
+        var result = new BulkImportResultDto();
         var classes = await classSubjectService.GetClassesAsync(cancellationToken);
         var classDict = classes.ToDictionary(c => c.GradeName.Trim(), c => c.ClassId, StringComparer.OrdinalIgnoreCase);
 
-        int lineNumber = 1;
-        foreach (var line in dataLines)
+        int lineNumber = 0;
+        foreach (var columns in rows)
         {
             lineNumber++;
-            if (string.IsNullOrWhiteSpace(line))
-                continue;
-
-            var columns = SplitCsvLine(line);
+            if (lineNumber == 1) continue; // skip header
             if (columns.Length < 5)
             {
                 result.Errors.Add($"خط {lineNumber}: تعداد ستون‌ها کمتر از ۵ است.");
@@ -72,12 +121,7 @@ public sealed class BulkImportService(
             try
             {
                 await studentService.RegisterStudentAsync(
-                    row.FirstName,
-                    row.LastName,
-                    row.FatherName,
-                    classId,
-                    row.RollNumber,
-                    cancellationToken);
+                    row.FirstName, row.LastName, row.FatherName, classId, row.RollNumber, cancellationToken);
                 result.SuccessCount++;
             }
             catch (Exception ex)
@@ -86,44 +130,33 @@ public sealed class BulkImportService(
             }
         }
 
+        result.TotalRows = rows.Count() - 1;
+        if (result.TotalRows < 0) result.TotalRows = 0;
         return result;
     }
 
-    public async Task<BulkImportResultDto> ImportMarksFromCsvAsync(
-        string csvText,
+    private async Task<BulkImportResultDto> ImportMarksFromRowsAsync(
+        IEnumerable<string[]> rows,
         int classId,
         int subjectId,
         int academicYearId,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(csvText))
-            throw new ArgumentException("CSV content is empty.", nameof(csvText));
-
         if (classId <= 0) throw new ArgumentOutOfRangeException(nameof(classId));
         if (subjectId <= 0) throw new ArgumentOutOfRangeException(nameof(subjectId));
         if (academicYearId <= 0) throw new ArgumentOutOfRangeException(nameof(academicYearId));
 
-        var lines = csvText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-        if (lines.Length < 2)
-            return new BulkImportResultDto();
-
-        var dataLines = lines.Skip(1).ToList();
-        var result = new BulkImportResultDto { TotalRows = dataLines.Count };
-
+        var result = new BulkImportResultDto();
         var students = await studentService.GetStudentsByClassAsync(classId, cancellationToken);
         var studentByRoll = students.ToDictionary(s => s.RollNumber.Trim(), s => s.StudentId, StringComparer.OrdinalIgnoreCase);
-
         var validMarks = new List<SaveExamMarkDto>();
 
-        int lineNumber = 1;
-        foreach (var line in dataLines)
+        int lineNumber = 0;
+        foreach (var columns in rows)
         {
             lineNumber++;
-            if (string.IsNullOrWhiteSpace(line))
-                continue;
+            if (lineNumber == 1) continue; // skip header
 
-            var columns = SplitCsvLine(line);
-            // Expected columns: RollNumber, MidtermScore, FinalScore (SubjectName optional)
             if (columns.Length < 3)
             {
                 result.Errors.Add($"خط {lineNumber}: تعداد ستون‌ها کمتر از ۳ است.");
@@ -143,13 +176,11 @@ public sealed class BulkImportService(
                 result.Errors.Add($"خط {lineNumber}: نمره چهارونیم‌ماهه باید بین ۰ و {GradingPolicy.MidtermMax} باشد.");
                 continue;
             }
-
             if (final < 0m || final > GradingPolicy.FinalMax)
             {
                 result.Errors.Add($"خط {lineNumber}: نمره سالانه باید بین ۰ و {GradingPolicy.FinalMax} باشد.");
                 continue;
             }
-
             if (!studentByRoll.TryGetValue(rollNumber, out var studentId))
             {
                 result.Errors.Add($"خط {lineNumber}: شاگرد با شماره اساس «{rollNumber}» یافت نشد.");
@@ -162,7 +193,6 @@ public sealed class BulkImportService(
                 MidtermScore: midterm,
                 FinalScore: final,
                 AcademicYearId: academicYearId));
-
             result.SuccessCount++;
         }
 
@@ -175,46 +205,35 @@ public sealed class BulkImportService(
             catch (Exception ex)
             {
                 result.Errors.Add($"خطا در ذخیره نمرات: {ex.Message}");
-                result.SuccessCount -= validMarks.Count; // rollback success count on failure
+                result.SuccessCount -= validMarks.Count;
             }
         }
 
+        result.TotalRows = rows.Count() - 1;
+        if (result.TotalRows < 0) result.TotalRows = 0;
         return result;
     }
 
-    public async Task<BulkImportResultDto> ImportAttendanceFromCsvAsync(
-        string csvText,
+    private async Task<BulkImportResultDto> ImportAttendanceFromRowsAsync(
+        IEnumerable<string[]> rows,
         int classId,
         int academicYearId,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(csvText))
-            throw new ArgumentException("CSV content is empty.", nameof(csvText));
-
         if (classId <= 0) throw new ArgumentOutOfRangeException(nameof(classId));
         if (academicYearId <= 0) throw new ArgumentOutOfRangeException(nameof(academicYearId));
 
-        var lines = csvText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-        if (lines.Length < 2)
-            return new BulkImportResultDto();
-
-        var dataLines = lines.Skip(1).ToList();
-        var result = new BulkImportResultDto { TotalRows = dataLines.Count };
-
+        var result = new BulkImportResultDto();
         var students = await studentService.GetStudentsByClassAsync(classId, cancellationToken);
         var studentByRoll = students.ToDictionary(s => s.RollNumber.Trim(), s => s.StudentId, StringComparer.OrdinalIgnoreCase);
-
         var validAttendance = new List<SaveAttendanceDto>();
 
-        int lineNumber = 1;
-        foreach (var line in dataLines)
+        int lineNumber = 0;
+        foreach (var columns in rows)
         {
             lineNumber++;
-            if (string.IsNullOrWhiteSpace(line))
-                continue;
+            if (lineNumber == 1) continue; // skip header
 
-            var columns = SplitCsvLine(line);
-            // Expected columns: RollNumber, Date, Status
             if (columns.Length < 3)
             {
                 result.Errors.Add($"خط {lineNumber}: تعداد ستون‌ها کمتر از ۳ است.");
@@ -246,7 +265,6 @@ public sealed class BulkImportService(
                 Date: date,
                 Status: status.Value,
                 AcademicYearId: academicYearId));
-
             result.SuccessCount++;
         }
 
@@ -263,7 +281,44 @@ public sealed class BulkImportService(
             }
         }
 
+        result.TotalRows = rows.Count() - 1;
+        if (result.TotalRows < 0) result.TotalRows = 0;
         return result;
+    }
+
+    // ---------- Helpers ----------
+
+    private IReadOnlyList<string[]> ReadRowsFromFile(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+            throw new ArgumentException("File path is required.", nameof(filePath));
+
+        var extension = Path.GetExtension(filePath).ToLowerInvariant();
+
+        if (extension == ".xlsx")
+            return excelReader.ReadRows(filePath);
+
+        if (extension == ".csv")
+        {
+            var text = File.ReadAllText(filePath);
+            return ParseCsvRows(text);
+        }
+
+        throw new NotSupportedException($"فرمت فایل «{extension}» پشتیبانی نمی‌شود.");
+    }
+
+    private static IReadOnlyList<string[]> ParseCsvRows(string csvText)
+    {
+        if (string.IsNullOrWhiteSpace(csvText))
+            return new List<string[]>();
+
+        var lines = csvText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        var rows = new List<string[]>();
+        foreach (var line in lines)
+        {
+            rows.Add(SplitCsvLine(line));
+        }
+        return rows;
     }
 
     private static AttendanceStatus? ParseAttendanceStatus(string status)
