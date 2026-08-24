@@ -1,8 +1,9 @@
-using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Painting;
+using SkiaSharp;
 using Maktab.Application.Abstractions;
 using Maktab.Domain.Enums;
 
@@ -93,12 +94,29 @@ public partial class DashboardView : UserControl
             try
             {
                 var fees = await _feeService.GetFeesAsync();
-                decimal outstanding = fees.Sum(f => f.Outstanding);
+                decimal totalAmount = fees.Sum(f => f.Amount);
+                decimal totalPaid = fees.Sum(f => f.TotalPaid);
+                decimal outstanding = totalAmount - totalPaid;
+
                 OutstandingFeesTextBlock.Text = outstanding.ToString("N0");
+
+                if (totalAmount > 0)
+                {
+                    double progress = (double)(totalPaid / totalAmount * 100);
+                    FeeProgressBar.Value = progress;
+                    FeeCollectionRateTextBlock.Text = $"وصول: {progress:F1}%";
+                }
+                else
+                {
+                    FeeProgressBar.Value = 0;
+                    FeeCollectionRateTextBlock.Text = "وصول: ۰%";
+                }
             }
             catch
             {
                 OutstandingFeesTextBlock.Text = "نامشخص";
+                FeeProgressBar.Value = 0;
+                FeeCollectionRateTextBlock.Text = "وصول: نامشخص";
             }
 
             try
@@ -208,7 +226,6 @@ public partial class DashboardView : UserControl
             if (classes.Count == 0)
                 return;
 
-            // Use first class as representative, or compute average across all classes
             var classId = classes[0].ClassId;
             var dates = Enumerable.Range(0, 7).Select(offset => DateTime.Today.AddDays(-offset)).Reverse().ToList();
             var rates = new List<double>();
@@ -231,7 +248,7 @@ public partial class DashboardView : UserControl
                     Values = rates.ToArray(),
                     Fill = null,
                     GeometrySize = 8,
-                    Stroke = new LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SkiaSharp.SKColors.Blue)
+                    Stroke = new SolidColorPaint(SKColors.Blue)
                 }
             };
 
