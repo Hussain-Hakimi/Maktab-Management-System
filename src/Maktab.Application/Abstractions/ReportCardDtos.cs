@@ -35,4 +35,13 @@ public sealed class StudentReportCardDto
     public PromotionOutcome PromotionOutcome { get; set; }
     public string PromotionStatusText { get; set; } = string.Empty;
     public string? FailureReason { get; set; }
+
+    // New fields for customizable headers
+    public string GovernmentTitle { get; set; } = "امارت اسلامی افغانستان";
+    public string ProvincialEducationHeader { get; set; } = string.Empty;
+    public string DistrictEducationHeader { get; set; } = string.Empty;
+    public string SchoolLogoPath { get; set; } = string.Empty;
+
+    // New field for report type
+    public ReportCardType ReportType { get; set; } = ReportCardType.Annual;
 }
