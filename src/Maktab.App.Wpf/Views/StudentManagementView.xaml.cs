@@ -147,6 +147,8 @@ public partial class StudentManagementView : UserControl
 
     private StudentDisplayItem? GetSelectedStudent() => StudentsDataGrid.SelectedItem as StudentDisplayItem;
 
+    private bool IsEditingMode => StudentsDataGrid.SelectedItem is not null;
+
     private async void AddStudentButton_Click(object sender, RoutedEventArgs e)
     {
         if (!ValidateInputs(out var firstName, out var lastName, out var fatherName, out var classId, out var rollNumber))
@@ -265,6 +267,26 @@ public partial class StudentManagementView : UserControl
     {
         await LoadClassesAsync();
         await RefreshStudentsListAsync();
+    }
+
+    private async void FormClassComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        // Only auto-fill when NOT editing an existing student
+        if (IsEditingMode)
+            return;
+
+        if (FormClassComboBox.SelectedValue is not int classId || classId <= 0)
+            return;
+
+        try
+        {
+            var next = await _studentService.GetNextRollNumberAsync(classId);
+            RollNumberTextBox.Text = next.ToString();
+        }
+        catch (Exception ex)
+        {
+            // Ignore roll number auto-fill errors
+        }
     }
 
     private bool ValidateInputs(out string firstName, out string lastName, out string fatherName, out int classId, out string rollNumber)
