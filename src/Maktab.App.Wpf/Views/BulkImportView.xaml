@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
-             d:DesignHeight="600" d:DesignWidth="900"
+             d:DesignHeight="650" d:DesignWidth="900"
              FlowDirection="RightToLeft">
     <Grid Margin="12">
         <Grid.RowDefinitions>
@@ -20,39 +20,140 @@
             </StackPanel>
         </Border>
 
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="14" />
-                <ColumnDefinition Width="300" />
-            </Grid.ColumnDefinitions>
+        <!-- Tab Control for Import Types -->
+        <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
+            <TabControl.Resources>
+                <Style TargetType="TabItem">
+                    <Setter Property="Padding" Value="16,8" />
+                    <Setter Property="FontSize" Value="13" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                    <Setter Property="Foreground" Value="#475569" />
+                    <Setter Property="Background" Value="#E2E8F0" />
+                    <Setter Property="Margin" Value="0,0,2,0" />
+                </Style>
+            </TabControl.Resources>
 
-            <!-- CSV Paste / File Select -->
-            <Border Grid.Column="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                        <Button Content="📁 انتخاب فایل CSV" Height="32" Padding="12,0" Background="#3B82F6" Foreground="White" FontWeight="SemiBold" Click="BrowseFileButton_Click" Margin="0,0,8,0" />
-                        <Button Content="📥 اجرای ورود" Height="32" Padding="12,0" Background="#16A34A" Foreground="White" FontWeight="Bold" Click="ImportButton_Click" Margin="0,0,8,0" />
-                        <TextBlock x:Name="FilePathTextBlock" VerticalAlignment="Center" Foreground="#475569" />
-                    </StackPanel>
-                    <TextBox x:Name="CsvTextBox" Grid.Row="1" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
-                             FontFamily="Consolas" FontSize="12" Padding="8" Background="#F8FAFC" BorderBrush="#CBD5E1" />
+            <!-- Students Import Tab -->
+            <TabItem Header="👨‍🎓 شاگردان">
+                <Grid Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="320" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- CSV Paste Area -->
+                    <Border Grid.Column="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                <Button Content="📁 انتخاب فایل CSV" Height="32" Padding="12,0" Background="#3B82F6" Foreground="White" FontWeight="SemiBold" Click="BrowseStudentsFileButton_Click" Margin="0,0,8,0" />
+                                <Button Content="📥 اجرای ورود" Height="32" Padding="12,0" Background="#16A34A" Foreground="White" FontWeight="Bold" Click="ImportStudentsButton_Click" Margin="0,0,8,0" />
+                                <TextBlock x:Name="StudentsFilePathTextBlock" VerticalAlignment="Center" Foreground="#475569" />
+                            </StackPanel>
+                            <TextBox x:Name="StudentsCsvTextBox" Grid.Row="1" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
+                                     FontFamily="Consolas" FontSize="12" Padding="8" Background="#F8FAFC" BorderBrush="#CBD5E1" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Result Panel -->
+                    <Border Grid.Column="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
+                        <StackPanel>
+                            <TextBlock Text="نتایج" FontWeight="Bold" FontSize="15" Foreground="#334155" Margin="0,0,0,12" />
+                            <TextBlock x:Name="StudentsSummaryTextBlock" Text="۰ ردیف وارد شد" FontWeight="SemiBold" Margin="0,0,0,8" />
+                            <TextBox x:Name="StudentsErrorsTextBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
+                                     VerticalScrollBarVisibility="Auto" Height="200" FontSize="11" Background="#FEF2F2" Foreground="#DC2626" />
+                        </StackPanel>
+                    </Border>
                 </Grid>
-            </Border>
+            </TabItem>
 
-            <!-- Result Panel -->
-            <Border Grid.Column="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
-                <StackPanel>
-                    <TextBlock Text="نتایج" FontWeight="Bold" FontSize="15" Foreground="#334155" Margin="0,0,0,12" />
-                    <TextBlock x:Name="SummaryTextBlock" Text="۰ ردیف وارد شد" FontWeight="SemiBold" Margin="0,0,0,8" />
-                    <TextBox x:Name="ErrorsTextBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
-                             VerticalScrollBarVisibility="Auto" Height="200" FontSize="11" Background="#FEF2F2" Foreground="#DC2626" />
-                </StackPanel>
-            </Border>
-        </Grid>
+            <!-- Marks Import Tab -->
+            <TabItem Header="📝 نمرات">
+                <Grid Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="320" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Filters + CSV Paste -->
+                    <Border Grid.Column="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                <TextBlock Text="صنف:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
+                                <ComboBox x:Name="MarksClassComboBox" Height="32" Width="140" DisplayMemberPath="GradeName" SelectedValuePath="ClassId" SelectionChanged="MarksClassComboBox_SelectionChanged" Margin="0,0,10,0" />
+                                <TextBlock Text="مضمون:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
+                                <ComboBox x:Name="MarksSubjectComboBox" Height="32" Width="140" DisplayMemberPath="SubjectName" SelectedValuePath="SubjectId" Margin="0,0,10,0" />
+                                <TextBlock Text="سال تعلیمی:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
+                                <ComboBox x:Name="MarksYearComboBox" Height="32" Width="120" DisplayMemberPath="YearName" SelectedValuePath="AcademicYearId" Margin="0,0,10,0" />
+                                <Button Content="📁 انتخاب CSV" Height="32" Padding="10,0" Background="#3B82F6" Foreground="White" FontWeight="SemiBold" Click="BrowseMarksFileButton_Click" Margin="0,0,8,0" />
+                                <Button Content="📥 ورود نمرات" Height="32" Padding="10,0" Background="#16A34A" Foreground="White" FontWeight="Bold" Click="ImportMarksButton_Click" />
+                            </StackPanel>
+                            <TextBox x:Name="MarksCsvTextBox" Grid.Row="1" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
+                                     FontFamily="Consolas" FontSize="12" Padding="8" Background="#F8FAFC" BorderBrush="#CBD5E1" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Result Panel -->
+                    <Border Grid.Column="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
+                        <StackPanel>
+                            <TextBlock Text="نتایج" FontWeight="Bold" FontSize="15" Foreground="#334155" Margin="0,0,0,12" />
+                            <TextBlock x:Name="MarksSummaryTextBlock" Text="۰ ردیف وارد شد" FontWeight="SemiBold" Margin="0,0,0,8" />
+                            <TextBox x:Name="MarksErrorsTextBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
+                                     VerticalScrollBarVisibility="Auto" Height="200" FontSize="11" Background="#FEF2F2" Foreground="#DC2626" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- Attendance Import Tab -->
+            <TabItem Header="🗓️ حاضری">
+                <Grid Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="320" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Filters + CSV Paste -->
+                    <Border Grid.Column="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                <TextBlock Text="صنف:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
+                                <ComboBox x:Name="AttendanceClassComboBox" Height="32" Width="140" DisplayMemberPath="GradeName" SelectedValuePath="ClassId" Margin="0,0,10,0" />
+                                <TextBlock Text="سال تعلیمی:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
+                                <ComboBox x:Name="AttendanceYearComboBox" Height="32" Width="120" DisplayMemberPath="YearName" SelectedValuePath="AcademicYearId" Margin="0,0,10,0" />
+                                <Button Content="📁 انتخاب CSV" Height="32" Padding="10,0" Background="#3B82F6" Foreground="White" FontWeight="SemiBold" Click="BrowseAttendanceFileButton_Click" Margin="0,0,8,0" />
+                                <Button Content="📥 ورود حاضری" Height="32" Padding="10,0" Background="#16A34A" Foreground="White" FontWeight="Bold" Click="ImportAttendanceButton_Click" />
+                            </StackPanel>
+                            <TextBox x:Name="AttendanceCsvTextBox" Grid.Row="1" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
+                                     FontFamily="Consolas" FontSize="12" Padding="8" Background="#F8FAFC" BorderBrush="#CBD5E1" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Result Panel -->
+                    <Border Grid.Column="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
+                        <StackPanel>
+                            <TextBlock Text="نتایج" FontWeight="Bold" FontSize="15" Foreground="#334155" Margin="0,0,0,12" />
+                            <TextBlock x:Name="AttendanceSummaryTextBlock" Text="۰ ردیف وارد شد" FontWeight="SemiBold" Margin="0,0,0,8" />
+                            <TextBox x:Name="AttendanceErrorsTextBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
+                                     VerticalScrollBarVisibility="Auto" Height="200" FontSize="11" Background="#FEF2F2" Foreground="#DC2626" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+        </TabControl>
     </Grid>
 </UserControl>
