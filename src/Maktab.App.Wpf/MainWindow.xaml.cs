@@ -33,6 +33,7 @@ public partial class MainWindow : Window
 
     // New placeholder view instances
     private readonly DashboardView _dashboardView;
+    private readonly AlertsView _alertsView;
     private readonly UserManagementView _userManagementView;
     private readonly PromotionSettingsView _promotionSettingsView;
     private readonly BulkImportView _bulkImportView;
@@ -45,6 +46,7 @@ public partial class MainWindow : Window
     private static readonly UserRole[][] SidebarItemRoles =
     [
         [UserRole.Admin, UserRole.Teacher, UserRole.Librarian, UserRole.Accountant], // Dashboard
+        [UserRole.Admin, UserRole.Teacher, UserRole.Librarian, UserRole.Accountant], // Alerts
         [UserRole.Admin, UserRole.Teacher],                                           // Students
         [UserRole.Admin, UserRole.Teacher],                                           // Classes
         [UserRole.Admin, UserRole.Teacher],                                           // Marks
@@ -78,6 +80,7 @@ public partial class MainWindow : Window
         ReportsView reportsView,
         BackupSettingsView backupSettingsView,
         DashboardView dashboardView,
+        AlertsView alertsView,
         UserManagementView userManagementView,
         PromotionSettingsView promotionSettingsView,
         BulkImportView bulkImportView,
@@ -104,6 +107,7 @@ public partial class MainWindow : Window
         _backupSettingsView = backupSettingsView;
 
         _dashboardView = dashboardView;
+        _alertsView = alertsView;
         _userManagementView = userManagementView;
         _promotionSettingsView = promotionSettingsView;
         _bulkImportView = bulkImportView;
@@ -205,24 +209,25 @@ public partial class MainWindow : Window
         switch (SidebarListBox.SelectedIndex)
         {
             case 0: _navigationService.Navigate(_dashboardView); break;
-            case 1: _navigationService.Navigate(_studentManagementView); break;
-            case 2: _navigationService.Navigate(_classSubjectView); break;
-            case 3: _navigationService.Navigate(_marksEntryView); break;
-            case 4: _navigationService.Navigate(_attendanceView); break;
-            case 5: _navigationService.Navigate(_attendanceReportsView); break;
-            case 6: _navigationService.Navigate(_libraryView); break;
-            case 7: _navigationService.Navigate(_textbookView); break;
-            case 8: _navigationService.Navigate(_feesView); break;
-            case 9: _navigationService.Navigate(_reportCardsView); break;
-            case 10: _navigationService.Navigate(_reportsView); break;
-            case 11: _navigationService.Navigate(_backupSettingsView); break;
-            case 12: _navigationService.Navigate(_userManagementView); break;
-            case 13: _navigationService.Navigate(_promotionSettingsView); break;
-            case 14: _navigationService.Navigate(_bulkImportView); break;
-            case 15: _navigationService.Navigate(_auditLogView); break;
-            case 16: _navigationService.Navigate(_schoolSettingsView); break;
-            case 17: _navigationService.Navigate(_academicYearView); break;
-            case 18: _navigationService.Navigate(_promotionHistoryView); break;
+            case 1: _navigationService.Navigate(_alertsView); break;
+            case 2: _navigationService.Navigate(_studentManagementView); break;
+            case 3: _navigationService.Navigate(_classSubjectView); break;
+            case 4: _navigationService.Navigate(_marksEntryView); break;
+            case 5: _navigationService.Navigate(_attendanceView); break;
+            case 6: _navigationService.Navigate(_attendanceReportsView); break;
+            case 7: _navigationService.Navigate(_libraryView); break;
+            case 8: _navigationService.Navigate(_textbookView); break;
+            case 9: _navigationService.Navigate(_feesView); break;
+            case 10: _navigationService.Navigate(_reportCardsView); break;
+            case 11: _navigationService.Navigate(_reportsView); break;
+            case 12: _navigationService.Navigate(_backupSettingsView); break;
+            case 13: _navigationService.Navigate(_userManagementView); break;
+            case 14: _navigationService.Navigate(_promotionSettingsView); break;
+            case 15: _navigationService.Navigate(_bulkImportView); break;
+            case 16: _navigationService.Navigate(_auditLogView); break;
+            case 17: _navigationService.Navigate(_schoolSettingsView); break;
+            case 18: _navigationService.Navigate(_academicYearView); break;
+            case 19: _navigationService.Navigate(_promotionHistoryView); break;
         }
     }
 }
