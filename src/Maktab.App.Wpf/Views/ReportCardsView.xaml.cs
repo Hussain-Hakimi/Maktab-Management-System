@@ -39,22 +39,30 @@ public partial class ReportCardsView : UserControl
     private readonly IClassSubjectService _classSubjectService;
     private readonly IStudentService _studentService;
     private readonly AppFolders _appFolders;
+    private readonly ITeacherAssignmentService _teacherAssignmentService;
+    private readonly ICurrentUserService _currentUserService;
 
     private readonly List<SchoolClass> _classes = [];
     private readonly List<Student> _classStudents = [];
     private readonly ObservableCollection<PreviewMarkItem> _previewMarks = [];
     private string? _lastGeneratedPdfPath;
+    private bool _isCurrentUserGuardianOfSelectedClass;
+    private bool _isAdmin;
 
     public ReportCardsView(
         IReportCardService reportCardService,
         IClassSubjectService classSubjectService,
         IStudentService studentService,
-        AppFolders appFolders)
+        AppFolders appFolders,
+        ITeacherAssignmentService teacherAssignmentService,
+        ICurrentUserService currentUserService)
     {
         _reportCardService = reportCardService;
         _classSubjectService = classSubjectService;
         _studentService = studentService;
         _appFolders = appFolders;
+        _teacherAssignmentService = teacherAssignmentService;
+        _currentUserService = currentUserService;
 
         InitializeComponent();
 
@@ -79,25 +87,52 @@ public partial class ReportCardsView : UserControl
     private async void ReportCardsView_Loaded(object sender, RoutedEventArgs e)
     {
         await LoadClassesAsync();
+        ApplyPermissionUi();
     }
 
     public async Task InitializeDataAsync()
     {
         await LoadClassesAsync();
+        ApplyPermissionUi();
     }
 
     private async Task LoadClassesAsync()
     {
         try
         {
-            var classes = await _classSubjectService.GetClassesAsync();
-            _classes.Clear();
-            _classes.AddRange(classes);
+            var allClasses = await _classSubjectService.GetClassesAsync();
+            var currentUser = _currentUserService.CurrentUser;
+
+            _isAdmin = currentUser?.Role == UserRole.Admin;
+
+            if (_isAdmin)
+            {
+                _classes.Clear();
+                _classes.AddRange(allClasses);
+            }
+            else if (currentUser is not null && currentUser.Role == UserRole.Teacher)
+            {
+                // Only classes where the teacher is a guardian
+                var guardianships = await _teacherAssignmentService.GetClassGuardiansAsync(currentUser.UserId);
+                var guardianClassIds = guardianships.Select(g => g.ClassId).ToHashSet();
+                _classes.Clear();
+                _classes.AddRange(allClasses.Where(c => guardianClassIds.Contains(c.ClassId)));
+            }
+            else
+            {
+                _classes.Clear();
+            }
 
             ClassComboBox.ItemsSource = _classes.ToList();
             if (_classes.Count > 0)
             {
                 ClassComboBox.SelectedIndex = 0;
+            }
+            else
+            {
+                StudentComboBox.ItemsSource = null;
+                ClearPreview();
+                StatusTextBlock.Text = "شما به هیچ صنفی دسترسی کارنامه ندارید.";
             }
         }
         catch (Exception ex)
@@ -111,13 +146,45 @@ public partial class ReportCardsView : UserControl
         if (ClassComboBox.SelectedValue is int classId && classId > 0)
         {
             await LoadStudentsForClassAsync(classId);
+            await UpdateGuardianStatusAsync(classId);
         }
         else
         {
             _classStudents.Clear();
             StudentComboBox.ItemsSource = null;
             ClearPreview();
+            _isCurrentUserGuardianOfSelectedClass = false;
         }
+
+        ApplyPermissionUi();
+    }
+
+    private async Task UpdateGuardianStatusAsync(int classId)
+    {
+        var currentUser = _currentUserService.CurrentUser;
+        if (currentUser?.Role == UserRole.Admin)
+        {
+            _isCurrentUserGuardianOfSelectedClass = true;
+            return;
+        }
+
+        if (currentUser is not null && currentUser.Role == UserRole.Teacher)
+        {
+            _isCurrentUserGuardianOfSelectedClass = await _teacherAssignmentService.IsClassGuardianAsync(
+                currentUser.UserId,
+                classId);
+        }
+        else
+        {
+            _isCurrentUserGuardianOfSelectedClass = false;
+        }
+    }
+
+    private void ApplyPermissionUi()
+    {
+        bool canGenerateClass = _isAdmin || (_isCurrentUserGuardianOfSelectedClass);
+        GenerateClassPdfButton.IsEnabled = canGenerateClass;
+        GenerateSinglePdfButton.IsEnabled = canGenerateClass;
     }
 
     private async Task LoadStudentsForClassAsync(int classId)
@@ -245,8 +312,19 @@ public partial class ReportCardsView : UserControl
         return (TemplateComboBox.SelectedItem as TemplateItem)?.Value ?? ReportCardTemplateType.Standard;
     }
 
+    private bool HasReportCardPermission()
+    {
+        return _isAdmin || _isCurrentUserGuardianOfSelectedClass;
+    }
+
     private async void GenerateSinglePdfButton_Click(object sender, RoutedEventArgs e)
     {
+        if (!HasReportCardPermission())
+        {
+            MessageBox.Show("شما اجازه تولید کارنامه این صنف را ندارید.", "دسترسی محدود", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
         if (StudentComboBox.SelectedValue is not int studentId || studentId <= 0)
         {
             MessageBox.Show("لطفاً یک شاگرد را انتخاب نمایید.", "شاگرد انتخاب نشده", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -277,6 +355,12 @@ public partial class ReportCardsView : UserControl
 
     private async void GenerateClassPdfButton_Click(object sender, RoutedEventArgs e)
     {
+        if (!HasReportCardPermission())
+        {
+            MessageBox.Show("شما اجازه تولید کارنامه کل صنف را ندارید.", "دسترسی محدود", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
         if (ClassComboBox.SelectedValue is not int classId || classId <= 0)
         {
             MessageBox.Show("لطفاً یک صنف را انتخاب نمایید.", "صنف انتخاب نشده", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -323,6 +407,7 @@ public partial class ReportCardsView : UserControl
     private async void RefreshButton_Click(object sender, RoutedEventArgs e)
     {
         await LoadClassesAsync();
+        ApplyPermissionUi();
     }
 
     private static void OpenPdf(string filePath)
