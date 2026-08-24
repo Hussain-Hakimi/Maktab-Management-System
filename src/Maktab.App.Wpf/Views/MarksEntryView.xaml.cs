@@ -102,25 +102,29 @@ public partial class MarksEntryView : UserControl
     private readonly IExamMarkService _examMarkService;
     private readonly IClassSubjectService _classSubjectService;
     private readonly IAcademicYearService _academicYearService;
-    private readonly IAuditService _auditService;
+    private readonly ITeacherAssignmentService _teacherAssignmentService;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IAuditService _auditService;
 
     private readonly ObservableCollection<EditableMarkRowItem> _markRows = [];
     private readonly List<SchoolClass> _classes = [];
     private readonly List<Subject> _subjects = [];
+    private bool _isGuardianOfSelectedClass;
 
     public MarksEntryView(
         IExamMarkService examMarkService,
         IClassSubjectService classSubjectService,
         IAcademicYearService academicYearService,
-        IAuditService auditService,
-        ICurrentUserService currentUserService)
+        ITeacherAssignmentService teacherAssignmentService,
+        ICurrentUserService currentUserService,
+        IAuditService auditService)
     {
         _examMarkService = examMarkService;
         _classSubjectService = classSubjectService;
         _academicYearService = academicYearService;
-        _auditService = auditService;
+        _teacherAssignmentService = teacherAssignmentService;
         _currentUserService = currentUserService;
+        _auditService = auditService;
 
         InitializeComponent();
 
@@ -142,14 +146,43 @@ public partial class MarksEntryView : UserControl
     {
         try
         {
-            var classes = await _classSubjectService.GetClassesAsync();
-            _classes.Clear();
-            _classes.AddRange(classes);
+            var allClasses = await _classSubjectService.GetClassesAsync();
+            var currentUser = _currentUserService.CurrentUser;
+
+            if (currentUser?.Role == Domain.Enums.UserRole.Admin)
+            {
+                _classes.Clear();
+                _classes.AddRange(allClasses);
+            }
+            else if (currentUser is not null)
+            {
+                // Teacher or other role: show only classes where user has assignment or is guardian
+                var assignments = await _teacherAssignmentService.GetMyTeacherSubjectsAsync(currentUser.UserId);
+                var guardianships = await _teacherAssignmentService.GetClassGuardiansAsync(currentUser.UserId);
+
+                var assignedClassIds = assignments.Select(a => a.ClassId).ToHashSet();
+                var guardianClassIds = guardianships.Select(g => g.ClassId).ToHashSet();
+                var allowedClassIds = assignedClassIds.Union(guardianClassIds).ToHashSet();
+
+                _classes.Clear();
+                _classes.AddRange(allClasses.Where(c => allowedClassIds.Contains(c.ClassId)));
+            }
+            else
+            {
+                _classes.Clear();
+            }
 
             ClassComboBox.ItemsSource = _classes.ToList();
             if (_classes.Count > 0)
             {
                 ClassComboBox.SelectedIndex = 0;
+            }
+            else
+            {
+                _subjects.Clear();
+                SubjectComboBox.ItemsSource = null;
+                _markRows.Clear();
+                StudentCountTextBlock.Text = "شما به هیچ صنفی تخصیص نشده‌اید.";
             }
         }
         catch (Exception ex)
@@ -177,9 +210,44 @@ public partial class MarksEntryView : UserControl
     {
         try
         {
-            var subjects = await _classSubjectService.GetSubjectsByClassAsync(classId);
-            _subjects.Clear();
-            _subjects.AddRange(subjects);
+            var allSubjects = await _classSubjectService.GetSubjectsByClassAsync(classId);
+            var currentUser = _currentUserService.CurrentUser;
+
+            if (currentUser?.Role == Domain.Enums.UserRole.Admin)
+            {
+                _subjects.Clear();
+                _subjects.AddRange(allSubjects);
+                _isGuardianOfSelectedClass = true; // admin can edit all
+            }
+            else if (currentUser is not null)
+            {
+                var assignments = await _teacherAssignmentService.GetMyTeacherSubjectsAsync(currentUser.UserId);
+                var assignedSubjectIds = assignments
+                    .Where(a => a.ClassId == classId)
+                    .Select(a => a.SubjectId)
+                    .ToHashSet();
+
+                bool isGuardian = await _teacherAssignmentService.IsClassGuardianAsync(currentUser.UserId, classId);
+                _isGuardianOfSelectedClass = isGuardian;
+
+                if (isGuardian)
+                {
+                    // Guardian can see all subjects, but only edit own subjects
+                    _subjects.Clear();
+                    _subjects.AddRange(allSubjects);
+                }
+                else
+                {
+                    // Regular teacher sees only assigned subjects
+                    _subjects.Clear();
+                    _subjects.AddRange(allSubjects.Where(s => assignedSubjectIds.Contains(s.SubjectId)));
+                }
+            }
+            else
+            {
+                _subjects.Clear();
+                _isGuardianOfSelectedClass = false;
+            }
 
             SubjectComboBox.ItemsSource = _subjects.ToList();
             if (_subjects.Count > 0)
@@ -189,7 +257,7 @@ public partial class MarksEntryView : UserControl
             else
             {
                 _markRows.Clear();
-                StudentCountTextBlock.Text = "برای این صنف هیچ مضمونی ثبت نشده است.";
+                StudentCountTextBlock.Text = "برای این صنف هیچ مضمونی تخصیص نشده است.";
             }
         }
         catch (Exception ex)
@@ -232,6 +300,27 @@ public partial class MarksEntryView : UserControl
 
             StudentCountTextBlock.Text = $"تعداد شاگردان: {_markRows.Count} نفر";
             SaveStatusTextBlock.Text = string.Empty;
+
+            // If guardian and selected subject not assigned, show note
+            var currentUser = _currentUserService.CurrentUser;
+            if (currentUser?.Role == Domain.Enums.UserRole.Teacher && _isGuardianOfSelectedClass)
+            {
+                var assignments = await _teacherAssignmentService.GetMyTeacherSubjectsAsync(currentUser.UserId);
+                bool canEdit = assignments.Any(a => a.ClassId == classId && a.SubjectId == subjectId);
+                if (!canEdit)
+                {
+                    SaveStatusTextBlock.Text = "⚠️ شما فقط می‌توانید نمرات مضامین تدریسی خود را ویرایش کنید.";
+                    SaveMarksButton.IsEnabled = false;
+                }
+                else
+                {
+                    SaveMarksButton.IsEnabled = true;
+                }
+            }
+            else
+            {
+                SaveMarksButton.IsEnabled = true;
+            }
         }
         catch (Exception ex)
         {
@@ -278,6 +367,20 @@ public partial class MarksEntryView : UserControl
 
         try
         {
+            var currentUser = _currentUserService.CurrentUser;
+            if (currentUser?.Role == Domain.Enums.UserRole.Teacher)
+            {
+                int classId = (int)ClassComboBox.SelectedValue;
+                int subjectId = (int)SubjectComboBox.SelectedValue;
+                var assignments = await _teacherAssignmentService.GetMyTeacherSubjectsAsync(currentUser.UserId);
+                bool canEdit = assignments.Any(a => a.ClassId == classId && a.SubjectId == subjectId);
+                if (!canEdit)
+                {
+                    MessageBox.Show("شما اجازه ویرایش نمرات این مضمون را ندارید.", "دسترسی محدود", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+            }
+
             // Get active academic year
             var activeYear = await _academicYearService.GetActiveAcademicYearAsync();
             if (activeYear is null)
@@ -286,9 +389,12 @@ public partial class MarksEntryView : UserControl
                 return;
             }
 
+            int classIdSave = (int)ClassComboBox.SelectedValue;
+            int subjectIdSave = (int)SubjectComboBox.SelectedValue;
+
             var dtos = _markRows.Select(r => new SaveExamMarkDto(
                 StudentId: r.StudentId,
-                SubjectId: r.SubjectId,
+                SubjectId: subjectIdSave,
                 MidtermScore: r.MidtermScore,
                 FinalScore: r.FinalScore,
                 AcademicYearId: activeYear.AcademicYearId
