@@ -16,3 +16,18 @@ public sealed class BulkImportStudentRowDto
     public string RollNumber { get; set; } = string.Empty;
     public string ClassName { get; set; } = string.Empty;
 }
+
+public sealed class MarkImportRowDto
+{
+    public string RollNumber { get; set; } = string.Empty;
+    public string SubjectName { get; set; } = string.Empty;
+    public decimal MidtermScore { get; set; }
+    public decimal FinalScore { get; set; }
+}
+
+public sealed class AttendanceImportRowDto
+{
+    public string RollNumber { get; set; } = string.Empty;
+    public DateTime Date { get; set; }
+    public string Status { get; set; } = string.Empty;
+}
