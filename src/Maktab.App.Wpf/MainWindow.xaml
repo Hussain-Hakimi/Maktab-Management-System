@@ -97,6 +97,7 @@
                     <ListBoxItem Content="👨‍🎓 شاگردان" />
                     <ListBoxItem Content="🏫 صنف‌ها و مضامین" />
                     <ListBoxItem Content="📝 ثبت نمرات" />
+                    <ListBoxItem Content="🎓 نمرات شاگرد" />
                     <ListBoxItem Content="🗓️ حاضری" />
                     <ListBoxItem Content="🗓️ گزارش حاضری" />
                     <ListBoxItem Content="📚 کتابخانه" />
