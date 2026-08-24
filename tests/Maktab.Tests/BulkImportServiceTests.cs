@@ -37,12 +37,32 @@ public class BulkImportServiceTests
         public Task DeleteSubjectAsync(int subjectId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
+    private sealed class MockExamMarkService : IExamMarkService
+    {
+        public Task<IReadOnlyList<StudentExamMarkDto>> GetClassSubjectMarksAsync(int classId, int subjectId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<IReadOnlyList<StudentExamMarkDto>> GetStudentMarksAsync(int studentId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task SaveMarksBatchAsync(IEnumerable<SaveExamMarkDto> marks, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    }
+
+    private sealed class MockAttendanceService : IAttendanceService
+    {
+        public Task<IReadOnlyList<StudentAttendanceDto>> GetClassAttendanceForDateAsync(int classId, DateTime date, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task SaveAttendanceBatchAsync(IEnumerable<SaveAttendanceDto> attendance, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<int> GetStudentAbsenceDaysAsync(int studentId, string academicYear, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<StudentAttendanceSummaryDto?> GetStudentAttendanceSummaryAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<IReadOnlyList<StudentAttendanceSummaryDto>> GetClassAttendanceSummaryAsync(int classId, int academicYearId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<IReadOnlyList<MonthlyAttendanceRowDto>> GetMonthlyAttendanceReportAsync(int classId, int year, int month, int academicYearId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    }
+
+
     [Fact]
     public async Task ImportStudents_WithValidCsv_ImportsAllRows()
     {
         var studentService = new MockStudentService();
         var classService = new MockClassSubjectService();
-        var bulkImport = new BulkImportService(studentService, classService);
+        var examService = new MockExamMarkService();
+        var attendanceService = new MockAttendanceService();
+        var bulkImport = new BulkImportService(studentService, classService, examService, attendanceService);
 
         var csv = "FirstName,LastName,FatherName,RollNumber,ClassName\nAli,Ahmadi,Mohammad,101,صنف هفتم\nZahra,Hussaini,Ali,102,صنف هفتم";
 
@@ -59,7 +79,9 @@ public class BulkImportServiceTests
     {
         var studentService = new MockStudentService();
         var classService = new MockClassSubjectService();
-        var bulkImport = new BulkImportService(studentService, classService);
+        var examService = new MockExamMarkService();
+        var attendanceService = new MockAttendanceService();
+        var bulkImport = new BulkImportService(studentService, classService, examService, attendanceService);
 
         var csv = "FirstName,LastName,FatherName,RollNumber,ClassName\nAli,Ahmadi,Mohammad,101,صنف نهم";
 

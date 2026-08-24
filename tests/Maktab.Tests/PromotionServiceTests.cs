@@ -83,6 +83,12 @@ public class PromotionServiceTests
         public Task<int> GetAbsenceDaysByStudentAndRangeAsync(int studentId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<int> GetAbsenceDaysByStudentAndYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default)
             => Task.FromResult(Records.Count(r => r.StudentId == studentId && r.AcademicYearId == academicYearId && r.Status == AttendanceStatus.Absent));
+
+        public Task<IReadOnlyList<AttendanceRecord>> GetByStudentAndYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<AttendanceRecord>>(Records.Where(r => r.StudentId == studentId && r.AcademicYearId == academicYearId).ToList());
+
+        public Task<IReadOnlyList<AttendanceRecord>> GetByClassAndYearAsync(int classId, int academicYearId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<AttendanceRecord>>(Records.Where(r => r.AcademicYearId == academicYearId).ToList());
     }
 
     private sealed class InMemoryPromotionHistoryRepository : IStudentPromotionHistoryRepository
