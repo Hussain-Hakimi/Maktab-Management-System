@@ -105,6 +105,7 @@ public partial class MarksEntryView : UserControl
     private readonly ITeacherAssignmentService _teacherAssignmentService;
     private readonly ICurrentUserService _currentUserService;
     private readonly IAuditService _auditService;
+    private readonly IFinalizationService _finalizationService;
 
     private readonly ObservableCollection<EditableMarkRowItem> _markRows = [];
     private readonly List<SchoolClass> _classes = [];
@@ -117,7 +118,8 @@ public partial class MarksEntryView : UserControl
         IAcademicYearService academicYearService,
         ITeacherAssignmentService teacherAssignmentService,
         ICurrentUserService currentUserService,
-        IAuditService auditService)
+        IAuditService auditService,
+        IFinalizationService finalizationService)
     {
         _examMarkService = examMarkService;
         _classSubjectService = classSubjectService;
@@ -125,6 +127,7 @@ public partial class MarksEntryView : UserControl
         _teacherAssignmentService = teacherAssignmentService;
         _currentUserService = currentUserService;
         _auditService = auditService;
+        _finalizationService = finalizationService;
 
         InitializeComponent();
 
@@ -156,7 +159,6 @@ public partial class MarksEntryView : UserControl
             }
             else if (currentUser is not null)
             {
-                // Teacher or other role: show only classes where user has assignment or is guardian
                 var assignments = await _teacherAssignmentService.GetMyTeacherSubjectsAsync(currentUser.UserId);
                 var guardianships = await _teacherAssignmentService.GetClassGuardiansAsync(currentUser.UserId);
 
@@ -217,7 +219,7 @@ public partial class MarksEntryView : UserControl
             {
                 _subjects.Clear();
                 _subjects.AddRange(allSubjects);
-                _isGuardianOfSelectedClass = true; // admin can edit all
+                _isGuardianOfSelectedClass = true;
             }
             else if (currentUser is not null)
             {
@@ -232,13 +234,11 @@ public partial class MarksEntryView : UserControl
 
                 if (isGuardian)
                 {
-                    // Guardian can see all subjects, but only edit own subjects
                     _subjects.Clear();
                     _subjects.AddRange(allSubjects);
                 }
                 else
                 {
-                    // Regular teacher sees only assigned subjects
                     _subjects.Clear();
                     _subjects.AddRange(allSubjects.Where(s => assignedSubjectIds.Contains(s.SubjectId)));
                 }
@@ -278,6 +278,27 @@ public partial class MarksEntryView : UserControl
 
         try
         {
+            // Get active academic year
+            var activeYear = await _academicYearService.GetActiveAcademicYearAsync();
+            if (activeYear is null)
+            {
+                MessageBox.Show("سال تعلیمی فعال تعیین نشده است.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Check finalization
+            bool isFinalized = await _finalizationService.IsClassFinalizedAsync(classId, activeYear.AcademicYearId);
+            if (isFinalized)
+            {
+                SaveMarksButton.IsEnabled = false;
+                SaveStatusTextBlock.Text = "🔒 نتایج این صنف نهایی شده است و قابل ویرایش نیست.";
+            }
+            else
+            {
+                SaveMarksButton.IsEnabled = true;
+                SaveStatusTextBlock.Text = string.Empty;
+            }
+
             var marks = await _examMarkService.GetClassSubjectMarksAsync(classId, subjectId);
             _markRows.Clear();
 
@@ -299,9 +320,8 @@ public partial class MarksEntryView : UserControl
             }
 
             StudentCountTextBlock.Text = $"تعداد شاگردان: {_markRows.Count} نفر";
-            SaveStatusTextBlock.Text = string.Empty;
 
-            // If guardian and selected subject not assigned, show note
+            // If guardian and selected subject not assigned, show note but keep view read-only
             var currentUser = _currentUserService.CurrentUser;
             if (currentUser?.Role == Domain.Enums.UserRole.Teacher && _isGuardianOfSelectedClass)
             {
@@ -314,12 +334,12 @@ public partial class MarksEntryView : UserControl
                 }
                 else
                 {
-                    SaveMarksButton.IsEnabled = true;
+                    SaveMarksButton.IsEnabled = !isFinalized;
                 }
             }
-            else
+            else if (isFinalized)
             {
-                SaveMarksButton.IsEnabled = true;
+                SaveMarksButton.IsEnabled = false;
             }
         }
         catch (Exception ex)
@@ -368,10 +388,12 @@ public partial class MarksEntryView : UserControl
         try
         {
             var currentUser = _currentUserService.CurrentUser;
+            int classId = (int)ClassComboBox.SelectedValue;
+            int subjectId = (int)SubjectComboBox.SelectedValue;
+
+            // Permission check for teacher
             if (currentUser?.Role == Domain.Enums.UserRole.Teacher)
             {
-                int classId = (int)ClassComboBox.SelectedValue;
-                int subjectId = (int)SubjectComboBox.SelectedValue;
                 var assignments = await _teacherAssignmentService.GetMyTeacherSubjectsAsync(currentUser.UserId);
                 bool canEdit = assignments.Any(a => a.ClassId == classId && a.SubjectId == subjectId);
                 if (!canEdit)
@@ -389,12 +411,17 @@ public partial class MarksEntryView : UserControl
                 return;
             }
 
-            int classIdSave = (int)ClassComboBox.SelectedValue;
-            int subjectIdSave = (int)SubjectComboBox.SelectedValue;
+            // Finalization check
+            bool isFinalized = await _finalizationService.IsClassFinalizedAsync(classId, activeYear.AcademicYearId);
+            if (isFinalized)
+            {
+                MessageBox.Show("نتایج این صنف نهایی شده است و قابل ویرایش نیست.", "دسترسی محدود", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
             var dtos = _markRows.Select(r => new SaveExamMarkDto(
                 StudentId: r.StudentId,
-                SubjectId: subjectIdSave,
+                SubjectId: subjectId,
                 MidtermScore: r.MidtermScore,
                 FinalScore: r.FinalScore,
                 AcademicYearId: activeYear.AcademicYearId
