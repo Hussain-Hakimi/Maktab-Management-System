@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
@@ -15,6 +16,7 @@ public partial class MainWindow : Window
     private readonly IUserService _userService;
     private readonly IAuditService _auditService;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IBackupService _backupService;
 
     private UserDto? _currentUser;
 
@@ -90,7 +92,8 @@ public partial class MainWindow : Window
         PromotionHistoryView promotionHistoryView,
         IUserService userService,
         IAuditService auditService,
-        ICurrentUserService currentUserService)
+        ICurrentUserService currentUserService,
+        IBackupService backupService)
     {
         InitializeComponent();
 
@@ -119,11 +122,13 @@ public partial class MainWindow : Window
         _userService = userService;
         _auditService = auditService;
         _currentUserService = currentUserService;
+        _backupService = backupService;
 
         _navigationService = new NavigationService(MainContentArea);
 
         SidebarListBox.SelectedIndex = 0;
         Loaded += MainWindow_Loaded;
+        Closing += MainWindow_Closing;
     }
 
     public void SetCurrentUser(UserDto user)
@@ -199,6 +204,29 @@ public partial class MainWindow : Window
         {
             await _auditService.LogAsync(_currentUser.Username, "تغییر رمز عبور");
             MessageBox.Show("رمز عبور با موفقیت تغییر کرد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+    }
+
+    private void MainWindow_Closing(object? sender, CancelEventArgs e)
+    {
+        try
+        {
+            var lastBackup = _backupService.GetLastBackupDateAsync().GetAwaiter().GetResult();
+            if (lastBackup is null || (DateTime.Now - lastBackup.Value).TotalDays > 7)
+            {
+                var result = MessageBox.Show(
+                    "هشدار: آخرین نسخه پشتیبان بیش از ۷ روز پیش تهیه شده است.\nآیا مطمئن هستید که می‌خواهید بدون تهیه نسخه پشتیبان خارج شوید؟",
+                    "یادآوری پشتیبان‌گیری",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result == MessageBoxResult.No)
+                    e.Cancel = true;
+            }
+        }
+        catch
+        {
+            // Ignore backup check errors
         }
     }
 
