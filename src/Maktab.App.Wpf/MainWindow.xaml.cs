@@ -42,6 +42,7 @@ public partial class MainWindow : Window
     private readonly SchoolSettingsView _schoolSettingsView;
     private readonly AcademicYearView _academicYearView;
     private readonly PromotionHistoryView _promotionHistoryView;
+    private readonly TeacherAssignmentView _teacherAssignmentView;
 
     public MainWindow(
         ClassSubjectView classSubjectView,
@@ -65,6 +66,7 @@ public partial class MainWindow : Window
         SchoolSettingsView schoolSettingsView,
         AcademicYearView academicYearView,
         PromotionHistoryView promotionHistoryView,
+        TeacherAssignmentView teacherAssignmentView,
         IUserService userService,
         IAuditService auditService,
         ICurrentUserService currentUserService,
@@ -93,6 +95,7 @@ public partial class MainWindow : Window
         _schoolSettingsView = schoolSettingsView;
         _academicYearView = academicYearView;
         _promotionHistoryView = promotionHistoryView;
+        _teacherAssignmentView = teacherAssignmentView;
 
         _userService = userService;
         _auditService = auditService;
@@ -110,7 +113,6 @@ public partial class MainWindow : Window
         _currentUser = user;
         CurrentUserTextBlock.Text = $"👤 {user.FullName} ({user.Role})";
         ApplyRoleBasedVisibility();
-        // Select first available main tab and sub item
         MainTabs.SelectedIndex = 0;
     }
 
@@ -118,20 +120,17 @@ public partial class MainWindow : Window
     {
         if (_currentUser is null) return;
 
-        // Show/hide main tabs based on role
-        DashboardTab.Visibility = Visibility.Visible;
-
         bool isAdmin = _currentUser.Role == UserRole.Admin;
         bool isTeacher = _currentUser.Role == UserRole.Teacher;
         bool isLibrarian = _currentUser.Role == UserRole.Librarian;
         bool isAccountant = _currentUser.Role == UserRole.Accountant;
 
+        DashboardTab.Visibility = Visibility.Visible;
         AcademicTab.Visibility = (isAdmin || isTeacher) ? Visibility.Visible : Visibility.Collapsed;
         AttendanceTab.Visibility = (isAdmin || isTeacher) ? Visibility.Visible : Visibility.Collapsed;
         OperationsTab.Visibility = (isAdmin || isLibrarian || isAccountant) ? Visibility.Visible : Visibility.Collapsed;
         AdminTab.Visibility = isAdmin ? Visibility.Visible : Visibility.Collapsed;
 
-        // Ensure selected tab is visible
         if (MainTabs.SelectedItem is TabItem selectedTab && selectedTab.Visibility != Visibility.Visible)
         {
             MainTabs.SelectedIndex = 0;
@@ -179,10 +178,10 @@ public partial class MainWindow : Window
         if (SubMenuListBox is null)
             return;
 
-        // Populate sub-menu based on selected main tab
         SubMenuListBox.Items.Clear();
 
         string? tabName = (MainTabs.SelectedItem as TabItem)?.Name;
+
         if (tabName == "DashboardTab")
         {
             SubMenuListBox.Items.Add(new ListBoxItem { Content = "🏠 داشبورد", Tag = "Dashboard" });
@@ -228,6 +227,7 @@ public partial class MainWindow : Window
             if (_currentUser?.Role == UserRole.Admin)
             {
                 SubMenuListBox.Items.Add(new ListBoxItem { Content = "👥 مدیریت کاربران", Tag = "UserManagement" });
+                SubMenuListBox.Items.Add(new ListBoxItem { Content = "👥 تخصیص استادان", Tag = "TeacherAssignment" });
                 SubMenuListBox.Items.Add(new ListBoxItem { Content = "⚙️ تنظیمات ارتقاء", Tag = "PromotionSettings" });
                 SubMenuListBox.Items.Add(new ListBoxItem { Content = "📥 ورود اطلاعات دسته‌جمعی", Tag = "BulkImport" });
                 SubMenuListBox.Items.Add(new ListBoxItem { Content = "📋 گزارش وقایع", Tag = "AuditLogs" });
@@ -261,6 +261,7 @@ public partial class MainWindow : Window
             case "Textbooks": _navigationService.Navigate(_textbookView); break;
             case "Fees": _navigationService.Navigate(_feesView); break;
             case "UserManagement": _navigationService.Navigate(_userManagementView); break;
+            case "TeacherAssignment": _navigationService.Navigate(_teacherAssignmentView); break;
             case "PromotionSettings": _navigationService.Navigate(_promotionSettingsView); break;
             case "BulkImport": _navigationService.Navigate(_bulkImportView); break;
             case "AuditLogs": _navigationService.Navigate(_auditLogView); break;
