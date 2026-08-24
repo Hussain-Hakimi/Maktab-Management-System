@@ -16,6 +16,7 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
     public Task GeneratePdfReportAsync(
         StudentReportCardDto reportCard,
         string outputFilePath,
+        ReportCardTemplateType templateType,
         CancellationToken cancellationToken = default)
     {
         var doc = Document.Create(container =>
@@ -26,9 +27,9 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
                 page.Margin(25);
                 page.DefaultTextStyle(x => x.FontSize(10));
 
-                page.Header().Element(c => ComposeHeader(c, reportCard));
-                page.Content().Element(c => ComposeContent(c, reportCard));
-                page.Footer().Element(c => ComposeFooter(c, reportCard));
+                page.Header().Element(c => ComposeHeader(c, reportCard, templateType));
+                page.Content().Element(c => ComposeContent(c, reportCard, templateType));
+                page.Footer().Element(c => ComposeFooter(c, reportCard, templateType));
             });
         });
 
@@ -36,7 +37,46 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
         return Task.CompletedTask;
     }
 
-    private static void ComposeHeader(IContainer container, StudentReportCardDto reportCard)
+    // ---------- Header ----------
+    private static void ComposeHeader(
+        IContainer container,
+        StudentReportCardDto reportCard,
+        ReportCardTemplateType templateType)
+    {
+        switch (templateType)
+        {
+            case ReportCardTemplateType.Simple:
+                ComposeHeaderSimple(container, reportCard);
+                break;
+            case ReportCardTemplateType.Detailed:
+                ComposeHeaderDetailed(container, reportCard);
+                break;
+            default:
+                ComposeHeaderStandard(container, reportCard);
+                break;
+        }
+    }
+
+    private static void ComposeHeaderSimple(IContainer container, StudentReportCardDto reportCard)
+    {
+        container.Column(col =>
+        {
+            col.Item().AlignCenter().Text("اطلاع‌نامه نمرات سالانه شاگرد").FontSize(14).Bold();
+            col.Item().AlignCenter().Text($"سال تعلیمی: {reportCard.AcademicYear}").FontSize(10).FontColor(Colors.Grey.Darken1);
+            col.Item().PaddingTop(8).Row(row =>
+            {
+                row.RelativeItem().Text($"نام: {reportCard.FirstName} {reportCard.LastName}");
+                row.RelativeItem().Text($"صنف: {reportCard.ClassName}");
+            });
+            col.Item().PaddingTop(4).Row(row =>
+            {
+                row.RelativeItem().Text($"شماره اساس: {reportCard.RollNumber}");
+                row.RelativeItem().Text($"تاریخ: {reportCard.IssueDate}");
+            });
+        });
+    }
+
+    private static void ComposeHeaderStandard(IContainer container, StudentReportCardDto reportCard)
     {
         container.Column(col =>
         {
@@ -92,11 +132,79 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
         });
     }
 
-    private static void ComposeContent(IContainer container, StudentReportCardDto reportCard)
+    private static void ComposeHeaderDetailed(IContainer container, StudentReportCardDto reportCard)
+    {
+        // Similar to Standard but with extra attendance/rank info
+        ComposeHeaderStandard(container, reportCard);
+        // Extra stats line below header
+        container.Column(col =>
+        {
+            col.Item().PaddingTop(4).Row(row =>
+            {
+                row.RelativeItem().Text($"غیبت‌ها: {reportCard.AbsenceDays} روز");
+                row.RelativeItem().Text($"اوسط فیصدی: {reportCard.AveragePercentage:0.##}%");
+            });
+        });
+    }
+
+    // ---------- Content ----------
+    private static void ComposeContent(
+        IContainer container,
+        StudentReportCardDto reportCard,
+        ReportCardTemplateType templateType)
+    {
+        switch (templateType)
+        {
+            case ReportCardTemplateType.Simple:
+                ComposeContentSimple(container, reportCard);
+                break;
+            case ReportCardTemplateType.Detailed:
+                ComposeContentDetailed(container, reportCard);
+                break;
+            default:
+                ComposeContentStandard(container, reportCard);
+                break;
+        }
+    }
+
+    private static void ComposeContentSimple(IContainer container, StudentReportCardDto reportCard)
     {
         container.PaddingTop(10).Column(col =>
         {
-            // Marks Table
+            col.Item().Table(table =>
+            {
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.RelativeColumn(3);
+                    columns.RelativeColumn(2);
+                    columns.RelativeColumn(2);
+                });
+
+                table.Header(header =>
+                {
+                    header.Cell().Background(Colors.Grey.Lighten3).Padding(4).Text("مضمون").Bold();
+                    header.Cell().Background(Colors.Grey.Lighten3).Padding(4).AlignCenter().Text("مجموع (۱۰۰)").Bold();
+                    header.Cell().Background(Colors.Grey.Lighten3).Padding(4).AlignCenter().Text("نتیجه").Bold();
+                });
+
+                foreach (var mark in reportCard.SubjectMarks)
+                {
+                    table.Cell().Padding(4).Text(mark.SubjectName);
+                    table.Cell().Padding(4).AlignCenter().Text(mark.TotalScore.ToString("0.##"));
+                    table.Cell().Padding(4).AlignCenter().Text(mark.IsPass ? "کامیاب" : "ناکام")
+                        .FontColor(mark.IsPass ? Colors.Green.Darken2 : Colors.Red.Darken2);
+                }
+
+                table.Cell().ColumnSpan(2).Padding(6).Text("اوسط فیصدی").Bold();
+                table.Cell().Padding(6).AlignCenter().Text($"{reportCard.AveragePercentage:0.##}%").Bold();
+            });
+        });
+    }
+
+    private static void ComposeContentStandard(IContainer container, StudentReportCardDto reportCard)
+    {
+        container.PaddingTop(10).Column(col =>
+        {
             col.Item().Table(table =>
             {
                 table.ColumnsDefinition(columns =>
@@ -109,7 +217,6 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
                     columns.RelativeColumn(2);   // Pass/Fail
                 });
 
-                // Header Row
                 table.Header(header =>
                 {
                     header.Cell().Background(Colors.Blue.Darken3).Padding(4).AlignCenter().Text("شماره").FontColor(Colors.White).Bold();
@@ -138,7 +245,6 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
                     idx++;
                 }
 
-                // Summary Row
                 table.Cell().ColumnSpan(2).Background(Colors.Grey.Lighten3).Padding(6).Text("مجموع کل و اوسط فیصدی").Bold();
                 table.Cell().Background(Colors.Grey.Lighten3).Padding(6).AlignCenter().Text("-");
                 table.Cell().Background(Colors.Grey.Lighten3).Padding(6).AlignCenter().Text("-");
@@ -148,7 +254,6 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
 
             col.Item().PaddingTop(12).Row(row =>
             {
-                // Summary Statistics Box
                 row.RelativeItem(3).Border(1).BorderColor(Colors.Grey.Lighten2).Padding(8).Column(c =>
                 {
                     c.Item().Text("خلاصه نتایج امتحانات").FontSize(11).Bold().FontColor(Colors.Blue.Darken3);
@@ -159,18 +264,17 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
 
                 row.ConstantItem(12);
 
-                // Promotion Decision Box
                 var promoBorder = reportCard.PromotionOutcome switch
                 {
                     PromotionOutcome.Promoted => Colors.Green.Darken2,
                     PromotionOutcome.Conditional => Colors.Yellow.Darken3,
-                    _ => Colors.Red.Darken2 // Repeat
+                    _ => Colors.Red.Darken2
                 };
                 var promoBg = reportCard.PromotionOutcome switch
                 {
                     PromotionOutcome.Promoted => Colors.Green.Lighten5,
                     PromotionOutcome.Conditional => Colors.Yellow.Lighten5,
-                    _ => Colors.Red.Lighten5 // Repeat
+                    _ => Colors.Red.Lighten5
                 };
                 var promoTitle = reportCard.PromotionOutcome switch
                 {
@@ -197,7 +301,48 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
         });
     }
 
-    private static void ComposeFooter(IContainer container, StudentReportCardDto reportCard)
+    private static void ComposeContentDetailed(IContainer container, StudentReportCardDto reportCard)
+    {
+        // Use standard content and then add extra attendance summary block
+        ComposeContentStandard(container, reportCard);
+
+        container.PaddingTop(8).Border(1).BorderColor(Colors.Grey.Lighten2).Padding(8).Column(col =>
+        {
+            col.Item().Text("جزئیات بیشتر").FontSize(11).Bold().FontColor(Colors.Blue.Darken3);
+            col.Item().PaddingTop(4).Text($"تعداد ایام غیرحاضری: {reportCard.AbsenceDays} روز");
+            col.Item().Text($"اوسط فیصدی: {reportCard.AveragePercentage:0.##}%");
+            col.Item().Text($"مجموع نمرات: {reportCard.TotalObtainedScore:0.##} از {reportCard.TotalMaxScore:0.##}");
+        });
+    }
+
+    // ---------- Footer ----------
+    private static void ComposeFooter(
+        IContainer container,
+        StudentReportCardDto reportCard,
+        ReportCardTemplateType templateType)
+    {
+        switch (templateType)
+        {
+            case ReportCardTemplateType.Simple:
+                ComposeFooterSimple(container);
+                break;
+            case ReportCardTemplateType.Standard:
+            case ReportCardTemplateType.Detailed:
+            default:
+                ComposeFooterStandard(container);
+                break;
+        }
+    }
+
+    private static void ComposeFooterSimple(IContainer container)
+    {
+        container.Column(col =>
+        {
+            col.Item().PaddingTop(20).AlignCenter().Text("سیستم مدیریت مکاتب افغانستان").FontSize(8).FontColor(Colors.Grey.Darken1);
+        });
+    }
+
+    private static void ComposeFooterStandard(IContainer container)
     {
         container.Column(col =>
         {
@@ -220,7 +365,7 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
 
             col.Item().PaddingTop(15).Row(row =>
             {
-                row.RelativeItem().Text("سیستم مدیریت مکاتب افغانستان — نسخه ۱.۰.۱ آفلاین").FontSize(8).FontColor(Colors.Grey.Darken1);
+                row.RelativeItem().Text("سیستم مدیریت مکاتب افغانستان — نسخه ۱.۵.۰ آفلاین").FontSize(8).FontColor(Colors.Grey.Darken1);
                 row.RelativeItem().AlignRight().Text("صفحه ۱ از ۱").FontSize(8).FontColor(Colors.Grey.Darken1);
             });
         });
