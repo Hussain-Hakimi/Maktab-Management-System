@@ -9,7 +9,8 @@ public sealed class ReportCardService(
     IClassSubjectRepository classSubjectRepository,
     IExamMarkRepository markRepository,
     IPdfReportCardGenerator pdfGenerator,
-    IAttendanceService attendanceService) : IReportCardService
+    IAttendanceService attendanceService,
+    ISchoolSettingsService schoolSettingsService) : IReportCardService
 {
     public async Task<StudentReportCardDto> GetStudentReportCardDataAsync(
         int studentId,
@@ -88,6 +89,9 @@ public sealed class ReportCardService(
                 break;
         }
 
+        // Load school settings for headers
+        var schoolSettings = await schoolSettingsService.GetSettingsAsync(cancellationToken);
+
         return new StudentReportCardDto
         {
             StudentId = student.StudentId,
@@ -110,7 +114,13 @@ public sealed class ReportCardService(
             PromotionOutcome = outcome,
             PromotionStatusText = promoText,
             FailureReason = failureReason,
-            ReportType = ReportCardType.Annual // default; set explicitly in generation methods
+            ReportType = ReportCardType.Annual, // default
+
+            // Populate new header fields
+            GovernmentTitle = schoolSettings.GovernmentTitle,
+            ProvincialEducationHeader = schoolSettings.ProvincialEducationHeader,
+            DistrictEducationHeader = schoolSettings.DistrictEducationHeader,
+            SchoolLogoPath = schoolSettings.LogoPath ?? string.Empty
         };
     }
 
