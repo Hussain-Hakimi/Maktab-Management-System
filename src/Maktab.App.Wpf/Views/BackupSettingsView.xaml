@@ -52,6 +52,7 @@
                         </Border>
 
                         <Button Height="40" Content="📦 تهیه نسخه پشتیبان دستی هم‌اکنون" Background="#059669" Foreground="White" FontWeight="Bold" FontSize="13" Margin="0,0,0,8" Click="CreateBackupButton_Click" />
+                        <Button Height="40" Content="📂 کپی به فلش USB" Background="#0284C7" Foreground="White" FontWeight="Bold" FontSize="13" Margin="0,0,0,8" Click="CopyBackupToUsbButton_Click" />
                     </StackPanel>
                 </Border>
 
