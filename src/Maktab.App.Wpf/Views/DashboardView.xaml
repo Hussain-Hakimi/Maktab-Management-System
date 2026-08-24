@@ -63,11 +63,16 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Card 4: Outstanding Fees -->
+                    <!-- Card 4: Outstanding Fees with Progress -->
                     <Border Grid.Row="2" Grid.Column="0" Background="#FEE2E2" BorderBrush="#FECACA" BorderThickness="1" CornerRadius="8" Padding="16">
                         <StackPanel>
                             <TextBlock Text="💰 فیس باقی‌مانده" FontSize="14" FontWeight="SemiBold" Foreground="#B91C1C" />
                             <TextBlock x:Name="OutstandingFeesTextBlock" Text="۰" FontSize="28" FontWeight="Bold" Foreground="#991B1B" Margin="0,8,0,0" />
+                            <ProgressBar x:Name="FeeProgressBar" Height="12" Margin="0,8,0,0"
+                                         Minimum="0" Maximum="100" Value="0"
+                                         Foreground="#16A34A" Background="#FECACA" />
+                            <TextBlock x:Name="FeeCollectionRateTextBlock" Text="وصول: ۰%" FontSize="12"
+                                       Foreground="#065F46" Margin="0,4,0,0" />
                         </StackPanel>
                     </Border>
 
