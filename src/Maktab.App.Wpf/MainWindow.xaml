@@ -110,6 +110,7 @@
                     <ListBoxItem Content="📋 گزارش وقایع (Admin)" />
                     <ListBoxItem Content="🏫 تنظیمات عمومی (Admin)" />
                     <ListBoxItem Content="📅 سال‌های تعلیمی (Admin)" />
+                    <ListBoxItem Content="📜 تاریخچه ارتقاء" />
                 </ListBox>
             </Border>
 
