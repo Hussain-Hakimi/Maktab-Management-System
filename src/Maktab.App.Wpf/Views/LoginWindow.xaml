@@ -5,37 +5,115 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="ورود به سیستم"
-        Height="400" Width="480"
+        Width="520"
+        Height="420"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         Language="fa-IR"
         FlowDirection="RightToLeft"
-        Background="#F1F5F9">
+        Background="#0F172A">
 
     <Grid>
-        <Border Background="White" CornerRadius="12" Margin="30" Padding="30"
-                BorderBrush="#E2E8F0" BorderThickness="1">
+        <Border Background="White"
+                CornerRadius="12"
+                Margin="30"
+                Padding="30"
+                BorderBrush="#E2E8F0"
+                BorderThickness="1">
             <StackPanel VerticalAlignment="Center">
-                <TextBlock Text="📘 سیستم مدیریت مکتب" FontSize="22" FontWeight="Bold"
-                           HorizontalAlignment="Center" Margin="0,0,0,10" Foreground="#0F172A" />
-                <TextBlock Text="لطفاً وارد شوید" FontSize="14" Foreground="#475569"
-                           HorizontalAlignment="Center" Margin="0,0,0,30" />
 
-                <TextBlock Text="نام کاربری" FontWeight="SemiBold" Margin="0,0,0,6" Foreground="#334155" />
-                <TextBox x:Name="UsernameTextBox" Height="40" Margin="0,0,0,16"
-                         FontSize="14" Padding="10,8" VerticalContentAlignment="Center"
-                         TextAlignment="Right" />
+                <TextBlock Text="📘 سیستم مدیریت مکتب"
+                           FontSize="22"
+                           FontWeight="Bold"
+                           Foreground="#0F172A"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,10" />
 
-                <TextBlock Text="رمز عبور" FontWeight="SemiBold" Margin="0,0,0,6" Foreground="#334155" />
-                <PasswordBox x:Name="PasswordBox" Height="40" Margin="0,0,0,24"
-                             FontSize="14" Padding="10,8" VerticalContentAlignment="Center" />
+                <TextBlock Text="ورود به سیستم"
+                           FontSize="14"
+                           Foreground="#64748B"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,30" />
 
-                <Button Height="44" Content="ورود" Background="#3B82F6" Foreground="White"
-                        FontWeight="Bold" FontSize="16" BorderThickness="0"
-                        Cursor="Hand" Click="LoginButton_Click" />
+                <!-- Username -->
+                <TextBlock Text="نام کاربری:"
+                           FontWeight="SemiBold"
+                           Foreground="#334155"
+                           HorizontalAlignment="Right"
+                           Margin="0,0,0,6" />
+                <TextBox x:Name="UsernameTextBox"
+                         Height="40"
+                         Margin="0,0,0,16"
+                         FontSize="14"
+                         Padding="10,8"
+                         VerticalContentAlignment="Center"
+                         TextAlignment="Right"
+                         FlowDirection="RightToLeft"
+                         InputMethod.IsInputMethodEnabled="True" />
 
-                <TextBlock x:Name="ErrorTextBlock" Foreground="#DC2626" FontSize="13"
-                           Margin="0,14,0,0" TextWrapping="Wrap" />
+                <!-- Password -->
+                <TextBlock Text="رمز عبور:"
+                           FontWeight="SemiBold"
+                           Foreground="#334155"
+                           HorizontalAlignment="Right"
+                           Margin="0,0,0,6" />
+                <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="36" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Masked password -->
+                    <PasswordBox x:Name="PasswordBox"
+                                 Grid.Column="0"
+                                 Height="40"
+                                 FontSize="14"
+                                 Padding="10,8"
+                                 VerticalContentAlignment="Center"
+                                 PasswordChar="●" />
+
+                    <!-- Plain text password (hidden by default) -->
+                    <TextBox x:Name="PasswordTextBox"
+                             Grid.Column="0"
+                             Height="40"
+                             FontSize="14"
+                             Padding="10,8"
+                             VerticalContentAlignment="Center"
+                             TextAlignment="Right"
+                             Visibility="Collapsed" />
+
+                    <Button Grid.Column="2"
+                            Content="👁"
+                            Height="40"
+                            Width="36"
+                            FontSize="18"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            Click="TogglePasswordVisibilityButton_Click" />
+                </Grid>
+
+                <!-- Login button -->
+                <Button x:Name="LoginButton"
+                        Content="ورود"
+                        Height="44"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        Background="#1E3A8A"
+                        Foreground="White"
+                        FontSize="15"
+                        FontWeight="Bold"
+                        CornerRadius="6"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        Click="LoginButton_Click" />
+
+                <TextBlock x:Name="StatusTextBlock"
+                           Foreground="#DC2626"
+                           FontSize="13"
+                           Margin="0,14,0,0"
+                           TextWrapping="Wrap" />
             </StackPanel>
         </Border>
     </Grid>
