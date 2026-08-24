@@ -43,32 +43,6 @@ public partial class MainWindow : Window
     private readonly AcademicYearView _academicYearView;
     private readonly PromotionHistoryView _promotionHistoryView;
 
-    // Allowed roles per sidebar item index (matching order in XAML)
-    private static readonly UserRole[][] SidebarItemRoles =
-    [
-        [UserRole.Admin, UserRole.Teacher, UserRole.Librarian, UserRole.Accountant], // Dashboard
-        [UserRole.Admin, UserRole.Teacher, UserRole.Librarian, UserRole.Accountant], // Alerts
-        [UserRole.Admin, UserRole.Teacher],                                           // Students
-        [UserRole.Admin, UserRole.Teacher],                                           // Classes
-        [UserRole.Admin, UserRole.Teacher],                                           // Marks
-        [UserRole.Admin, UserRole.Teacher],                                           // Student Grades
-        [UserRole.Admin, UserRole.Teacher],                                           // Attendance
-        [UserRole.Admin, UserRole.Teacher],                                           // Attendance Reports
-        [UserRole.Admin, UserRole.Librarian],                                         // Library
-        [UserRole.Admin, UserRole.Librarian],                                         // Textbooks
-        [UserRole.Admin, UserRole.Accountant],                                        // Fees
-        [UserRole.Admin, UserRole.Teacher],                                           // Report Cards
-        [UserRole.Admin, UserRole.Teacher],                                           // Reports
-        [UserRole.Admin],                                                             // Backup/Restore
-        [UserRole.Admin],                                                             // User Management
-        [UserRole.Admin],                                                             // Promotion Settings
-        [UserRole.Admin],                                                             // Bulk Import
-        [UserRole.Admin],                                                             // Audit Logs
-        [UserRole.Admin],                                                             // School Settings
-        [UserRole.Admin],                                                             // Academic Years
-        [UserRole.Admin, UserRole.Teacher]                                            // Promotion History
-    ];
-
     public MainWindow(
         ClassSubjectView classSubjectView,
         StudentManagementView studentManagementView,
@@ -127,7 +101,6 @@ public partial class MainWindow : Window
 
         _navigationService = new NavigationService(MainContentArea);
 
-        SidebarListBox.SelectedIndex = 0;
         Loaded += MainWindow_Loaded;
         Closing += MainWindow_Closing;
     }
@@ -136,39 +109,32 @@ public partial class MainWindow : Window
     {
         _currentUser = user;
         CurrentUserTextBlock.Text = $"👤 {user.FullName} ({user.Role})";
-        try
-        {
-            ApplyRoleBasedSidebarVisibility();
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Error setting current user: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
+        ApplyRoleBasedVisibility();
+        // Select first available main tab and sub item
+        MainTabs.SelectedIndex = 0;
     }
 
-    private void ApplyRoleBasedSidebarVisibility()
+    private void ApplyRoleBasedVisibility()
     {
         if (_currentUser is null) return;
 
-        try
-        {
-            for (int i = 0; i < SidebarListBox.Items.Count; i++)
-            {
-                if (SidebarListBox.Items[i] is not ListBoxItem item)
-                    continue;
+        // Show/hide main tabs based on role
+        DashboardTab.Visibility = Visibility.Visible;
 
-                var allowedRoles = SidebarItemRoles[i];
-                item.Visibility = allowedRoles.Contains(_currentUser.Role) ? Visibility.Visible : Visibility.Collapsed;
-            }
+        bool isAdmin = _currentUser.Role == UserRole.Admin;
+        bool isTeacher = _currentUser.Role == UserRole.Teacher;
+        bool isLibrarian = _currentUser.Role == UserRole.Librarian;
+        bool isAccountant = _currentUser.Role == UserRole.Accountant;
 
-            if (SidebarListBox.SelectedItem is ListBoxItem selectedItem && selectedItem.Visibility != Visibility.Visible)
-            {
-                SidebarListBox.SelectedIndex = 0;
-            }
-        }
-        catch (Exception ex)
+        AcademicTab.Visibility = (isAdmin || isTeacher) ? Visibility.Visible : Visibility.Collapsed;
+        AttendanceTab.Visibility = (isAdmin || isTeacher) ? Visibility.Visible : Visibility.Collapsed;
+        OperationsTab.Visibility = (isAdmin || isLibrarian || isAccountant) ? Visibility.Visible : Visibility.Collapsed;
+        AdminTab.Visibility = isAdmin ? Visibility.Visible : Visibility.Collapsed;
+
+        // Ensure selected tab is visible
+        if (MainTabs.SelectedItem is TabItem selectedTab && selectedTab.Visibility != Visibility.Visible)
         {
-            MessageBox.Show($"Error applying role-based sidebar: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            MainTabs.SelectedIndex = 0;
         }
     }
 
@@ -208,6 +174,104 @@ public partial class MainWindow : Window
         }
     }
 
+    private void MainTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (SubMenuListBox is null)
+            return;
+
+        // Populate sub-menu based on selected main tab
+        SubMenuListBox.Items.Clear();
+
+        string? tabName = (MainTabs.SelectedItem as TabItem)?.Name;
+        if (tabName == "DashboardTab")
+        {
+            SubMenuListBox.Items.Add(new ListBoxItem { Content = "🏠 داشبورد", Tag = "Dashboard" });
+            SubMenuListBox.SelectedIndex = 0;
+        }
+        else if (tabName == "AcademicTab")
+        {
+            if (_currentUser?.Role == UserRole.Admin || _currentUser?.Role == UserRole.Teacher)
+            {
+                SubMenuListBox.Items.Add(new ListBoxItem { Content = "👨‍🎓 شاگردان", Tag = "Students" });
+                SubMenuListBox.Items.Add(new ListBoxItem { Content = "🏫 صنف‌ها و مضامین", Tag = "Classes" });
+                SubMenuListBox.Items.Add(new ListBoxItem { Content = "📝 ثبت نمرات", Tag = "MarksEntry" });
+                SubMenuListBox.Items.Add(new ListBoxItem { Content = "🎓 نمرات شاگرد", Tag = "StudentGrades" });
+                SubMenuListBox.Items.Add(new ListBoxItem { Content = "📄 کارنامه / اطلاع‌نامه", Tag = "ReportCards" });
+                SubMenuListBox.Items.Add(new ListBoxItem { Content = "📜 تاریخچه ارتقاء", Tag = "PromotionHistory" });
+                SubMenuListBox.SelectedIndex = 0;
+            }
+        }
+        else if (tabName == "AttendanceTab")
+        {
+            if (_currentUser?.Role == UserRole.Admin || _currentUser?.Role == UserRole.Teacher)
+            {
+                SubMenuListBox.Items.Add(new ListBoxItem { Content = "🗓️ حاضری", Tag = "Attendance" });
+                SubMenuListBox.Items.Add(new ListBoxItem { Content = "🗓️ گزارش حاضری", Tag = "AttendanceReports" });
+                SubMenuListBox.SelectedIndex = 0;
+            }
+        }
+        else if (tabName == "OperationsTab")
+        {
+            if (_currentUser?.Role == UserRole.Admin || _currentUser?.Role == UserRole.Librarian)
+            {
+                SubMenuListBox.Items.Add(new ListBoxItem { Content = "📚 کتابخانه", Tag = "Library" });
+                SubMenuListBox.Items.Add(new ListBoxItem { Content = "📦 کتاب‌های درسی", Tag = "Textbooks" });
+            }
+            if (_currentUser?.Role == UserRole.Admin || _currentUser?.Role == UserRole.Accountant)
+            {
+                SubMenuListBox.Items.Add(new ListBoxItem { Content = "💰 فیس‌ها", Tag = "Fees" });
+            }
+            SubMenuListBox.SelectedIndex = SubMenuListBox.Items.Count > 0 ? 0 : -1;
+        }
+        else if (tabName == "AdminTab")
+        {
+            if (_currentUser?.Role == UserRole.Admin)
+            {
+                SubMenuListBox.Items.Add(new ListBoxItem { Content = "👥 مدیریت کاربران", Tag = "UserManagement" });
+                SubMenuListBox.Items.Add(new ListBoxItem { Content = "⚙️ تنظیمات ارتقاء", Tag = "PromotionSettings" });
+                SubMenuListBox.Items.Add(new ListBoxItem { Content = "📥 ورود اطلاعات دسته‌جمعی", Tag = "BulkImport" });
+                SubMenuListBox.Items.Add(new ListBoxItem { Content = "📋 گزارش وقایع", Tag = "AuditLogs" });
+                SubMenuListBox.Items.Add(new ListBoxItem { Content = "🏫 تنظیمات عمومی", Tag = "SchoolSettings" });
+                SubMenuListBox.Items.Add(new ListBoxItem { Content = "📅 سال‌های تعلیمی", Tag = "AcademicYears" });
+                SubMenuListBox.Items.Add(new ListBoxItem { Content = "📊 گزارش‌ها", Tag = "Reports" });
+                SubMenuListBox.Items.Add(new ListBoxItem { Content = "🔔 اعلان‌ها", Tag = "Alerts" });
+                SubMenuListBox.Items.Add(new ListBoxItem { Content = "💾 پشتیبان‌گیری و تنظیمات", Tag = "Backup" });
+                SubMenuListBox.SelectedIndex = 0;
+            }
+        }
+    }
+
+    private void SubMenuListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (SubMenuListBox.SelectedItem is not ListBoxItem item || item.Tag is not string tag)
+            return;
+
+        switch (tag)
+        {
+            case "Dashboard": _navigationService.Navigate(_dashboardView); break;
+            case "Students": _navigationService.Navigate(_studentManagementView); break;
+            case "Classes": _navigationService.Navigate(_classSubjectView); break;
+            case "MarksEntry": _navigationService.Navigate(_marksEntryView); break;
+            case "StudentGrades": _navigationService.Navigate(_studentGradesView); break;
+            case "ReportCards": _navigationService.Navigate(_reportCardsView); break;
+            case "PromotionHistory": _navigationService.Navigate(_promotionHistoryView); break;
+            case "Attendance": _navigationService.Navigate(_attendanceView); break;
+            case "AttendanceReports": _navigationService.Navigate(_attendanceReportsView); break;
+            case "Library": _navigationService.Navigate(_libraryView); break;
+            case "Textbooks": _navigationService.Navigate(_textbookView); break;
+            case "Fees": _navigationService.Navigate(_feesView); break;
+            case "UserManagement": _navigationService.Navigate(_userManagementView); break;
+            case "PromotionSettings": _navigationService.Navigate(_promotionSettingsView); break;
+            case "BulkImport": _navigationService.Navigate(_bulkImportView); break;
+            case "AuditLogs": _navigationService.Navigate(_auditLogView); break;
+            case "SchoolSettings": _navigationService.Navigate(_schoolSettingsView); break;
+            case "AcademicYears": _navigationService.Navigate(_academicYearView); break;
+            case "Reports": _navigationService.Navigate(_reportsView); break;
+            case "Alerts": _navigationService.Navigate(_alertsView); break;
+            case "Backup": _navigationService.Navigate(_backupSettingsView); break;
+        }
+    }
+
     private void MainWindow_Closing(object? sender, CancelEventArgs e)
     {
         try
@@ -228,36 +292,6 @@ public partial class MainWindow : Window
         catch
         {
             // Ignore backup check errors
-        }
-    }
-
-    private void SidebarListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (SidebarListBox.SelectedIndex < 0) return;
-
-        switch (SidebarListBox.SelectedIndex)
-        {
-            case 0: _navigationService.Navigate(_dashboardView); break;
-            case 1: _navigationService.Navigate(_alertsView); break;
-            case 2: _navigationService.Navigate(_studentManagementView); break;
-            case 3: _navigationService.Navigate(_classSubjectView); break;
-            case 4: _navigationService.Navigate(_marksEntryView); break;
-            case 5: _navigationService.Navigate(_studentGradesView); break;
-            case 6: _navigationService.Navigate(_attendanceView); break;
-            case 7: _navigationService.Navigate(_attendanceReportsView); break;
-            case 8: _navigationService.Navigate(_libraryView); break;
-            case 9: _navigationService.Navigate(_textbookView); break;
-            case 10: _navigationService.Navigate(_feesView); break;
-            case 11: _navigationService.Navigate(_reportCardsView); break;
-            case 12: _navigationService.Navigate(_reportsView); break;
-            case 13: _navigationService.Navigate(_backupSettingsView); break;
-            case 14: _navigationService.Navigate(_userManagementView); break;
-            case 15: _navigationService.Navigate(_promotionSettingsView); break;
-            case 16: _navigationService.Navigate(_bulkImportView); break;
-            case 17: _navigationService.Navigate(_auditLogView); break;
-            case 18: _navigationService.Navigate(_schoolSettingsView); break;
-            case 19: _navigationService.Navigate(_academicYearView); break;
-            case 20: _navigationService.Navigate(_promotionHistoryView); break;
         }
     }
 }
