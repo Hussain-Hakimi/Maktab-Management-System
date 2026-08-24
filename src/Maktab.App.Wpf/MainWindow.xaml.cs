@@ -20,7 +20,7 @@ public partial class MainWindow : Window
 
     private UserDto? _currentUser;
 
-    // Existing view instances
+    // View instances
     private readonly ClassSubjectView _classSubjectView;
     private readonly StudentManagementView _studentManagementView;
     private readonly MarksEntryView _marksEntryView;
@@ -33,8 +33,6 @@ public partial class MainWindow : Window
     private readonly ReportCardsView _reportCardsView;
     private readonly ReportsView _reportsView;
     private readonly BackupSettingsView _backupSettingsView;
-
-    // New placeholder view instances
     private readonly DashboardView _dashboardView;
     private readonly AlertsView _alertsView;
     private readonly UserManagementView _userManagementView;
@@ -112,7 +110,6 @@ public partial class MainWindow : Window
         _reportCardsView = reportCardsView;
         _reportsView = reportsView;
         _backupSettingsView = backupSettingsView;
-
         _dashboardView = dashboardView;
         _alertsView = alertsView;
         _userManagementView = userManagementView;
