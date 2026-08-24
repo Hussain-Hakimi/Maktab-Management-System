@@ -32,6 +32,7 @@ public static class DependencyInjection
         services.AddSingleton<IExcelReader, ExcelReader>();
         services.AddSingleton<IExportService, ExcelExportService>();
         services.AddSingleton<IPdfReportCardGenerator, QuestPdfReportCardGenerator>();
+        services.AddSingleton<IFinalizationRepository, SqliteFinalizationRepository>();
 
         return services;
     }
