@@ -26,7 +26,9 @@ PRAGMA synchronous = NORMAL;
         await LoadPromotionSettingsIntoPolicyAsync(connection, cancellationToken);
     }
 
-    private static async Task RunMigrationsAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    private static async Task RunMigrationsAsync(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
     {
         int currentVersion = await GetUserVersionAsync(connection, cancellationToken);
 
@@ -48,12 +50,15 @@ PRAGMA synchronous = NORMAL;
         }
     }
 
-    private static async Task SeedDefaultAdminAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    private static async Task SeedDefaultAdminAsync(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
     {
         await using var checkCmd = connection.CreateCommand();
         checkCmd.CommandText = "SELECT COUNT(1) FROM tbl_Users;";
         var count = Convert.ToInt32(await checkCmd.ExecuteScalarAsync(cancellationToken));
-        if (count > 0) return;
+        if (count > 0)
+            return;
 
         const string insertSql = @"
 INSERT INTO tbl_Users (Username, PasswordHash, FullName, Role, IsActive)
@@ -67,7 +72,9 @@ VALUES ($username, $passwordHash, $fullName, 'Admin', 1);";
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    private static async Task SeedDefaultSettingsAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    private static async Task SeedDefaultSettingsAsync(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
     {
         await ExecuteUpsertIfNotExistsAsync(connection, "Promotion.PassingAverage", "65", cancellationToken);
         await ExecuteUpsertIfNotExistsAsync(connection, "Promotion.PassingMark", "40", cancellationToken);
@@ -75,16 +82,25 @@ VALUES ($username, $passwordHash, $fullName, 'Admin', 1);";
         await ExecuteUpsertIfNotExistsAsync(connection, "Promotion.MaxAbsenceDays", "30", cancellationToken);
     }
 
-    private static async Task SeedDefaultSchoolSettingsAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    private static async Task SeedDefaultSchoolSettingsAsync(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
     {
         await ExecuteUpsertIfNotExistsAsync(connection, "School.Name", "مکتب نمونه", cancellationToken);
         await ExecuteUpsertIfNotExistsAsync(connection, "School.Address", "", cancellationToken);
         await ExecuteUpsertIfNotExistsAsync(connection, "School.Phone", "", cancellationToken);
         await ExecuteUpsertIfNotExistsAsync(connection, "School.AcademicYear", AcademicYearProvider.GetCurrentAcademicYear(), cancellationToken);
         await ExecuteUpsertIfNotExistsAsync(connection, "School.LogoPath", "", cancellationToken);
+
+        // New keys for official headers
+        await ExecuteUpsertIfNotExistsAsync(connection, "GovernmentTitle", "امارت اسلامی افغانستان", cancellationToken);
+        await ExecuteUpsertIfNotExistsAsync(connection, "ProvincialEducationHeader", "ریاست معارف ولایت کابل", cancellationToken);
+        await ExecuteUpsertIfNotExistsAsync(connection, "DistrictEducationHeader", "مدیریت معارف ولسوالی", cancellationToken);
     }
 
-    private static async Task SeedDefaultAcademicYearAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    private static async Task SeedDefaultAcademicYearAsync(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
     {
         await using var checkCmd = connection.CreateCommand();
         checkCmd.CommandText = "SELECT COUNT(1) FROM tbl_AcademicYears;";
@@ -106,27 +122,27 @@ SELECT last_insert_rowid();";
         insertCmd.Parameters.AddWithValue("$end", end.ToString("yyyy-MM-dd"));
         var yearId = Convert.ToInt32(await insertCmd.ExecuteScalarAsync(cancellationToken));
 
-        await using (var updateMarks = connection.CreateCommand())
-        {
-            updateMarks.CommandText = "UPDATE tbl_ExamMarks SET AcademicYearId = $id WHERE AcademicYearId = 0;";
-            updateMarks.Parameters.AddWithValue("$id", yearId);
-            await updateMarks.ExecuteNonQueryAsync(cancellationToken);
-        }
-        await using (var updateAttendance = connection.CreateCommand())
-        {
-            updateAttendance.CommandText = "UPDATE tbl_Attendance SET AcademicYearId = $id WHERE AcademicYearId = 0;";
-            updateAttendance.Parameters.AddWithValue("$id", yearId);
-            await updateAttendance.ExecuteNonQueryAsync(cancellationToken);
-        }
-        await using (var updateFees = connection.CreateCommand())
-        {
-            updateFees.CommandText = "UPDATE tbl_Fees SET AcademicYearId = $id WHERE AcademicYearId = 0;";
-            updateFees.Parameters.AddWithValue("$id", yearId);
-            await updateFees.ExecuteNonQueryAsync(cancellationToken);
-        }
+        await using var updateMarks = connection.CreateCommand();
+        updateMarks.CommandText = "UPDATE tbl_ExamMarks SET AcademicYearId = $id WHERE AcademicYearId = 0;";
+        updateMarks.Parameters.AddWithValue("$id", yearId);
+        await updateMarks.ExecuteNonQueryAsync(cancellationToken);
+
+        await using var updateAttendance = connection.CreateCommand();
+        updateAttendance.CommandText = "UPDATE tbl_Attendance SET AcademicYearId = $id WHERE AcademicYearId = 0;";
+        updateAttendance.Parameters.AddWithValue("$id", yearId);
+        await updateAttendance.ExecuteNonQueryAsync(cancellationToken);
+
+        await using var updateFees = connection.CreateCommand();
+        updateFees.CommandText = "UPDATE tbl_Fees SET AcademicYearId = $id WHERE AcademicYearId = 0;";
+        updateFees.Parameters.AddWithValue("$id", yearId);
+        await updateFees.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    private static async Task ExecuteUpsertIfNotExistsAsync(SqliteConnection connection, string key, string value, CancellationToken cancellationToken)
+    private static async Task ExecuteUpsertIfNotExistsAsync(
+        SqliteConnection connection,
+        string key,
+        string value,
+        CancellationToken cancellationToken)
     {
         await using var checkCmd = connection.CreateCommand();
         checkCmd.CommandText = "SELECT COUNT(1) FROM tbl_Settings WHERE Key = $key;";
@@ -143,7 +159,9 @@ SELECT last_insert_rowid();";
         }
     }
 
-    private static async Task LoadPromotionSettingsIntoPolicyAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    private static async Task LoadPromotionSettingsIntoPolicyAsync(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
     {
         var settings = new Dictionary<string, string>();
 
