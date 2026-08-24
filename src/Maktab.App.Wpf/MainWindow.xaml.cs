@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
@@ -15,13 +16,15 @@ public partial class MainWindow : Window
     private readonly IUserService _userService;
     private readonly IAuditService _auditService;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IBackupService _backupService;
 
     private UserDto? _currentUser;
 
-    // Existing view instances
+    // View instances
     private readonly ClassSubjectView _classSubjectView;
     private readonly StudentManagementView _studentManagementView;
     private readonly MarksEntryView _marksEntryView;
+    private readonly StudentGradesView _studentGradesView;
     private readonly AttendanceView _attendanceView;
     private readonly AttendanceReportsView _attendanceReportsView;
     private readonly LibraryView _libraryView;
@@ -30,8 +33,6 @@ public partial class MainWindow : Window
     private readonly ReportCardsView _reportCardsView;
     private readonly ReportsView _reportsView;
     private readonly BackupSettingsView _backupSettingsView;
-
-    // New placeholder view instances
     private readonly DashboardView _dashboardView;
     private readonly AlertsView _alertsView;
     private readonly UserManagementView _userManagementView;
@@ -50,6 +51,7 @@ public partial class MainWindow : Window
         [UserRole.Admin, UserRole.Teacher],                                           // Students
         [UserRole.Admin, UserRole.Teacher],                                           // Classes
         [UserRole.Admin, UserRole.Teacher],                                           // Marks
+        [UserRole.Admin, UserRole.Teacher],                                           // Student Grades
         [UserRole.Admin, UserRole.Teacher],                                           // Attendance
         [UserRole.Admin, UserRole.Teacher],                                           // Attendance Reports
         [UserRole.Admin, UserRole.Librarian],                                         // Library
@@ -71,6 +73,7 @@ public partial class MainWindow : Window
         ClassSubjectView classSubjectView,
         StudentManagementView studentManagementView,
         MarksEntryView marksEntryView,
+        StudentGradesView studentGradesView,
         AttendanceView attendanceView,
         AttendanceReportsView attendanceReportsView,
         LibraryView libraryView,
@@ -90,13 +93,15 @@ public partial class MainWindow : Window
         PromotionHistoryView promotionHistoryView,
         IUserService userService,
         IAuditService auditService,
-        ICurrentUserService currentUserService)
+        ICurrentUserService currentUserService,
+        IBackupService backupService)
     {
         InitializeComponent();
 
         _classSubjectView = classSubjectView;
         _studentManagementView = studentManagementView;
         _marksEntryView = marksEntryView;
+        _studentGradesView = studentGradesView;
         _attendanceView = attendanceView;
         _attendanceReportsView = attendanceReportsView;
         _libraryView = libraryView;
@@ -105,7 +110,6 @@ public partial class MainWindow : Window
         _reportCardsView = reportCardsView;
         _reportsView = reportsView;
         _backupSettingsView = backupSettingsView;
-
         _dashboardView = dashboardView;
         _alertsView = alertsView;
         _userManagementView = userManagementView;
@@ -119,11 +123,13 @@ public partial class MainWindow : Window
         _userService = userService;
         _auditService = auditService;
         _currentUserService = currentUserService;
+        _backupService = backupService;
 
         _navigationService = new NavigationService(MainContentArea);
 
         SidebarListBox.SelectedIndex = 0;
         Loaded += MainWindow_Loaded;
+        Closing += MainWindow_Closing;
     }
 
     public void SetCurrentUser(UserDto user)
@@ -202,6 +208,29 @@ public partial class MainWindow : Window
         }
     }
 
+    private void MainWindow_Closing(object? sender, CancelEventArgs e)
+    {
+        try
+        {
+            var lastBackup = _backupService.GetLastBackupDateAsync().GetAwaiter().GetResult();
+            if (lastBackup is null || (DateTime.Now - lastBackup.Value).TotalDays > 7)
+            {
+                var result = MessageBox.Show(
+                    "هشدار: آخرین نسخه پشتیبان بیش از ۷ روز پیش تهیه شده است.\nآیا مطمئن هستید که می‌خواهید بدون تهیه نسخه پشتیبان خارج شوید؟",
+                    "یادآوری پشتیبان‌گیری",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result == MessageBoxResult.No)
+                    e.Cancel = true;
+            }
+        }
+        catch
+        {
+            // Ignore backup check errors
+        }
+    }
+
     private void SidebarListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (SidebarListBox.SelectedIndex < 0) return;
@@ -213,21 +242,22 @@ public partial class MainWindow : Window
             case 2: _navigationService.Navigate(_studentManagementView); break;
             case 3: _navigationService.Navigate(_classSubjectView); break;
             case 4: _navigationService.Navigate(_marksEntryView); break;
-            case 5: _navigationService.Navigate(_attendanceView); break;
-            case 6: _navigationService.Navigate(_attendanceReportsView); break;
-            case 7: _navigationService.Navigate(_libraryView); break;
-            case 8: _navigationService.Navigate(_textbookView); break;
-            case 9: _navigationService.Navigate(_feesView); break;
-            case 10: _navigationService.Navigate(_reportCardsView); break;
-            case 11: _navigationService.Navigate(_reportsView); break;
-            case 12: _navigationService.Navigate(_backupSettingsView); break;
-            case 13: _navigationService.Navigate(_userManagementView); break;
-            case 14: _navigationService.Navigate(_promotionSettingsView); break;
-            case 15: _navigationService.Navigate(_bulkImportView); break;
-            case 16: _navigationService.Navigate(_auditLogView); break;
-            case 17: _navigationService.Navigate(_schoolSettingsView); break;
-            case 18: _navigationService.Navigate(_academicYearView); break;
-            case 19: _navigationService.Navigate(_promotionHistoryView); break;
+            case 5: _navigationService.Navigate(_studentGradesView); break;
+            case 6: _navigationService.Navigate(_attendanceView); break;
+            case 7: _navigationService.Navigate(_attendanceReportsView); break;
+            case 8: _navigationService.Navigate(_libraryView); break;
+            case 9: _navigationService.Navigate(_textbookView); break;
+            case 10: _navigationService.Navigate(_feesView); break;
+            case 11: _navigationService.Navigate(_reportCardsView); break;
+            case 12: _navigationService.Navigate(_reportsView); break;
+            case 13: _navigationService.Navigate(_backupSettingsView); break;
+            case 14: _navigationService.Navigate(_userManagementView); break;
+            case 15: _navigationService.Navigate(_promotionSettingsView); break;
+            case 16: _navigationService.Navigate(_bulkImportView); break;
+            case 17: _navigationService.Navigate(_auditLogView); break;
+            case 18: _navigationService.Navigate(_schoolSettingsView); break;
+            case 19: _navigationService.Navigate(_academicYearView); break;
+            case 20: _navigationService.Navigate(_promotionHistoryView); break;
         }
     }
 }
