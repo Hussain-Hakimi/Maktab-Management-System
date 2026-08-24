@@ -281,6 +281,17 @@ Added:
 - “My Subjects” view for teachers
 - Database migration v7
 
+  ---
+
+### Version 1.8.0 — Guardian Report Card & Finalization
+
+Added:
+- Guardian Class View (view all subjects, edit only own)
+- Report card generation restricted to guardians and admins
+- Class finalization workflow (finalize/unfinalize results)
+- Finalization prevents further mark edits
+- Database migration v8
+- --
 
 ## 🗺️ Roadmap
 
