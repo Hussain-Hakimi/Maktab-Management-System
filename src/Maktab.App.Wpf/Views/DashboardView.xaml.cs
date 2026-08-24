@@ -53,6 +53,7 @@ public partial class DashboardView : UserControl
         await LoadSummaryAsync();
         await LoadAlertsAsync();
         await LoadGradeDistributionAsync();
+        await LoadAttendanceTrendAsync();
     }
 
     private async Task LoadSummaryAsync()
@@ -190,6 +191,66 @@ public partial class DashboardView : UserControl
                 new Axis
                 {
                     MinLimit = 0
+                }
+            };
+        }
+        catch
+        {
+            // Silently ignore chart errors
+        }
+    }
+
+    private async Task LoadAttendanceTrendAsync()
+    {
+        try
+        {
+            var classes = await _classSubjectService.GetClassesAsync();
+            if (classes.Count == 0)
+                return;
+
+            // Use first class as representative, or compute average across all classes
+            var classId = classes[0].ClassId;
+            var dates = Enumerable.Range(0, 7).Select(offset => DateTime.Today.AddDays(-offset)).Reverse().ToList();
+            var rates = new List<double>();
+            var labels = new List<string>();
+
+            foreach (var date in dates)
+            {
+                var attendance = await _attendanceService.GetClassAttendanceForDateAsync(classId, date);
+                int present = attendance.Count(a => a.Status == AttendanceStatus.Present);
+                int total = attendance.Count;
+                double rate = total > 0 ? Math.Round((double)present / total * 100, 2) : 0.0;
+                rates.Add(rate);
+                labels.Add(date.ToString("MM/dd"));
+            }
+
+            AttendanceTrendChart.Series = new ISeries[]
+            {
+                new LineSeries<double>
+                {
+                    Values = rates.ToArray(),
+                    Fill = null,
+                    GeometrySize = 8,
+                    Stroke = new LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SkiaSharp.SKColors.Blue)
+                }
+            };
+
+            AttendanceTrendChart.XAxes = new Axis[]
+            {
+                new Axis
+                {
+                    Labels = labels.ToArray(),
+                    LabelsRotation = 0
+                }
+            };
+
+            AttendanceTrendChart.YAxes = new Axis[]
+            {
+                new Axis
+                {
+                    MinLimit = 0,
+                    MaxLimit = 100,
+                    Labeler = value => $"{value}%"
                 }
             };
         }
