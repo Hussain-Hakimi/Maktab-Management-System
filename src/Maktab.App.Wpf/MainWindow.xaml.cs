@@ -44,6 +44,7 @@ public partial class MainWindow : Window
     private readonly PromotionHistoryView _promotionHistoryView;
     private readonly TeacherAssignmentView _teacherAssignmentView;
     private readonly TeacherMySubjectsView _teacherMySubjectsView;
+    private readonly GuardianClassView _guardianClassView;
 
     public MainWindow(
         ClassSubjectView classSubjectView,
@@ -69,6 +70,7 @@ public partial class MainWindow : Window
         PromotionHistoryView promotionHistoryView,
         TeacherAssignmentView teacherAssignmentView,
         TeacherMySubjectsView teacherMySubjectsView,
+        GuardianClassView guardianClassView,
         IUserService userService,
         IAuditService auditService,
         ICurrentUserService currentUserService,
@@ -99,6 +101,7 @@ public partial class MainWindow : Window
         _promotionHistoryView = promotionHistoryView;
         _teacherAssignmentView = teacherAssignmentView;
         _teacherMySubjectsView = teacherMySubjectsView;
+        _guardianClassView = guardianClassView;
 
         _userService = userService;
         _auditService = auditService;
@@ -197,6 +200,7 @@ public partial class MainWindow : Window
                 SubMenuListBox.Items.Add(new ListBoxItem { Content = "👨‍🎓 شاگردان", Tag = "Students" });
                 SubMenuListBox.Items.Add(new ListBoxItem { Content = "🏫 صنف‌ها و مضامین", Tag = "Classes" });
                 SubMenuListBox.Items.Add(new ListBoxItem { Content = "📚 مضامین تدریسی من", Tag = "MySubjects" });
+                SubMenuListBox.Items.Add(new ListBoxItem { Content = "🛡️ صنف نگرانی من", Tag = "GuardianClass" });
                 SubMenuListBox.Items.Add(new ListBoxItem { Content = "📝 ثبت نمرات", Tag = "MarksEntry" });
                 SubMenuListBox.Items.Add(new ListBoxItem { Content = "🎓 نمرات شاگرد", Tag = "StudentGrades" });
                 SubMenuListBox.Items.Add(new ListBoxItem { Content = "📄 کارنامه / اطلاع‌نامه", Tag = "ReportCards" });
@@ -256,6 +260,7 @@ public partial class MainWindow : Window
             case "Students": _navigationService.Navigate(_studentManagementView); break;
             case "Classes": _navigationService.Navigate(_classSubjectView); break;
             case "MySubjects": _navigationService.Navigate(_teacherMySubjectsView); break;
+            case "GuardianClass": _navigationService.Navigate(_guardianClassView); break;
             case "MarksEntry": _navigationService.Navigate(_marksEntryView); break;
             case "StudentGrades": _navigationService.Navigate(_studentGradesView); break;
             case "ReportCards": _navigationService.Navigate(_reportCardsView); break;
