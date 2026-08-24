@@ -20,7 +20,6 @@
             </StackPanel>
         </Border>
 
-        <!-- Tab Control for Import Types -->
         <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
             <TabControl.Resources>
                 <Style TargetType="TabItem">
@@ -42,7 +41,6 @@
                         <ColumnDefinition Width="320" />
                     </Grid.ColumnDefinitions>
 
-                    <!-- CSV Paste Area -->
                     <Border Grid.Column="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -50,7 +48,7 @@
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                <Button Content="📁 انتخاب فایل CSV" Height="32" Padding="12,0" Background="#3B82F6" Foreground="White" FontWeight="SemiBold" Click="BrowseStudentsFileButton_Click" Margin="0,0,8,0" />
+                                <Button Content="📁 انتخاب فایل CSV/Excel" Height="32" Padding="12,0" Background="#3B82F6" Foreground="White" FontWeight="SemiBold" Click="BrowseStudentsFileButton_Click" Margin="0,0,8,0" />
                                 <Button Content="📥 اجرای ورود" Height="32" Padding="12,0" Background="#16A34A" Foreground="White" FontWeight="Bold" Click="ImportStudentsButton_Click" Margin="0,0,8,0" />
                                 <TextBlock x:Name="StudentsFilePathTextBlock" VerticalAlignment="Center" Foreground="#475569" />
                             </StackPanel>
@@ -59,7 +57,6 @@
                         </Grid>
                     </Border>
 
-                    <!-- Result Panel -->
                     <Border Grid.Column="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
                         <StackPanel>
                             <TextBlock Text="نتایج" FontWeight="Bold" FontSize="15" Foreground="#334155" Margin="0,0,0,12" />
@@ -80,7 +77,6 @@
                         <ColumnDefinition Width="320" />
                     </Grid.ColumnDefinitions>
 
-                    <!-- Filters + CSV Paste -->
                     <Border Grid.Column="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -89,20 +85,19 @@
                             </Grid.RowDefinitions>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                                 <TextBlock Text="صنف:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
-                                <ComboBox x:Name="MarksClassComboBox" Height="32" Width="140" DisplayMemberPath="GradeName" SelectedValuePath="ClassId" SelectionChanged="MarksClassComboBox_SelectionChanged" Margin="0,0,10,0" />
+                                <ComboBox x:Name="MarksClassComboBox" Height="32" Width="120" DisplayMemberPath="GradeName" SelectedValuePath="ClassId" SelectionChanged="MarksClassComboBox_SelectionChanged" Margin="0,0,10,0" />
                                 <TextBlock Text="مضمون:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
-                                <ComboBox x:Name="MarksSubjectComboBox" Height="32" Width="140" DisplayMemberPath="SubjectName" SelectedValuePath="SubjectId" Margin="0,0,10,0" />
+                                <ComboBox x:Name="MarksSubjectComboBox" Height="32" Width="120" DisplayMemberPath="SubjectName" SelectedValuePath="SubjectId" Margin="0,0,10,0" />
                                 <TextBlock Text="سال تعلیمی:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
-                                <ComboBox x:Name="MarksYearComboBox" Height="32" Width="120" DisplayMemberPath="YearName" SelectedValuePath="AcademicYearId" Margin="0,0,10,0" />
-                                <Button Content="📁 انتخاب CSV" Height="32" Padding="10,0" Background="#3B82F6" Foreground="White" FontWeight="SemiBold" Click="BrowseMarksFileButton_Click" Margin="0,0,8,0" />
-                                <Button Content="📥 ورود نمرات" Height="32" Padding="10,0" Background="#16A34A" Foreground="White" FontWeight="Bold" Click="ImportMarksButton_Click" />
+                                <ComboBox x:Name="MarksYearComboBox" Height="32" Width="100" DisplayMemberPath="YearName" SelectedValuePath="AcademicYearId" Margin="0,0,10,0" />
+                                <Button Content="📁 انتخاب CSV/Excel" Height="32" Padding="10,0" Background="#3B82F6" Foreground="White" FontWeight="SemiBold" Click="BrowseMarksFileButton_Click" Margin="0,0,8,0" />
+                                <Button Content="📥 ورود" Height="32" Padding="10,0" Background="#16A34A" Foreground="White" FontWeight="Bold" Click="ImportMarksButton_Click" />
                             </StackPanel>
                             <TextBox x:Name="MarksCsvTextBox" Grid.Row="1" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
                                      FontFamily="Consolas" FontSize="12" Padding="8" Background="#F8FAFC" BorderBrush="#CBD5E1" />
                         </Grid>
                     </Border>
 
-                    <!-- Result Panel -->
                     <Border Grid.Column="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
                         <StackPanel>
                             <TextBlock Text="نتایج" FontWeight="Bold" FontSize="15" Foreground="#334155" Margin="0,0,0,12" />
@@ -123,7 +118,6 @@
                         <ColumnDefinition Width="320" />
                     </Grid.ColumnDefinitions>
 
-                    <!-- Filters + CSV Paste -->
                     <Border Grid.Column="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -132,18 +126,17 @@
                             </Grid.RowDefinitions>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                                 <TextBlock Text="صنف:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
-                                <ComboBox x:Name="AttendanceClassComboBox" Height="32" Width="140" DisplayMemberPath="GradeName" SelectedValuePath="ClassId" Margin="0,0,10,0" />
+                                <ComboBox x:Name="AttendanceClassComboBox" Height="32" Width="120" DisplayMemberPath="GradeName" SelectedValuePath="ClassId" Margin="0,0,10,0" />
                                 <TextBlock Text="سال تعلیمی:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
-                                <ComboBox x:Name="AttendanceYearComboBox" Height="32" Width="120" DisplayMemberPath="YearName" SelectedValuePath="AcademicYearId" Margin="0,0,10,0" />
-                                <Button Content="📁 انتخاب CSV" Height="32" Padding="10,0" Background="#3B82F6" Foreground="White" FontWeight="SemiBold" Click="BrowseAttendanceFileButton_Click" Margin="0,0,8,0" />
-                                <Button Content="📥 ورود حاضری" Height="32" Padding="10,0" Background="#16A34A" Foreground="White" FontWeight="Bold" Click="ImportAttendanceButton_Click" />
+                                <ComboBox x:Name="AttendanceYearComboBox" Height="32" Width="100" DisplayMemberPath="YearName" SelectedValuePath="AcademicYearId" Margin="0,0,10,0" />
+                                <Button Content="📁 انتخاب CSV/Excel" Height="32" Padding="10,0" Background="#3B82F6" Foreground="White" FontWeight="SemiBold" Click="BrowseAttendanceFileButton_Click" Margin="0,0,8,0" />
+                                <Button Content="📥 ورود" Height="32" Padding="10,0" Background="#16A34A" Foreground="White" FontWeight="Bold" Click="ImportAttendanceButton_Click" />
                             </StackPanel>
                             <TextBox x:Name="AttendanceCsvTextBox" Grid.Row="1" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
                                      FontFamily="Consolas" FontSize="12" Padding="8" Background="#F8FAFC" BorderBrush="#CBD5E1" />
                         </Grid>
                     </Border>
 
-                    <!-- Result Panel -->
                     <Border Grid.Column="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
                         <StackPanel>
                             <TextBlock Text="نتایج" FontWeight="Bold" FontSize="15" Foreground="#334155" Margin="0,0,0,12" />
