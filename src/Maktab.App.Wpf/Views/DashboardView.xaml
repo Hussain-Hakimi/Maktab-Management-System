@@ -3,7 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="900"
              FlowDirection="RightToLeft">
@@ -21,7 +20,7 @@
             </StackPanel>
         </Border>
 
-        <!-- Summary Cards + Charts + Alerts -->
+        <!-- Summary Cards + Alerts -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel>
                 <Grid>
@@ -63,7 +62,7 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Card 4: Outstanding Fees with Progress -->
+                    <!-- Card 4: Outstanding Fees -->
                     <Border Grid.Row="2" Grid.Column="0" Background="#FEE2E2" BorderBrush="#FECACA" BorderThickness="1" CornerRadius="8" Padding="16">
                         <StackPanel>
                             <TextBlock Text="💰 فیس باقی‌مانده" FontSize="14" FontWeight="SemiBold" Foreground="#B91C1C" />
@@ -106,30 +105,6 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </StackPanel>
-                </Border>
-
-                <!-- Grade Distribution Chart Card -->
-                <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,12,0,0">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="220" />
-                        </Grid.RowDefinitions>
-                        <TextBlock Text="📊 توزیع نمرات" FontSize="14" FontWeight="SemiBold" Foreground="#334155" />
-                        <lvc:CartesianChart x:Name="GradeChart" Grid.Row="1" Margin="0,8,0,0" />
-                    </Grid>
-                </Border>
-
-                <!-- Attendance Trend Chart Card -->
-                <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,12,0,0">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="220" />
-                        </Grid.RowDefinitions>
-                        <TextBlock Text="📈 روند حاضری (۷ روز اخیر)" FontSize="14" FontWeight="SemiBold" Foreground="#334155" />
-                        <lvc:CartesianChart x:Name="AttendanceTrendChart" Grid.Row="1" Margin="0,8,0,0" />
-                    </Grid>
                 </Border>
             </StackPanel>
         </ScrollViewer>
