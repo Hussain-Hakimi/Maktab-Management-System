@@ -20,6 +20,11 @@ public sealed class ClassSubjectService(IClassSubjectRepository repository) : IC
         return repository.GetSubjectsByClassAsync(classId, cancellationToken);
     }
 
+    public Task<IReadOnlyList<Subject>> GetAllSubjectsAsync(CancellationToken cancellationToken = default)
+    {
+        return repository.GetAllSubjectsAsync(cancellationToken);
+    }
+
     public Task<int> CreateClassAsync(string gradeName, int numberOfSubjects, CancellationToken cancellationToken = default)
     {
         ValidateGradeName(gradeName);
