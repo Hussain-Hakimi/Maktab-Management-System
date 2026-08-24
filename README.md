@@ -292,6 +292,18 @@ Added:
 - Finalization prevents further mark edits
 - Database migration v8
 - --
+### Version 1.9.0 — Improvements & Correctness
+
+Added:
+- Login window with first‑run auto‑login (empty credentials → admin)
+- Removed attendance trend and grade distribution panels from Dashboard
+- Student roll number auto‑generation (next available integer)
+- Textbooks subject dropdown from database
+- Report card types: Annual and Midterm (with different layouts)
+- Configurable official headers (government title, provincial education, district education)
+- School logo upload and display in PDF report cards
+
+- --
 
 ## 🗺️ Roadmap
 
