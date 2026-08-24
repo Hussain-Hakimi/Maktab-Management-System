@@ -28,6 +28,7 @@ public static class DependencyInjection
         services.AddSingleton<IAlertService, AlertService>();
         services.AddSingleton<ITeacherAssignmentService, TeacherAssignmentService>();
         services.AddSingleton<IExamService, ExamService>();
+        services.AddSingleton<IFinalizationService, FinalizationService>();
         return services;
     }
 }
