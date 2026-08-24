@@ -39,6 +39,7 @@ public partial class MainWindow : Window
     private readonly AuditLogView _auditLogView;
     private readonly SchoolSettingsView _schoolSettingsView;
     private readonly AcademicYearView _academicYearView;
+    private readonly PromotionHistoryView _promotionHistoryView;
 
     // Allowed roles per sidebar item index (matching order in XAML)
     private static readonly UserRole[][] SidebarItemRoles =
@@ -60,7 +61,8 @@ public partial class MainWindow : Window
         [UserRole.Admin],                                                             // Bulk Import
         [UserRole.Admin],                                                             // Audit Logs
         [UserRole.Admin],                                                             // School Settings
-        [UserRole.Admin]                                                              // Academic Years
+        [UserRole.Admin],                                                             // Academic Years
+        [UserRole.Admin, UserRole.Teacher]                                            // Promotion History
     ];
 
     public MainWindow(
@@ -82,6 +84,7 @@ public partial class MainWindow : Window
         AuditLogView auditLogView,
         SchoolSettingsView schoolSettingsView,
         AcademicYearView academicYearView,
+        PromotionHistoryView promotionHistoryView,
         IUserService userService,
         IAuditService auditService,
         ICurrentUserService currentUserService)
@@ -107,6 +110,7 @@ public partial class MainWindow : Window
         _auditLogView = auditLogView;
         _schoolSettingsView = schoolSettingsView;
         _academicYearView = academicYearView;
+        _promotionHistoryView = promotionHistoryView;
 
         _userService = userService;
         _auditService = auditService;
@@ -218,6 +222,7 @@ public partial class MainWindow : Window
             case 15: _navigationService.Navigate(_auditLogView); break;
             case 16: _navigationService.Navigate(_schoolSettingsView); break;
             case 17: _navigationService.Navigate(_academicYearView); break;
+            case 18: _navigationService.Navigate(_promotionHistoryView); break;
         }
     }
 }
