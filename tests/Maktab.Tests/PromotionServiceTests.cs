@@ -35,21 +35,46 @@ public class PromotionServiceTests
 
     private sealed class InMemoryClassSubjectRepository : IClassSubjectRepository
     {
-        public List<SchoolClass> Classes { get; } = [];
-        public List<Subject> Subjects { get; } = [];
+       private sealed class InMemoryPromotionHistoryRepository : IStudentPromotionHistoryRepository
+{
+    public List<StudentPromotionHistory> Histories { get; } = [];
 
-        public Task<IReadOnlyList<SchoolClass>> GetClassesAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<SchoolClass>>(Classes);
+    public Task<int> AddAsync(StudentPromotionHistory history, CancellationToken cancellationToken = default)
+    {
+        history.PromotionId = Histories.Count + 1;
+        Histories.Add(history);
+        return Task.FromResult(history.PromotionId);
+    }
 
-        public Task<IReadOnlyList<Subject>> GetSubjectsByClassAsync(int classId, CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<Subject>>(Subjects.Where(s => s.ClassId == classId).ToList());
+    public Task<IReadOnlyList<StudentPromotionHistory>> GetByStudentAsync(int studentId, CancellationToken cancellationToken = default)
+        => Task.FromResult<IReadOnlyList<StudentPromotionHistory>>(Histories.Where(h => h.StudentId == studentId).ToList());
 
-        public Task<int> CreateClassAsync(SchoolClass schoolClass, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-        public Task UpdateClassAsync(SchoolClass schoolClass, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-        public Task DeleteClassAsync(int classId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-        public Task<int> CreateSubjectAsync(Subject subject, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-        public Task UpdateSubjectAsync(Subject subject, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-        public Task DeleteSubjectAsync(int subjectId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public Task<IReadOnlyList<PromotionHistoryDto>> GetHistoryAsync(int? academicYearId, int? studentId, CancellationToken cancellationToken = default)
+    {
+        var query = Histories.AsEnumerable();
+
+        if (academicYearId.HasValue)
+            query = query.Where(h => h.AcademicYearId == academicYearId.Value);
+
+        if (studentId.HasValue)
+            query = query.Where(h => h.StudentId == studentId.Value);
+
+        var result = query.Select(h => new PromotionHistoryDto
+        {
+            PromotionId = h.PromotionId,
+            StudentId = h.StudentId,
+            StudentName = h.StudentId.ToString(),
+            RollNumber = h.StudentId.ToString(),
+            FromClassName = h.FromClassId.ToString(),
+            ToClassName = h.ToClassId?.ToString(),
+            AcademicYearName = h.AcademicYearId.ToString(),
+            Result = h.Result,
+            PromotionDate = h.PromotionDate
+        }).ToList();
+
+        return Task.FromResult<IReadOnlyList<PromotionHistoryDto>>(result);
+    }
+}
     }
 
     private sealed class InMemoryExamMarkRepository : IExamMarkRepository
