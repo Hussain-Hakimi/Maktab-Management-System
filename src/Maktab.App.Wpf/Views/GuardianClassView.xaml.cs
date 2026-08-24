@@ -27,6 +27,8 @@ public partial class GuardianClassView : UserControl
     private readonly IExamMarkService _examMarkService;
     private readonly IAcademicYearService _academicYearService;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IFinalizationService _finalizationService;
+    private readonly IAuditService _auditService;
 
     private readonly ObservableCollection<GuardianStudentSummaryItem> _students = [];
     private List<SchoolClass> _guardianClasses = [];
@@ -37,7 +39,9 @@ public partial class GuardianClassView : UserControl
         IStudentService studentService,
         IExamMarkService examMarkService,
         IAcademicYearService academicYearService,
-        ICurrentUserService currentUserService)
+        ICurrentUserService currentUserService,
+        IFinalizationService finalizationService,
+        IAuditService auditService)
     {
         _assignmentService = assignmentService;
         _classSubjectService = classSubjectService;
@@ -45,6 +49,8 @@ public partial class GuardianClassView : UserControl
         _examMarkService = examMarkService;
         _academicYearService = academicYearService;
         _currentUserService = currentUserService;
+        _finalizationService = finalizationService;
+        _auditService = auditService;
 
         InitializeComponent();
         StudentsDataGrid.ItemsSource = _students;
@@ -99,11 +105,13 @@ public partial class GuardianClassView : UserControl
     private async void ClassComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         await LoadStudentsAsync();
+        await UpdateFinalizationStatusAsync();
     }
 
     private async void AcademicYearComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         await LoadStudentsAsync();
+        await UpdateFinalizationStatusAsync();
     }
 
     private async Task LoadStudentsAsync()
@@ -134,7 +142,7 @@ public partial class GuardianClassView : UserControl
 
                 var maxScore = subjects.Count * GradingPolicy.TotalMax;
                 var average = maxScore > 0 ? Math.Round((totalObtained / maxScore) * 100m, 2) : 0m;
-                var outcome = PromotionPolicy.GetPromotionOutcome(average, failed, 0); // absence not included here
+                var outcome = PromotionPolicy.GetPromotionOutcome(average, failed, 0);
 
                 _students.Add(new GuardianStudentSummaryItem
                 {
@@ -156,6 +164,90 @@ public partial class GuardianClassView : UserControl
         catch (Exception ex)
         {
             MessageBox.Show($"خطا در بارگذاری شاگردان:\n{ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private async Task UpdateFinalizationStatusAsync()
+    {
+        if (ClassComboBox.SelectedValue is not int classId || classId <= 0) return;
+        if (AcademicYearComboBox.SelectedValue is not int yearId || yearId <= 0) return;
+
+        try
+        {
+            bool isFinalized = await _finalizationService.IsClassFinalizedAsync(classId, yearId);
+            FinalizationStatusTextBlock.Text = isFinalized ? "وضعیت: نهایی شده ✅" : "وضعیت: باز است 🔓";
+            FinalizeButton.IsEnabled = !isFinalized;
+            UnfinalizeButton.IsEnabled = isFinalized;
+        }
+        catch (Exception ex)
+        {
+            FinalizationStatusTextBlock.Text = "خطا در بررسی وضعیت";
+            FinalizeButton.IsEnabled = false;
+            UnfinalizeButton.IsEnabled = false;
+        }
+    }
+
+    private async void FinalizeButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (ClassComboBox.SelectedValue is not int classId || classId <= 0)
+        {
+            MessageBox.Show("لطفاً صنف را انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        if (AcademicYearComboBox.SelectedValue is not int yearId || yearId <= 0)
+        {
+            MessageBox.Show("لطفاً سال تعلیمی را انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var userId = _currentUserService.CurrentUser?.UserId;
+        if (userId is null or <= 0)
+            return;
+
+        var confirm = MessageBox.Show(
+            "آیا از نهایی کردن نتایج این صنف اطمینان دارید؟ پس از نهایی شدن، نمرات قابل ویرایش نخواهند بود.",
+            "تأیید نهایی‌سازی",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (confirm != MessageBoxResult.Yes)
+            return;
+
+        try
+        {
+            await _finalizationService.FinalizeClassAsync(classId, yearId, userId.Value);
+            await _auditService.LogAsync(_currentUserService.CurrentUser!.Username, $"نهایی‌سازی نتایج صنف {classId} سال {yearId}");
+            await UpdateFinalizationStatusAsync();
+            MessageBox.Show("نتایج با موفقیت نهایی شد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private async void UnfinalizeButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (ClassComboBox.SelectedValue is not int classId || classId <= 0) return;
+        if (AcademicYearComboBox.SelectedValue is not int yearId || yearId <= 0) return;
+
+        var userId = _currentUserService.CurrentUser?.UserId;
+        if (userId is null or <= 0) return;
+
+        var confirm = MessageBox.Show("آیا از بازگشایی نتایج این صنف اطمینان دارید؟", "تأیید بازگشایی", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (confirm != MessageBoxResult.Yes)
+            return;
+
+        try
+        {
+            await _finalizationService.UnfinalizeClassAsync(classId, yearId, userId.Value);
+            await _auditService.LogAsync(_currentUserService.CurrentUser!.Username, $"بازگشایی نتایج صنف {classId} سال {yearId}");
+            await UpdateFinalizationStatusAsync();
+            MessageBox.Show("نتایج بازگشایی شد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 }
