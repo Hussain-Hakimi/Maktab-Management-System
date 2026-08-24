@@ -30,29 +30,29 @@ public partial class App : System.Windows.Application
                         .AddApplicationCore()
                         .AddInfrastructureCore();
 
-                    // Register views as singletons
+                    // Register all views as singletons
                     services.AddSingleton<ClassSubjectView>();
                     services.AddSingleton<StudentManagementView>();
                     services.AddSingleton<MarksEntryView>();
+                    services.AddSingleton<StudentGradesView>();
                     services.AddSingleton<AttendanceView>();
+                    services.AddSingleton<AttendanceReportsView>();
                     services.AddSingleton<LibraryView>();
                     services.AddSingleton<TextbookView>();
                     services.AddSingleton<FeesView>();
                     services.AddSingleton<ReportCardsView>();
-                    services.AddSingleton<ReportsView>(); // NEW
+                    services.AddSingleton<ReportsView>();
                     services.AddSingleton<BackupSettingsView>();
                     services.AddSingleton<DashboardView>();
+                    services.AddSingleton<AlertsView>();
                     services.AddSingleton<UserManagementView>();
                     services.AddSingleton<PromotionSettingsView>();
                     services.AddSingleton<BulkImportView>();
                     services.AddSingleton<AuditLogView>();
                     services.AddSingleton<SchoolSettingsView>();
                     services.AddSingleton<AcademicYearView>();
-                    services.AddSingleton<MainWindow>();
-                    services.AddSingleton<AttendanceReportsView>();
                     services.AddSingleton<PromotionHistoryView>();
-                    services.AddSingleton<AlertsView>();
-                    services.AddSingleton<StudentGradesView>();
+                    services.AddSingleton<MainWindow>();
                 })
                 .Build();
 
@@ -168,6 +168,7 @@ public partial class App : System.Windows.Application
         }
         catch
         {
+            // Logging must never crash the application
         }
     }
 
