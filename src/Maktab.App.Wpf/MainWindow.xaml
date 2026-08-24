@@ -45,6 +45,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
@@ -76,44 +77,81 @@
             </Grid>
         </Border>
 
-        <!-- Main Content Area with Sidebar -->
-        <Grid Grid.Row="1">
+        <!-- Main Navigation Tabs -->
+        <TabControl x:Name="MainTabs" Grid.Row="1" SelectionChanged="MainTabs_SelectionChanged"
+                    Background="#F1F5F9" BorderThickness="0" Padding="0">
+            <TabControl.Resources>
+                <Style TargetType="TabItem">
+                    <Setter Property="Padding" Value="18,10" />
+                    <Setter Property="FontSize" Value="14" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                    <Setter Property="Foreground" Value="#475569" />
+                    <Setter Property="Background" Value="#E2E8F0" />
+                    <Setter Property="Margin" Value="0,0,2,0" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="TabItem">
+                                <Border x:Name="TabBorder"
+                                        Background="{TemplateBinding Background}"
+                                        Padding="{TemplateBinding Padding}"
+                                        CornerRadius="6,6,0,0"
+                                        Margin="0,4,2,0"
+                                        BorderThickness="1,1,1,0"
+                                        BorderBrush="#CBD5E1"
+                                        Cursor="Hand">
+                                    <ContentPresenter ContentSource="Header"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center" />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="TabBorder" Property="Background" Value="White" />
+                                        <Setter Property="Foreground" Value="#0F172A" />
+                                        <Setter TargetName="TabBorder" Property="BorderBrush" Value="#3B82F6" />
+                                        <Setter TargetName="TabBorder" Property="BorderThickness" Value="1,2,1,0" />
+                                    </Trigger>
+                                    <MultiTrigger>
+                                        <MultiTrigger.Conditions>
+                                            <Condition Property="IsSelected" Value="False" />
+                                            <Condition Property="IsMouseOver" Value="True" />
+                                        </MultiTrigger.Conditions>
+                                        <Setter TargetName="TabBorder" Property="Background" Value="#CBD5E1" />
+                                    </MultiTrigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </TabControl.Resources>
+
+            <!-- Main Tab 1: Dashboard -->
+            <TabItem x:Name="DashboardTab" Header="🏠 داشبورد" />
+            <!-- Main Tab 2: Academic -->
+            <TabItem x:Name="AcademicTab" Header="📚 تعلیمی" />
+            <!-- Main Tab 3: Attendance -->
+            <TabItem x:Name="AttendanceTab" Header="🗓️ حاضری" />
+            <!-- Main Tab 4: Operations -->
+            <TabItem x:Name="OperationsTab" Header="📦 عملیات" />
+            <!-- Main Tab 5: Administration -->
+            <TabItem x:Name="AdminTab" Header="⚙️ مدیریت" />
+        </TabControl>
+
+        <!-- Sub-menu + Content Area -->
+        <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="220" />
+                <ColumnDefinition Width="200" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- Sidebar -->
+            <!-- Sidebar sub-menu -->
             <Border Grid.Column="0" Background="#1E293B">
-                <ListBox x:Name="SidebarListBox"
-                         SelectionChanged="SidebarListBox_SelectionChanged"
+                <ListBox x:Name="SubMenuListBox"
+                         SelectionChanged="SubMenuListBox_SelectionChanged"
                          Background="Transparent"
                          BorderThickness="0"
                          Foreground="#CBD5E1"
                          FontSize="14"
-                         ItemContainerStyle="{StaticResource SidebarItemStyle}">
-                    <ListBoxItem Content="🏠 داشبورد" />
-                    <ListBoxItem Content="🔔 اعلان‌ها" />
-                    <ListBoxItem Content="👨‍🎓 شاگردان" />
-                    <ListBoxItem Content="🏫 صنف‌ها و مضامین" />
-                    <ListBoxItem Content="📝 ثبت نمرات" />
-                    <ListBoxItem Content="🎓 نمرات شاگرد" />
-                    <ListBoxItem Content="🗓️ حاضری" />
-                    <ListBoxItem Content="🗓️ گزارش حاضری" />
-                    <ListBoxItem Content="📚 کتابخانه" />
-                    <ListBoxItem Content="📦 کتاب‌های درسی" />
-                    <ListBoxItem Content="💰 فیس‌ها" />
-                    <ListBoxItem Content="📄 کارنامه / اطلاع‌نامه" />
-                    <ListBoxItem Content="📊 گزارش‌ها" />
-                    <ListBoxItem Content="💾 پشتیبان‌گیری و تنظیمات" />
-                    <ListBoxItem Content="👥 مدیریت کاربران (Admin)" />
-                    <ListBoxItem Content="⚙️ تنظیمات ارتقاء (Admin)" />
-                    <ListBoxItem Content="📥 ورود اطلاعات دسته‌جمعی (Admin)" />
-                    <ListBoxItem Content="📋 گزارش وقایع (Admin)" />
-                    <ListBoxItem Content="🏫 تنظیمات عمومی (Admin)" />
-                    <ListBoxItem Content="📅 سال‌های تعلیمی (Admin)" />
-                    <ListBoxItem Content="📜 تاریخچه ارتقاء" />
-                </ListBox>
+                         ItemContainerStyle="{StaticResource SidebarItemStyle}" />
             </Border>
 
             <!-- Content Area -->
@@ -121,7 +159,7 @@
         </Grid>
 
         <!-- Status Bar -->
-        <Border Grid.Row="2" Background="#0F172A" Padding="12,6">
+        <Border Grid.Row="3" Background="#0F172A" Padding="12,6">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />

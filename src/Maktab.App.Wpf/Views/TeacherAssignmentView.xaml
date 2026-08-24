@@ -1,0 +1,148 @@
+<UserControl x:Class="Maktab.App.Wpf.Views.TeacherAssignmentView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="900"
+             FlowDirection="RightToLeft">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#334155" Padding="14" CornerRadius="6" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="👥 تخصیص مضامین و نگرانی صنف" FontSize="20" FontWeight="Bold" Foreground="White" />
+                <TextBlock Text=" (Teacher Assignments)" FontSize="13" Foreground="#CBD5E1" VerticalAlignment="Center" Margin="10,2,0,0" />
+            </StackPanel>
+        </Border>
+
+        <!-- Main Content -->
+        <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
+            <!-- Tab 1: Teacher Subjects -->
+            <TabItem Header="📚 مضامین تدریس">
+                <Grid Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="300" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Assignment Form -->
+                    <Border Grid.Column="0" Background="#FAFAFA" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="14">
+                        <StackPanel>
+                            <TextBlock Text="تخصیص مضمون به استاد" FontSize="16" FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,12" />
+
+                            <TextBlock Text="استاد *" FontWeight="SemiBold" Margin="0,0,0,4" />
+                            <ComboBox x:Name="TeacherComboBox" Height="32" Margin="0,0,0,10" DisplayMemberPath="FullName" SelectedValuePath="UserId" />
+
+                            <TextBlock Text="صنف *" FontWeight="SemiBold" Margin="0,0,0,4" />
+                            <ComboBox x:Name="ClassComboBox" Height="32" Margin="0,0,0,10" DisplayMemberPath="GradeName" SelectedValuePath="ClassId" />
+
+                            <TextBlock Text="مضمون *" FontWeight="SemiBold" Margin="0,0,0,4" />
+                            <ComboBox x:Name="SubjectComboBox" Height="32" Margin="0,0,0,16" DisplayMemberPath="SubjectName" SelectedValuePath="SubjectId" />
+
+                            <Button Height="36" Content="➕ تخصیص" Background="#16A34A" Foreground="White" FontWeight="Bold" Click="AddTeacherSubjectButton_Click" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Assignments DataGrid -->
+                    <Border Grid.Column="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="8">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="مضامین تخصیص‌شده" FontWeight="Bold" FontSize="15" Foreground="#334155" Margin="4,4,4,8" />
+                            <DataGrid x:Name="TeacherSubjectsDataGrid"
+                                      Grid.Row="1"
+                                      AutoGenerateColumns="False"
+                                      CanUserAddRows="False"
+                                      IsReadOnly="True"
+                                      SelectionMode="Single"
+                                      GridLinesVisibility="Horizontal"
+                                      HorizontalGridLinesBrush="#E2E8F0"
+                                      RowHeight="32">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="استاد" Binding="{Binding TeacherName}" Width="*" />
+                                    <DataGridTextColumn Header="صنف" Binding="{Binding ClassName}" Width="100" />
+                                    <DataGridTextColumn Header="مضمون" Binding="{Binding SubjectName}" Width="*" />
+                                    <DataGridTemplateColumn Header="عملیات" Width="100">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Content="حذف" Background="#DC2626" Foreground="White" FontSize="12" Padding="8,4"
+                                                        Click="RemoveTeacherSubjectButton_Click" Tag="{Binding TeacherSubjectId}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- Tab 2: Class Guardians -->
+            <TabItem Header="🛡️ نگران صنف">
+                <Grid Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="300" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Guardian Form -->
+                    <Border Grid.Column="0" Background="#FAFAFA" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="14">
+                        <StackPanel>
+                            <TextBlock Text="تخصیص نگران صنف" FontSize="16" FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,12" />
+
+                            <TextBlock Text="استاد *" FontWeight="SemiBold" Margin="0,0,0,4" />
+                            <ComboBox x:Name="GuardianTeacherComboBox" Height="32" Margin="0,0,0,10" DisplayMemberPath="FullName" SelectedValuePath="UserId" />
+
+                            <TextBlock Text="صنف *" FontWeight="SemiBold" Margin="0,0,0,4" />
+                            <ComboBox x:Name="GuardianClassComboBox" Height="32" Margin="0,0,0,16" DisplayMemberPath="GradeName" SelectedValuePath="ClassId" />
+
+                            <Button Height="36" Content="➕ تخصیص نگران" Background="#16A34A" Foreground="White" FontWeight="Bold" Click="AddGuardianButton_Click" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Guardians DataGrid -->
+                    <Border Grid.Column="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="8">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="نگران‌های صنف" FontWeight="Bold" FontSize="15" Foreground="#334155" Margin="4,4,4,8" />
+                            <DataGrid x:Name="GuardiansDataGrid"
+                                      Grid.Row="1"
+                                      AutoGenerateColumns="False"
+                                      CanUserAddRows="False"
+                                      IsReadOnly="True"
+                                      SelectionMode="Single"
+                                      GridLinesVisibility="Horizontal"
+                                      HorizontalGridLinesBrush="#E2E8F0"
+                                      RowHeight="32">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="استاد" Binding="{Binding TeacherName}" Width="*" />
+                                    <DataGridTextColumn Header="صنف" Binding="{Binding ClassName}" Width="*" />
+                                    <DataGridTemplateColumn Header="عملیات" Width="100">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Content="حذف" Background="#DC2626" Foreground="White" FontSize="12" Padding="8,4"
+                                                        Click="RemoveGuardianButton_Click" Tag="{Binding ClassGuardianId}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

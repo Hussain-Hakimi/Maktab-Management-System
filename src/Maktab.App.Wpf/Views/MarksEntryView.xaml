@@ -104,7 +104,7 @@
                 <TextBlock x:Name="SaveStatusTextBlock" VerticalAlignment="Center" FontWeight="Bold" FontSize="14" Foreground="#16A34A" Text="" />
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button Content="💾 ثبت و ذخیره نمرات در دیتابیس" Height="38" Padding="20,0" Background="#16A34A" Foreground="White" FontWeight="Bold" FontSize="14" Click="SaveMarksButton_Click" />
+                    <Button x:Name="SaveMarksButton" Content="💾 ثبت و ذخیره نمرات در دیتابیس" Height="38" Padding="20,0" Background="#16A34A" Foreground="White" FontWeight="Bold" FontSize="14" Click="SaveMarksButton_Click" />
                 </StackPanel>
             </Grid>
         </Border>

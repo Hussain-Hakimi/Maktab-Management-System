@@ -51,6 +51,56 @@ CREATE TABLE IF NOT EXISTS tbl_StudentPromotionHistory (
     FOREIGN KEY (ToClassID) REFERENCES tbl_Classes(ClassID) ON DELETE RESTRICT,
     FOREIGN KEY (AcademicYearID) REFERENCES tbl_AcademicYears(AcademicYearID) ON DELETE RESTRICT
 );
+"),
+            new(6, @"
+CREATE TABLE IF NOT EXISTS tbl_TeacherSubjects (
+    TeacherSubjectID INTEGER PRIMARY KEY AUTOINCREMENT,
+    TeacherUserID INTEGER NOT NULL,
+    ClassID INTEGER NOT NULL,
+    SubjectID INTEGER NOT NULL,
+    FOREIGN KEY (TeacherUserID) REFERENCES tbl_Users(UserID) ON DELETE CASCADE,
+    FOREIGN KEY (ClassID) REFERENCES tbl_Classes(ClassID) ON DELETE CASCADE,
+    FOREIGN KEY (SubjectID) REFERENCES tbl_Subjects(SubjectID) ON DELETE CASCADE,
+    UNIQUE (TeacherUserID, ClassID, SubjectID)
+);
+
+CREATE TABLE IF NOT EXISTS tbl_ClassGuardians (
+    ClassGuardianID INTEGER PRIMARY KEY AUTOINCREMENT,
+    TeacherUserID INTEGER NOT NULL,
+    ClassID INTEGER NOT NULL,
+    FOREIGN KEY (TeacherUserID) REFERENCES tbl_Users(UserID) ON DELETE CASCADE,
+    FOREIGN KEY (ClassID) REFERENCES tbl_Classes(ClassID) ON DELETE CASCADE,
+    UNIQUE (TeacherUserID, ClassID)
+);
+"),
+            new(7, @"
+CREATE TABLE IF NOT EXISTS tbl_Exams (
+    ExamID INTEGER PRIMARY KEY AUTOINCREMENT,
+    SubjectID INTEGER NOT NULL,
+    ClassID INTEGER NOT NULL,
+    AcademicYearID INTEGER NOT NULL,
+    ExamType TEXT NOT NULL CHECK (ExamType IN ('Midterm', 'Final')),
+    ExamDate TEXT NOT NULL,
+    CreatedByTeacherUserID INTEGER NOT NULL,
+    FOREIGN KEY (SubjectID) REFERENCES tbl_Subjects(SubjectID) ON DELETE CASCADE,
+    FOREIGN KEY (ClassID) REFERENCES tbl_Classes(ClassID) ON DELETE CASCADE,
+    FOREIGN KEY (AcademicYearID) REFERENCES tbl_AcademicYears(AcademicYearID) ON DELETE CASCADE,
+    FOREIGN KEY (CreatedByTeacherUserID) REFERENCES tbl_Users(UserID) ON DELETE CASCADE
+);
+"),
+            new(8, @"
+CREATE TABLE IF NOT EXISTS tbl_ClassFinalizations (
+    ClassFinalizationID INTEGER PRIMARY KEY AUTOINCREMENT,
+    ClassID INTEGER NOT NULL,
+    AcademicYearID INTEGER NOT NULL,
+    IsFinalized INTEGER NOT NULL CHECK (IsFinalized IN (0, 1)),
+    FinalizedByTeacherUserID INTEGER NOT NULL,
+    FinalizationDate TEXT NOT NULL,
+    FOREIGN KEY (ClassID) REFERENCES tbl_Classes(ClassID) ON DELETE CASCADE,
+    FOREIGN KEY (AcademicYearID) REFERENCES tbl_AcademicYears(AcademicYearID) ON DELETE CASCADE,
+    FOREIGN KEY (FinalizedByTeacherUserID) REFERENCES tbl_Users(UserID) ON DELETE CASCADE,
+    UNIQUE (ClassID, AcademicYearID)
+);
 ")
         };
     }

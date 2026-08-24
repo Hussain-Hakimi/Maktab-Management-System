@@ -1,0 +1,59 @@
+<UserControl x:Class="Maktab.App.Wpf.Views.TeacherMySubjectsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="900"
+             FlowDirection="RightToLeft">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#0F766E" Padding="14" CornerRadius="6" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="📚 مضامین تدریسی من" FontSize="20" FontWeight="Bold" Foreground="White" />
+                <TextBlock Text=" (My Assigned Subjects)" FontSize="13" Foreground="#99F6E4" VerticalAlignment="Center" Margin="10,2,0,0" />
+            </StackPanel>
+        </Border>
+
+        <!-- Content -->
+        <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
+            <!-- Assigned Subjects Tab -->
+            <TabItem Header="📖 مضامین تدریس">
+                <DataGrid x:Name="SubjectsDataGrid"
+                          Margin="0,10,0,0"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False"
+                          IsReadOnly="True"
+                          GridLinesVisibility="Horizontal"
+                          HorizontalGridLinesBrush="#E2E8F0"
+                          RowHeight="32">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="صنف" Binding="{Binding ClassName}" Width="*" />
+                        <DataGridTextColumn Header="مضمون" Binding="{Binding SubjectName}" Width="*" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <!-- Guardian Classes Tab -->
+            <TabItem Header="🛡️ صنف‌های نگرانی">
+                <DataGrid x:Name="GuardianClassesDataGrid"
+                          Margin="0,10,0,0"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False"
+                          IsReadOnly="True"
+                          GridLinesVisibility="Horizontal"
+                          HorizontalGridLinesBrush="#E2E8F0"
+                          RowHeight="32">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="صنف" Binding="{Binding ClassName}" Width="*" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

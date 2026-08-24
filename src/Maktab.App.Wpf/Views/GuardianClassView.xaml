@@ -1,0 +1,69 @@
+<UserControl x:Class="Maktab.App.Wpf.Views.GuardianClassView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="900"
+             FlowDirection="RightToLeft">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="#0F766E" Padding="14" CornerRadius="6" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="🛡️ صنف نگرانی من" FontSize="20" FontWeight="Bold" Foreground="White" />
+                <TextBlock Text=" (My Guardian Class)" FontSize="13" Foreground="#99F6E4" VerticalAlignment="Center" Margin="10,2,0,0" />
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="1" Background="#F0FDFA" BorderBrush="#99F6E4" BorderThickness="1" Padding="10" CornerRadius="6" Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="180" />
+                    <ColumnDefinition Width="20" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="180" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="صنف:" VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,6,0" />
+                <ComboBox x:Name="ClassComboBox" Grid.Column="1" Height="32" DisplayMemberPath="GradeName" SelectedValuePath="ClassId" SelectionChanged="ClassComboBox_SelectionChanged" />
+                <TextBlock Grid.Column="3" Text="سال تعلیمی:" VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,6,0" />
+                <ComboBox x:Name="AcademicYearComboBox" Grid.Column="4" Height="32" DisplayMemberPath="YearName" SelectedValuePath="AcademicYearId" SelectionChanged="AcademicYearComboBox_SelectionChanged" />
+            </Grid>
+        </Border>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,12">
+            <Button x:Name="FinalizeButton" Height="32" Padding="12,0" Background="#16A34A" Foreground="White" FontWeight="Bold"
+                    Content="🔒 نهایی کردن نتایج" Click="FinalizeButton_Click" />
+            <Button x:Name="UnfinalizeButton" Height="32" Padding="12,0" Background="#DC2626" Foreground="White" FontWeight="Bold"
+                    Content="🔓 بازگشایی نتایج" Click="UnfinalizeButton_Click" Margin="8,0,0,0" />
+            <TextBlock x:Name="FinalizationStatusTextBlock" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#047857" Margin="12,0,0,0" />
+        </StackPanel>
+
+        <Border Grid.Row="3" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="8">
+            <DataGrid x:Name="StudentsDataGrid"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      IsReadOnly="True"
+                      GridLinesVisibility="Horizontal"
+                      HorizontalGridLinesBrush="#E2E8F0"
+                      RowHeight="32">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="آیدی" Binding="{Binding StudentId}" Width="60" />
+                    <DataGridTextColumn Header="شماره اساس" Binding="{Binding RollNumber}" Width="100" />
+                    <DataGridTextColumn Header="نام" Binding="{Binding FirstName}" Width="*" />
+                    <DataGridTextColumn Header="تخلص" Binding="{Binding LastName}" Width="*" />
+                    <DataGridTextColumn Header="مجموع نمرات" Binding="{Binding TotalScore}" Width="100" />
+                    <DataGridTextColumn Header="اوسط" Binding="{Binding AveragePercentage}" Width="80" />
+                    <DataGridTextColumn Header="نتیجه" Binding="{Binding ResultText}" Width="100" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </Grid>
+</UserControl>
