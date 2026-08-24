@@ -73,11 +73,19 @@ public class BulkImportMarksAttendanceTests
         public Task<IReadOnlyList<StudentExamMarkDto>> GetStudentMarksAsync(int studentId, CancellationToken cancellationToken = default)
             => throw new NotImplementedException();
 
+        public Task<IReadOnlyList<StudentExamMarkDto>> GetStudentMarksForYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default)
+            => throw new NotImplementedException();
+
         public Task SaveMarksBatchAsync(IEnumerable<SaveExamMarkDto> marks, CancellationToken cancellationToken = default)
         {
             SavedMarks.AddRange(marks);
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class InMemoryExcelReader : IExcelReader
+    {
+        public IReadOnlyList<string[]> ReadRows(string filePath) => throw new NotImplementedException();
     }
 
     private sealed class InMemoryAttendanceService : IAttendanceService
@@ -116,13 +124,14 @@ public class BulkImportMarksAttendanceTests
         var classService = new InMemoryClassSubjectService();
         var examMarkService = new InMemoryExamMarkService();
         var attendanceService = new InMemoryAttendanceService();
+        var excelReader = new InMemoryExcelReader();
 
         // Add a class and student
         classService.Classes.Add(new SchoolClass { ClassId = 1, GradeName = "Grade 1", NumberOfSubjects = 2 });
         classService.Subjects.Add(new Subject { SubjectId = 1, ClassId = 1, SubjectName = "Math" });
         studentService.Students.Add(new Student { StudentId = 1, FirstName = "Ahmad", LastName = "Karimi", FatherName = "Mohammad", ClassId = 1, RollNumber = "101" });
 
-        var bulkImport = new BulkImportService(studentService, classService, examMarkService, attendanceService);
+        var bulkImport = new BulkImportService(studentService, classService, examMarkService, attendanceService, excelReader);
 
         var csv = "RollNumber,MidtermScore,FinalScore\n101,30,50";
 
@@ -144,11 +153,12 @@ public class BulkImportMarksAttendanceTests
         var classService = new InMemoryClassSubjectService();
         var examMarkService = new InMemoryExamMarkService();
         var attendanceService = new InMemoryAttendanceService();
+        var excelReader = new InMemoryExcelReader();
 
         classService.Classes.Add(new SchoolClass { ClassId = 1, GradeName = "Grade 1", NumberOfSubjects = 2 });
         classService.Subjects.Add(new Subject { SubjectId = 1, ClassId = 1, SubjectName = "Math" });
 
-        var bulkImport = new BulkImportService(studentService, classService, examMarkService, attendanceService);
+        var bulkImport = new BulkImportService(studentService, classService, examMarkService, attendanceService, excelReader);
 
         var csv = "RollNumber,MidtermScore,FinalScore\n999,30,50";
 
@@ -168,11 +178,12 @@ public class BulkImportMarksAttendanceTests
         var classService = new InMemoryClassSubjectService();
         var examMarkService = new InMemoryExamMarkService();
         var attendanceService = new InMemoryAttendanceService();
+        var excelReader = new InMemoryExcelReader();
 
         classService.Classes.Add(new SchoolClass { ClassId = 1, GradeName = "Grade 1", NumberOfSubjects = 2 });
         studentService.Students.Add(new Student { StudentId = 1, FirstName = "A", LastName = "B", FatherName = "C", ClassId = 1, RollNumber = "101" });
 
-        var bulkImport = new BulkImportService(studentService, classService, examMarkService, attendanceService);
+        var bulkImport = new BulkImportService(studentService, classService, examMarkService, attendanceService, excelReader);
 
         var csv = "RollNumber,Date,Status\n101,2024-01-15,Present";
 
@@ -191,11 +202,12 @@ public class BulkImportMarksAttendanceTests
         var classService = new InMemoryClassSubjectService();
         var examMarkService = new InMemoryExamMarkService();
         var attendanceService = new InMemoryAttendanceService();
+        var excelReader = new InMemoryExcelReader();
 
         classService.Classes.Add(new SchoolClass { ClassId = 1, GradeName = "Grade 1", NumberOfSubjects = 2 });
         studentService.Students.Add(new Student { StudentId = 1, FirstName = "A", LastName = "B", FatherName = "C", ClassId = 1, RollNumber = "101" });
 
-        var bulkImport = new BulkImportService(studentService, classService, examMarkService, attendanceService);
+        var bulkImport = new BulkImportService(studentService, classService, examMarkService, attendanceService, excelReader);
 
         var csv = "RollNumber,Date,Status\n101,2024-01-15,Unknown";
 

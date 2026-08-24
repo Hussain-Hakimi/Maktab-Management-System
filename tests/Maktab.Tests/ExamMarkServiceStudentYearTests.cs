@@ -1,57 +1,72 @@
 using Maktab.Application.Abstractions;
 using Maktab.Application.Services;
 using Maktab.Domain.Entities;
-using Moq;
 
 namespace Maktab.Tests;
 
 public class ExamMarkServiceStudentYearTests
 {
-    private readonly Mock<IExamMarkRepository> _markRepoMock = new();
-    private readonly Mock<IStudentRepository> _studentRepoMock = new();
-    private readonly Mock<IClassSubjectRepository> _classRepoMock = new();
+    private sealed class MockExamMarkRepository : IExamMarkRepository
+    {
+        public List<ExamMark> Marks { get; set; } = [];
+        public Task<IReadOnlyList<ExamMark>> GetMarksByClassAndSubjectAsync(int classId, int subjectId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<IReadOnlyList<ExamMark>> GetMarksByClassSubjectAndYearAsync(int classId, int subjectId, int academicYearId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<IReadOnlyList<ExamMark>> GetMarksByStudentAsync(int studentId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<IReadOnlyList<ExamMark>> GetMarksByStudentAndYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<ExamMark>>(Marks.Where(m => m.StudentId == studentId && m.AcademicYearId == academicYearId).ToList());
+        public Task<IReadOnlyList<ExamMark>> GetMarksByClassAsync(int classId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task SaveOrUpdateMarkAsync(ExamMark mark, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task SaveOrUpdateMarksBatchAsync(IEnumerable<ExamMark> marks, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    }
 
+    private sealed class MockStudentRepository : IStudentRepository
+    {
+        public Student? Student { get; set; }
+        public Task<IReadOnlyList<Student>> GetStudentsAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<IReadOnlyList<Student>> GetStudentsByClassAsync(int classId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<Student?> GetStudentByIdAsync(int studentId, CancellationToken cancellationToken = default) => Task.FromResult(Student);
+        public Task<int> CreateStudentAsync(Student student, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task UpdateStudentAsync(Student student, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task DeleteStudentAsync(int studentId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<bool> ExistsByRollNumberAsync(int classId, string rollNumber, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    }
+
+    private sealed class MockClassSubjectRepository : IClassSubjectRepository
+    {
+        public List<Subject> Subjects { get; set; } = [];
+        public Task<IReadOnlyList<SchoolClass>> GetClassesAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<IReadOnlyList<Subject>> GetSubjectsByClassAsync(int classId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<Subject>>(Subjects);
+        public Task<int> CreateClassAsync(SchoolClass schoolClass, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task UpdateClassAsync(SchoolClass schoolClass, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task DeleteClassAsync(int classId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<int> CreateSubjectAsync(Subject subject, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task UpdateSubjectAsync(Subject subject, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task DeleteSubjectAsync(int subjectId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    }
+
+    private readonly MockExamMarkRepository _markRepo = new();
+    private readonly MockStudentRepository _studentRepo = new();
+    private readonly MockClassSubjectRepository _classRepo = new();
     private readonly ExamMarkService _service;
 
     public ExamMarkServiceStudentYearTests()
     {
-        _service = new ExamMarkService(
-            _markRepoMock.Object,
-            _studentRepoMock.Object,
-            _classRepoMock.Object);
+        _service = new ExamMarkService(_markRepo, _studentRepo, _classRepo);
     }
 
     [Fact]
     public async Task GetStudentMarksForYear_ReturnsAllSubjectsWithScores()
     {
         // Arrange
-        var student = new Student
-        {
-            StudentId = 1,
-            FirstName = "Ahmad",
-            LastName = "Karimi",
-            FatherName = "Mohammad",
-            ClassId = 1,
-            RollNumber = "101",
-            RegistrationDate = DateTime.Now
-        };
-        var subjects = new List<Subject>
-        {
+        var student = new Student { StudentId = 1, ClassId = 1, FirstName = "A", LastName = "B", FatherName = "C", RollNumber = "1" };
+        _studentRepo.Student = student;
+        _classRepo.Subjects = [
             new() { SubjectId = 1, ClassId = 1, SubjectName = "ریاضی" },
             new() { SubjectId = 2, ClassId = 1, SubjectName = "فزیک" }
-        };
-        var marks = new List<ExamMark>
-        {
+        ];
+        _markRepo.Marks = [
             new() { StudentId = 1, SubjectId = 1, MidtermScore = 35m, FinalScore = 50m, AcademicYearId = 1 },
             new() { StudentId = 1, SubjectId = 2, MidtermScore = 30m, FinalScore = 40m, AcademicYearId = 1 }
-        };
-
-        _studentRepoMock.Setup(r => r.GetStudentByIdAsync(1, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(student);
-        _classRepoMock.Setup(r => r.GetSubjectsByClassAsync(1, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(subjects);
-        _markRepoMock.Setup(r => r.GetMarksByStudentAndYearAsync(1, 1, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(marks);
+        ];
 
         // Act
         var result = await _service.GetStudentMarksForYearAsync(1, 1);
@@ -67,8 +82,7 @@ public class ExamMarkServiceStudentYearTests
     [Fact]
     public async Task GetStudentMarksForYear_WhenStudentNotFound_ReturnsEmptyList()
     {
-        _studentRepoMock.Setup(r => r.GetStudentByIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Student?)null);
+        _studentRepo.Student = null;
 
         var result = await _service.GetStudentMarksForYearAsync(999, 1);
 

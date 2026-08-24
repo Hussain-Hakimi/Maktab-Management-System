@@ -2,19 +2,43 @@ using Maktab.Application.Abstractions;
 using Maktab.Application.Services;
 using Maktab.Domain.Entities;
 using Maktab.Domain.Enums;
-using Moq;
 
 namespace Maktab.Tests;
 
 public class UserServiceChangePasswordTests
 {
-    private readonly Mock<IUserRepository> _repoMock = new();
-    private readonly Mock<IAppLogger> _loggerMock = new();
+    private sealed class MockUserRepository : IUserRepository
+    {
+        public User? GetByIdResult { get; set; }
+        public User? LastUpdatedUser { get; private set; }
+
+        public Task<User?> GetByUsernameAsync(string username, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<User?> GetByIdAsync(int userId, CancellationToken cancellationToken = default) => Task.FromResult(GetByIdResult);
+        public Task<IReadOnlyList<User>> GetAllAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<int> CreateAsync(User user, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task UpdateAsync(User user, CancellationToken cancellationToken = default)
+        {
+            LastUpdatedUser = user;
+            return Task.CompletedTask;
+        }
+        public Task DeleteAsync(int userId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    }
+
+    private sealed class MockLogger : IAppLogger
+    {
+        public void LogInfo(string message) { }
+        public void LogWarning(string message) { }
+        public void LogError(string message, Exception? ex = null) { }
+        public Task<IReadOnlyList<string>> ReadRecentLogsAsync(int maxLines = 100, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    }
+
+    private readonly MockUserRepository _repo = new();
+    private readonly MockLogger _logger = new();
     private readonly UserService _service;
 
     public UserServiceChangePasswordTests()
     {
-        _service = new UserService(_repoMock.Object, _loggerMock.Object);
+        _service = new UserService(_repo, _logger);
     }
 
     [Fact]
@@ -30,13 +54,13 @@ public class UserServiceChangePasswordTests
             Role = UserRole.Admin,
             IsActive = true
         };
-        _repoMock.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(user);
+        _repo.GetByIdResult = user;
 
         await _service.ChangePasswordAsync(1, "oldpass", "newpass");
 
-        _repoMock.Verify(r => r.UpdateAsync(
-            It.Is<User>(u => u.PasswordHash != oldHash && PasswordHasher.VerifyPassword("newpass", u.PasswordHash)),
-            It.IsAny<CancellationToken>()), Times.Once);
+        Assert.NotNull(_repo.LastUpdatedUser);
+        Assert.NotEqual(oldHash, _repo.LastUpdatedUser!.PasswordHash);
+        Assert.True(PasswordHasher.VerifyPassword("newpass", _repo.LastUpdatedUser.PasswordHash));
     }
 
     [Fact]
@@ -52,7 +76,7 @@ public class UserServiceChangePasswordTests
             Role = UserRole.Admin,
             IsActive = true
         };
-        _repoMock.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(user);
+        _repo.GetByIdResult = user;
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
         {
@@ -63,7 +87,7 @@ public class UserServiceChangePasswordTests
     [Fact]
     public async Task ChangePassword_WhenUserNotFound_ThrowsInvalidOperationException()
     {
-        _repoMock.Setup(r => r.GetByIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync((User?)null);
+        _repo.GetByIdResult = null;
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
         {

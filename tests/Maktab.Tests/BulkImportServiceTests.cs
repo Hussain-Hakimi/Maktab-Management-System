@@ -41,6 +41,7 @@ public class BulkImportServiceTests
     {
         public Task<IReadOnlyList<StudentExamMarkDto>> GetClassSubjectMarksAsync(int classId, int subjectId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<IReadOnlyList<StudentExamMarkDto>> GetStudentMarksAsync(int studentId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<IReadOnlyList<StudentExamMarkDto>> GetStudentMarksForYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task SaveMarksBatchAsync(IEnumerable<SaveExamMarkDto> marks, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
@@ -54,6 +55,11 @@ public class BulkImportServiceTests
         public Task<IReadOnlyList<MonthlyAttendanceRowDto>> GetMonthlyAttendanceReportAsync(int classId, int year, int month, int academicYearId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
+    private sealed class MockExcelReader : IExcelReader
+    {
+        public IReadOnlyList<string[]> ReadRows(string filePath) => throw new NotImplementedException();
+    }
+
 
     [Fact]
     public async Task ImportStudents_WithValidCsv_ImportsAllRows()
@@ -62,7 +68,8 @@ public class BulkImportServiceTests
         var classService = new MockClassSubjectService();
         var examService = new MockExamMarkService();
         var attendanceService = new MockAttendanceService();
-        var bulkImport = new BulkImportService(studentService, classService, examService, attendanceService);
+        var excelReader = new MockExcelReader();
+        var bulkImport = new BulkImportService(studentService, classService, examService, attendanceService, excelReader);
 
         var csv = "FirstName,LastName,FatherName,RollNumber,ClassName\nAli,Ahmadi,Mohammad,101,صنف هفتم\nZahra,Hussaini,Ali,102,صنف هفتم";
 
@@ -81,7 +88,8 @@ public class BulkImportServiceTests
         var classService = new MockClassSubjectService();
         var examService = new MockExamMarkService();
         var attendanceService = new MockAttendanceService();
-        var bulkImport = new BulkImportService(studentService, classService, examService, attendanceService);
+        var excelReader = new MockExcelReader();
+        var bulkImport = new BulkImportService(studentService, classService, examService, attendanceService, excelReader);
 
         var csv = "FirstName,LastName,FatherName,RollNumber,ClassName\nAli,Ahmadi,Mohammad,101,صنف نهم";
 
