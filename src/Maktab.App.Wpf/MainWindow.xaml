@@ -70,7 +70,7 @@
                     <TextBlock x:Name="SchoolYearTextBlock" Text="" FontSize="12" Foreground="#CBD5E1" VerticalAlignment="Center" Margin="0,0,12,0" />
                     <TextBlock x:Name="CurrentDateTextBlock" Text="" FontSize="12" Foreground="#CBD5E1" VerticalAlignment="Center" Margin="0,0,16,0" />
                     <Button Content="🔒 تغییر رمز عبور" Height="30" Padding="12,0" Background="#334155" Foreground="White"
-                            FontSize="12" FontWeight="SemiBold" BorderThickness="0" Cursor="Hand"
+                            FontSize="12" FontWeight="SemiBold" BorderThickness="0" CornerRadius="4" Cursor="Hand"
                             Click="ChangePasswordButton_Click" />
                 </StackPanel>
             </Grid>
@@ -93,6 +93,7 @@
                          FontSize="14"
                          ItemContainerStyle="{StaticResource SidebarItemStyle}">
                     <ListBoxItem Content="🏠 داشبورد" />
+                    <ListBoxItem Content="🔔 اعلان‌ها" />
                     <ListBoxItem Content="👨‍🎓 شاگردان" />
                     <ListBoxItem Content="🏫 صنف‌ها و مضامین" />
                     <ListBoxItem Content="📝 ثبت نمرات" />
