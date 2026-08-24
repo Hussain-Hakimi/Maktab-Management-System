@@ -52,6 +52,7 @@ public partial class App : System.Windows.Application
                     services.AddSingleton<AttendanceReportsView>();
                     services.AddSingleton<PromotionHistoryView>();
                     services.AddSingleton<AlertsView>();
+                    services.AddSingleton<StudentGradesView>();
                 })
                 .Build();
 
