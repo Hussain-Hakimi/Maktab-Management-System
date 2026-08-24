@@ -1,9 +1,5 @@
 using System.Windows;
 using System.Windows.Controls;
-using LiveChartsCore;
-using LiveChartsCore.SkiaSharpView;
-using LiveChartsCore.SkiaSharpView.Painting;
-using SkiaSharp;
 using Maktab.Application.Abstractions;
 using Maktab.Domain.Enums;
 
@@ -19,8 +15,6 @@ public partial class DashboardView : UserControl
     private readonly IAuditService _auditService;
     private readonly ICurrentUserService _currentUserService;
     private readonly IAlertService _alertService;
-    private readonly IAcademicYearService _academicYearService;
-    private readonly IReportService _reportService;
 
     public DashboardView(
         IStudentService studentService,
@@ -30,9 +24,7 @@ public partial class DashboardView : UserControl
         IBookService bookService,
         IAuditService auditService,
         ICurrentUserService currentUserService,
-        IAlertService alertService,
-        IAcademicYearService academicYearService,
-        IReportService reportService)
+        IAlertService alertService)
     {
         _studentService = studentService;
         _classSubjectService = classSubjectService;
@@ -42,8 +34,6 @@ public partial class DashboardView : UserControl
         _auditService = auditService;
         _currentUserService = currentUserService;
         _alertService = alertService;
-        _academicYearService = academicYearService;
-        _reportService = reportService;
 
         InitializeComponent();
         Loaded += DashboardView_Loaded;
@@ -53,8 +43,6 @@ public partial class DashboardView : UserControl
     {
         await LoadSummaryAsync();
         await LoadAlertsAsync();
-        await LoadGradeDistributionAsync();
-        await LoadAttendanceTrendAsync();
     }
 
     private async Task LoadSummaryAsync()
@@ -170,110 +158,6 @@ public partial class DashboardView : UserControl
         catch
         {
             AlertsCountTextBlock.Text = "امکان بارگذاری اعلان‌ها وجود ندارد.";
-        }
-    }
-
-    private async Task LoadGradeDistributionAsync()
-    {
-        try
-        {
-            var classes = await _classSubjectService.GetClassesAsync();
-            if (classes.Count == 0)
-                return;
-
-            var classId = classes[0].ClassId;
-            var activeYear = await _academicYearService.GetActiveAcademicYearAsync();
-            if (activeYear is null)
-                return;
-
-            var data = await _reportService.GetGradeDistributionAsync(classId, activeYear.AcademicYearId);
-
-            GradeChart.Series = new ISeries[]
-            {
-                new ColumnSeries<int>
-                {
-                    Values = new int[] { data.CountA, data.CountB, data.CountC, data.CountD, data.CountF }
-                }
-            };
-
-            GradeChart.XAxes = new Axis[]
-            {
-                new Axis
-                {
-                    Labels = new string[] { "A", "B", "C", "D", "F" }
-                }
-            };
-
-            GradeChart.YAxes = new Axis[]
-            {
-                new Axis
-                {
-                    MinLimit = 0
-                }
-            };
-        }
-        catch
-        {
-            // Silently ignore chart errors
-        }
-    }
-
-    private async Task LoadAttendanceTrendAsync()
-    {
-        try
-        {
-            var classes = await _classSubjectService.GetClassesAsync();
-            if (classes.Count == 0)
-                return;
-
-            var classId = classes[0].ClassId;
-            var dates = Enumerable.Range(0, 7).Select(offset => DateTime.Today.AddDays(-offset)).Reverse().ToList();
-            var rates = new List<double>();
-            var labels = new List<string>();
-
-            foreach (var date in dates)
-            {
-                var attendance = await _attendanceService.GetClassAttendanceForDateAsync(classId, date);
-                int present = attendance.Count(a => a.Status == AttendanceStatus.Present);
-                int total = attendance.Count;
-                double rate = total > 0 ? Math.Round((double)present / total * 100, 2) : 0.0;
-                rates.Add(rate);
-                labels.Add(date.ToString("MM/dd"));
-            }
-
-            AttendanceTrendChart.Series = new ISeries[]
-            {
-                new LineSeries<double>
-                {
-                    Values = rates.ToArray(),
-                    Fill = null,
-                    GeometrySize = 8,
-                    Stroke = new SolidColorPaint(SKColors.Blue)
-                }
-            };
-
-            AttendanceTrendChart.XAxes = new Axis[]
-            {
-                new Axis
-                {
-                    Labels = labels.ToArray(),
-                    LabelsRotation = 0
-                }
-            };
-
-            AttendanceTrendChart.YAxes = new Axis[]
-            {
-                new Axis
-                {
-                    MinLimit = 0,
-                    MaxLimit = 100,
-                    Labeler = value => $"{value}%"
-                }
-            };
-        }
-        catch
-        {
-            // Silently ignore chart errors
         }
     }
 }
