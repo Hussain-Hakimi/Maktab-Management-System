@@ -16,9 +16,11 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
     public Task GeneratePdfReportAsync(
         StudentReportCardDto reportCard,
         string outputFilePath,
-        ReportCardTemplateType templateType,
+        ReportCardType reportType,
         CancellationToken cancellationToken = default)
     {
+        reportCard.ReportType = reportType;
+
         var doc = Document.Create(container =>
         {
             container.Page(page =>
@@ -66,11 +68,10 @@ public sealed class QuestPdfReportCardGenerator : IPdfReportCardGenerator
                     .FontSize(10).FontColor(Colors.Grey.Darken1);
             }
 
-            // School name (optional but use class name as fallback)
-            var schoolName = reportCard.ClassName; // placeholder if not present
-            if (!string.IsNullOrWhiteSpace(schoolName))
+            // School name (optional)
+            if (!string.IsNullOrWhiteSpace(reportCard.ClassName))
             {
-                col.Item().AlignCenter().Text(schoolName)
+                col.Item().AlignCenter().Text(reportCard.ClassName)
                     .FontSize(13).Bold().FontColor(Colors.Black);
             }
 
