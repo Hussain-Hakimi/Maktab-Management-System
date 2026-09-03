@@ -10,7 +10,8 @@ public sealed class ReportCardService(
     IExamMarkRepository markRepository,
     IPdfReportCardGenerator pdfGenerator,
     IAttendanceService attendanceService,
-    ISchoolSettingsService schoolSettingsService) : IReportCardService
+    ISchoolSettingsService schoolSettingsService,
+    IAcademicYearRepository academicYearRepository) : IReportCardService
 {
     public async Task<StudentReportCardDto> GetStudentReportCardDataAsync(
         int studentId,
@@ -18,6 +19,17 @@ public sealed class ReportCardService(
         CancellationToken cancellationToken = default)
     {
         if (studentId <= 0) throw new ArgumentOutOfRangeException(nameof(studentId));
+
+        var requestedAcademicYear = string.IsNullOrWhiteSpace(academicYear)
+            ? AcademicYearProvider.GetCurrentAcademicYear()
+            : academicYear.Trim();
+
+        var academicYears = await academicYearRepository.GetAllAsync(cancellationToken);
+        var selectedAcademicYear = academicYears.FirstOrDefault(y => y.YearName == requestedAcademicYear);
+        if (selectedAcademicYear is null)
+        {
+            throw new InvalidOperationException($"سال تعلیمی {requestedAcademicYear} یافت نشد.");
+        }
 
         var student = await studentRepository.GetStudentByIdAsync(studentId, cancellationToken);
         if (student is null)
@@ -30,7 +42,10 @@ public sealed class ReportCardService(
         var className = schoolClass?.GradeName ?? $"صنف {student.ClassId}";
 
         var subjects = await classSubjectRepository.GetSubjectsByClassAsync(student.ClassId, cancellationToken);
-        var marks = await markRepository.GetMarksByStudentAsync(studentId, cancellationToken);
+        var marks = await markRepository.GetMarksByStudentAndYearAsync(
+            studentId,
+            selectedAcademicYear.AcademicYearId,
+            cancellationToken);
         var markMap = marks.ToDictionary(m => m.SubjectId);
 
         var subjectReports = new List<SubjectMarkReportDto>();
@@ -63,7 +78,7 @@ public sealed class ReportCardService(
         var avgPercentage = totalMaxScore > 0 ? Math.Round((totalObtained / totalMaxScore) * 100m, 2) : 0m;
         var overallGrade = GradingPolicy.ResolveLetterGrade(avgPercentage);
 
-        var absenceDays = await attendanceService.GetStudentAbsenceDaysAsync(studentId, academicYear, cancellationToken);
+        var absenceDays = await attendanceService.GetStudentAbsenceDaysAsync(studentId, requestedAcademicYear, cancellationToken);
 
         var outcome = PromotionPolicy.GetPromotionOutcome(avgPercentage, failedCount, absenceDays);
         string promoText;
@@ -89,7 +104,6 @@ public sealed class ReportCardService(
                 break;
         }
 
-        // Load school settings for headers
         var schoolSettings = await schoolSettingsService.GetSettingsAsync(cancellationToken);
 
         return new StudentReportCardDto
@@ -101,7 +115,7 @@ public sealed class ReportCardService(
             RollNumber = student.RollNumber,
             ClassId = student.ClassId,
             ClassName = className,
-            AcademicYear = string.IsNullOrWhiteSpace(academicYear) ? AcademicYearProvider.GetCurrentAcademicYear() : academicYear.Trim(),
+            AcademicYear = requestedAcademicYear,
             IssueDate = DateTime.Now.ToString("yyyy/MM/dd"),
             SubjectMarks = subjectReports,
             TotalObtainedScore = totalObtained,
@@ -114,9 +128,7 @@ public sealed class ReportCardService(
             PromotionOutcome = outcome,
             PromotionStatusText = promoText,
             FailureReason = failureReason,
-            ReportType = ReportCardType.Annual, // default
-
-            // Populate new header fields
+            ReportType = ReportCardType.Annual,
             GovernmentTitle = schoolSettings.GovernmentTitle,
             ProvincialEducationHeader = schoolSettings.ProvincialEducationHeader,
             DistrictEducationHeader = schoolSettings.DistrictEducationHeader,
