@@ -15,6 +15,7 @@ public partial class DashboardView : UserControl
     private readonly IAuditService _auditService;
     private readonly ICurrentUserService _currentUserService;
     private readonly IAlertService _alertService;
+    private readonly IAppLogger _logger;
 
     public DashboardView(
         IStudentService studentService,
@@ -24,7 +25,8 @@ public partial class DashboardView : UserControl
         IBookService bookService,
         IAuditService auditService,
         ICurrentUserService currentUserService,
-        IAlertService alertService)
+        IAlertService alertService,
+        IAppLogger logger)
     {
         _studentService = studentService;
         _classSubjectService = classSubjectService;
@@ -34,6 +36,7 @@ public partial class DashboardView : UserControl
         _auditService = auditService;
         _currentUserService = currentUserService;
         _alertService = alertService;
+        _logger = logger;
 
         InitializeComponent();
         Loaded += DashboardView_Loaded;
@@ -73,8 +76,9 @@ public partial class DashboardView : UserControl
                 decimal absenceRate = totalStudents > 0 ? Math.Round((decimal)absentCount / totalStudents * 100, 2) : 0m;
                 TodayAbsenceRateTextBlock.Text = $"غیبت: {absenceRate}%";
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError("Failed to load dashboard attendance summary.", ex);
                 TodayAttendanceTextBlock.Text = "نامشخص";
                 TodayAbsenceRateTextBlock.Text = "غیبت: نامشخص";
             }
@@ -100,8 +104,9 @@ public partial class DashboardView : UserControl
                     FeeCollectionRateTextBlock.Text = "وصول: ۰%";
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError("Failed to load dashboard fee summary.", ex);
                 OutstandingFeesTextBlock.Text = "نامشخص";
                 FeeProgressBar.Value = 0;
                 FeeCollectionRateTextBlock.Text = "وصول: نامشخص";
@@ -112,8 +117,9 @@ public partial class DashboardView : UserControl
                 var overdue = await _bookService.GetOverdueIssuesAsync();
                 OverdueBooksTextBlock.Text = overdue.Count.ToString();
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError("Failed to load dashboard overdue books summary.", ex);
                 OverdueBooksTextBlock.Text = "نامشخص";
             }
 
@@ -131,13 +137,15 @@ public partial class DashboardView : UserControl
                     RecentAuditTextBlock.Text = "فقط مدیر سیستم";
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError("Failed to load dashboard recent audit summary.", ex);
                 RecentAuditTextBlock.Text = "نامشخص";
             }
         }
         catch (Exception ex)
         {
+            _logger.LogError("Failed to load dashboard summary.", ex);
             MessageBox.Show($"خطا در بارگذاری داشبورد:\n{ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -155,8 +163,9 @@ public partial class DashboardView : UserControl
             var topAlerts = alerts.Take(5).ToList();
             AlertsListItemsControl.ItemsSource = topAlerts;
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError("Failed to load dashboard alerts.", ex);
             AlertsCountTextBlock.Text = "امکان بارگذاری اعلان‌ها وجود ندارد.";
         }
     }
