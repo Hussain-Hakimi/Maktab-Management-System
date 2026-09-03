@@ -4,26 +4,51 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
-             d:DesignHeight="650" d:DesignWidth="900"
+             d:DesignHeight="700" d:DesignWidth="1000"
              FlowDirection="RightToLeft">
     <Grid Margin="12">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Border Grid.Row="0" Background="#334155" Padding="14" CornerRadius="6" Margin="0,0,0,12">
+        <Border Grid.Row="0" Background="#334155" Padding="14" CornerRadius="6" Margin="0,0,0,10">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="📥 ورود اطلاعات دسته‌جمعی" FontSize="20" FontWeight="Bold" Foreground="White" />
+                <TextBlock Text="&#x1F4E5; &#x648;&#x631;&#x648;&#x62F; &#x627;&#x637;&#x644;&#x627;&#x639;&#x627;&#x62A; &#x62F;&#x633;&#x62A;&#x647;&#x200C;&#x62C;&#x645;&#x639;&#x6CC;" FontSize="20" FontWeight="Bold" Foreground="White" />
                 <TextBlock Text=" (Bulk Import)" FontSize="13" Foreground="#CBD5E1" VerticalAlignment="Center" Margin="10,2,0,0" />
             </StackPanel>
         </Border>
 
-        <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
+        <!-- Step-by-Step Instructions -->
+        <Border Grid.Row="1" Background="#EFF6FF" BorderBrush="#93C5FD" BorderThickness="1" CornerRadius="6" Padding="14,10" Margin="0,0,0,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="&#x1F4CB;" FontSize="22" VerticalAlignment="Top" Margin="0,0,10,0"/>
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="&#x631;&#x627;&#x647;&#x646;&#x645;&#x627;&#x6CC; &#x648;&#x631;&#x648;&#x62F; &#x627;&#x637;&#x644;&#x627;&#x639;&#x627;&#x62A; &#x628;&#x631;&#x627;&#x6CC; &#x645;&#x6A9;&#x627;&#x62A;&#x628; (&#x645;&#x631;&#x62D;&#x644;&#x647; &#x628;&#x647; &#x645;&#x631;&#x62D;&#x644;&#x647;)" FontWeight="Bold" FontSize="14" Foreground="#1D4ED8" Margin="0,0,0,6"/>
+                    <TextBlock TextWrapping="Wrap" Foreground="#1E40AF" FontSize="12.5" LineHeight="22">
+                        <Run FontWeight="Bold">&#x645;&#x631;&#x62D;&#x644;&#x647; &#x6F1;:</Run><Run> &#x627;&#x632; &#x628;&#x62E;&#x634; &#xAB;&#x635;&#x646;&#x641;&#x200C;&#x647;&#x627;&#xBB; &#x627;&#x628;&#x62A;&#x62F;&#x627; &#x62A;&#x645;&#x627;&#x645; &#x635;&#x646;&#x648;&#x641; &#x645;&#x6A9;&#x62A;&#x628; &#x62E;&#x648;&#x62F; &#x631;&#x627; &#x627;&#x6CC;&#x62C;&#x627;&#x62F; &#x6A9;&#x646;&#x6CC;&#x62F;. &#x627;&#x632; &#x62F;&#x6A9;&#x645;&#x647; &#xAB;&#x1F3EB; &#x627;&#x6CC;&#x62C;&#x627;&#x62F; &#x62F;&#x633;&#x62A;&#x647;&#x200C;&#x62C;&#x645;&#x639;&#x6CC;&#xBB; &#x627;&#x633;&#x62A;&#x641;&#x627;&#x62F;&#x647; &#x6A9;&#x646;&#x6CC;&#x62F; &#x62A;&#x627; &#x635;&#x646;&#x641; &#x627;&#x648;&#x644; &#x62A;&#x627; &#x62F;&#x648;&#x627;&#x632;&#x62F;&#x647;&#x645; &#x62F;&#x631; &#x6CC;&#x6A9; &#x6A9;&#x644;&#x6CC;&#x6A9; &#x633;&#x627;&#x62E;&#x62A;&#x647; &#x634;&#x648;&#x62F;.</Run>
+                        <LineBreak/>
+                        <Run FontWeight="Bold">&#x645;&#x631;&#x62D;&#x644;&#x647; &#x6F2;:</Run><Run> &#x62F;&#x631; &#x62A;&#x628; &#xAB;&#x634;&#x627;&#x6AF;&#x631;&#x62F;&#x627;&#x646;&#xBB; &#x641;&#x627;&#x631;&#x645;&#x62A; &#x646;&#x645;&#x648;&#x646;&#x647; &#x631;&#x627; &#x62F;&#x627;&#x646;&#x644;&#x648;&#x62F; &#x6A9;&#x646;&#x6CC;&#x62F;&#x60C; &#x645;&#x639;&#x644;&#x648;&#x645;&#x627;&#x62A; &#x634;&#x627;&#x6AF;&#x631;&#x62F;&#x627;&#x646; &#x631;&#x627; &#x648;&#x627;&#x631;&#x62F; &#x648; &#x641;&#x627;&#x6CC;&#x644; &#x631;&#x627; &#x622;&#x67E;&#x644;&#x648;&#x62F; &#x646;&#x645;&#x627;&#x6CC;&#x6CC;&#x62F;.</Run>
+                        <LineBreak/>
+                        <Run FontWeight="Bold">&#x645;&#x631;&#x62D;&#x644;&#x647; &#x6F3;:</Run><Run> &#x62F;&#x631; &#x62A;&#x628; &#xAB;&#x646;&#x645;&#x631;&#x627;&#x62A; &#x686;&#x646;&#x62F; &#x645;&#x636;&#x645;&#x648;&#x646;&#xBB; &#x646;&#x645;&#x631;&#x627;&#x62A; &#x62A;&#x645;&#x627;&#x645; &#x645;&#x636;&#x627;&#x645;&#x6CC;&#x646; &#x647;&#x631; &#x635;&#x646;&#x641; &#x631;&#x627; &#x62F;&#x631; &#x6CC;&#x6A9; &#x641;&#x627;&#x6CC;&#x644; &#x6CC;&#x6A9;&#x62C;&#x627; &#x648;&#x627;&#x631;&#x62F; &#x6A9;&#x646;&#x6CC;&#x62F;.</Run>
+                        <LineBreak/>
+                        <Run FontWeight="Bold">&#x645;&#x631;&#x62D;&#x644;&#x647; &#x6F4;:</Run><Run> &#x62F;&#x631; &#x62A;&#x628; &#xAB;&#x62D;&#x627;&#x636;&#x631;&#x6CC;&#xBB; &#x633;&#x648;&#x627;&#x628;&#x642; &#x62D;&#x627;&#x636;&#x631;&#x6CC; &#x634;&#x627;&#x6AF;&#x631;&#x62F;&#x627;&#x646; &#x631;&#x627; &#x648;&#x627;&#x631;&#x62F; &#x6A9;&#x646;&#x6CC;&#x62F;.</Run>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Tabs -->
+        <TabControl Grid.Row="2" Background="Transparent" BorderThickness="0">
             <TabControl.Resources>
                 <Style TargetType="TabItem">
-                    <Setter Property="Padding" Value="16,8" />
+                    <Setter Property="Padding" Value="14,8" />
                     <Setter Property="FontSize" Value="13" />
                     <Setter Property="FontWeight" Value="SemiBold" />
                     <Setter Property="Foreground" Value="#475569" />
@@ -33,116 +58,182 @@
             </TabControl.Resources>
 
             <!-- Students Import Tab -->
-            <TabItem Header="👨‍🎓 شاگردان">
+            <TabItem Header="&#x1F9D1;&#x200D;&#x1F393; &#x634;&#x627;&#x6AF;&#x631;&#x62F;&#x627;&#x646;">
                 <Grid Margin="0,10,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="14" />
-                        <ColumnDefinition Width="320" />
+                        <ColumnDefinition Width="330" />
                     </Grid.ColumnDefinitions>
-
                     <Border Grid.Column="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                <Button Content="📁 انتخاب فایل CSV/Excel" Height="32" Padding="12,0" Background="#3B82F6" Foreground="White" FontWeight="SemiBold" Click="BrowseStudentsFileButton_Click" Margin="0,0,8,0" />
-                                <Button Content="📥 اجرای ورود" Height="32" Padding="12,0" Background="#16A34A" Foreground="White" FontWeight="Bold" Click="ImportStudentsButton_Click" Margin="0,0,8,0" />
-                                <TextBlock x:Name="StudentsFilePathTextBlock" VerticalAlignment="Center" Foreground="#475569" />
-                            </StackPanel>
-                            <TextBox x:Name="StudentsCsvTextBox" Grid.Row="1" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
-                                     FontFamily="Consolas" FontSize="12" Padding="8" Background="#F8FAFC" BorderBrush="#CBD5E1" />
+                            <WrapPanel Margin="0,0,0,8">
+                                <Button Content="&#x2B07; &#x62F;&#x627;&#x646;&#x644;&#x648;&#x62F; &#x641;&#x627;&#x631;&#x645;&#x62A; &#x646;&#x645;&#x648;&#x646;&#x647;" Height="32" Padding="12,0" Background="#7C3AED" Foreground="White" FontWeight="SemiBold" Click="DownloadStudentsTemplate_Click" Margin="0,0,8,0" />
+                                <Button Content="&#x1F4C1; &#x627;&#x646;&#x62A;&#x62E;&#x627;&#x628; &#x641;&#x627;&#x6CC;&#x644; CSV/Excel" Height="32" Padding="12,0" Background="#3B82F6" Foreground="White" FontWeight="SemiBold" Click="BrowseStudentsFileButton_Click" Margin="0,0,8,0" />
+                                <Button Content="&#x1F4E5; &#x627;&#x62C;&#x631;&#x627;&#x6CC; &#x648;&#x631;&#x648;&#x62F;" Height="32" Padding="12,0" Background="#16A34A" Foreground="White" FontWeight="Bold" Click="ImportStudentsButton_Click" Margin="0,0,8,0" />
+                                <TextBlock x:Name="StudentsFilePathTextBlock" VerticalAlignment="Center" Foreground="#475569" TextTrimming="CharacterEllipsis" MaxWidth="200" />
+                            </WrapPanel>
+                            <Border Grid.Row="1" Background="#F0FDF4" BorderBrush="#86EFAC" BorderThickness="1" CornerRadius="4" Padding="10,6" Margin="0,0,0,8">
+                                <TextBlock FontSize="12" Foreground="#166534" TextWrapping="Wrap">
+                                    <Run FontWeight="Bold">&#x641;&#x627;&#x631;&#x645;&#x62A; &#x641;&#x627;&#x6CC;&#x644;: </Run><Run FontFamily="Consolas">FirstName | LastName | FatherName | RollNumber | ClassName</Run>
+                                    <LineBreak/>
+                                    <Run>&#x633;&#x62A;&#x648;&#x646; ClassName &#x628;&#x627;&#x6CC;&#x62F; &#x62F;&#x642;&#x6CC;&#x642;&#x627;&#x64B; &#x628;&#x631;&#x627;&#x628;&#x631; &#x646;&#x627;&#x645; &#x635;&#x646;&#x641; &#x62F;&#x631; &#x633;&#x6CC;&#x633;&#x62A;&#x645; &#x628;&#x627;&#x634;&#x62F; (&#x645;&#x62B;&#x644;&#x627;&#x64B;: &#x635;&#x646;&#x641; &#x627;&#x648;&#x644;)</Run>
+                                </TextBlock>
+                            </Border>
+                            <TextBox x:Name="StudentsCsvTextBox" Grid.Row="2" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="12" Padding="8" Background="#F8FAFC" BorderBrush="#CBD5E1" />
                         </Grid>
                     </Border>
-
                     <Border Grid.Column="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
                         <StackPanel>
-                            <TextBlock Text="نتایج" FontWeight="Bold" FontSize="15" Foreground="#334155" Margin="0,0,0,12" />
-                            <TextBlock x:Name="StudentsSummaryTextBlock" Text="۰ ردیف وارد شد" FontWeight="SemiBold" Margin="0,0,0,8" />
-                            <TextBox x:Name="StudentsErrorsTextBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
-                                     VerticalScrollBarVisibility="Auto" Height="200" FontSize="11" Background="#FEF2F2" Foreground="#DC2626" />
+                            <TextBlock Text="&#x646;&#x62A;&#x627;&#x6CC;&#x62C;" FontWeight="Bold" FontSize="15" Foreground="#334155" Margin="0,0,0,12" />
+                            <TextBlock x:Name="StudentsSummaryTextBlock" Text="&#x6F0; &#x631;&#x62F;&#x6CC;&#x641; &#x648;&#x627;&#x631;&#x62F; &#x634;&#x62F;" FontWeight="SemiBold" Margin="0,0,0,8" />
+                            <TextBox x:Name="StudentsErrorsTextBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Height="200" FontSize="11" Background="#FEF2F2" Foreground="#DC2626" />
+                            <TextBlock Margin="0,12,0,0" FontSize="11" Foreground="#64748B" TextWrapping="Wrap">&#x627;&#x6AF;&#x631; &#x62E;&#x637;&#x627;&#x6CC;&#x6CC; &#x648;&#x62C;&#x648;&#x62F; &#x62F;&#x627;&#x634;&#x62A;&#x647; &#x628;&#x627;&#x634;&#x62F;&#x60C; &#x62E;&#x637; &#x648; &#x62F;&#x644;&#x6CC;&#x644; &#x622;&#x646; &#x627;&#x6CC;&#x646;&#x62C;&#x627; &#x646;&#x645;&#x627;&#x6CC;&#x634; &#x62F;&#x627;&#x62F;&#x647; &#x645;&#x6CC;&#x200C;&#x634;&#x648;&#x62F;. &#x633;&#x627;&#x6CC;&#x631; &#x631;&#x62F;&#x6CC;&#x641;&#x200C;&#x647;&#x627;&#x6CC; &#x635;&#x62D;&#x6CC;&#x62D; &#x648;&#x627;&#x631;&#x62F; &#x645;&#x6CC;&#x200C;&#x634;&#x648;&#x646;&#x62F;.</TextBlock>
                         </StackPanel>
                     </Border>
                 </Grid>
             </TabItem>
 
-            <!-- Marks Import Tab -->
-            <TabItem Header="📝 نمرات">
+            <!-- Marks (Single Subject) Tab -->
+            <TabItem Header="&#x1F4DD; &#x646;&#x645;&#x631;&#x627;&#x62A; (&#x6CC;&#x6A9; &#x645;&#x636;&#x645;&#x648;&#x646;)">
                 <Grid Margin="0,10,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="14" />
-                        <ColumnDefinition Width="320" />
+                        <ColumnDefinition Width="330" />
                     </Grid.ColumnDefinitions>
-
                     <Border Grid.Column="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                <TextBlock Text="صنف:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
+                            <WrapPanel Margin="0,0,0,8">
+                                <TextBlock Text="&#x635;&#x646;&#x641;:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
                                 <ComboBox x:Name="MarksClassComboBox" Height="32" Width="120" DisplayMemberPath="GradeName" SelectedValuePath="ClassId" SelectionChanged="MarksClassComboBox_SelectionChanged" Margin="0,0,10,0" />
-                                <TextBlock Text="مضمون:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
+                                <TextBlock Text="&#x645;&#x636;&#x645;&#x648;&#x646;:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
                                 <ComboBox x:Name="MarksSubjectComboBox" Height="32" Width="120" DisplayMemberPath="SubjectName" SelectedValuePath="SubjectId" Margin="0,0,10,0" />
-                                <TextBlock Text="سال تعلیمی:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
-                                <ComboBox x:Name="MarksYearComboBox" Height="32" Width="100" DisplayMemberPath="YearName" SelectedValuePath="AcademicYearId" Margin="0,0,10,0" />
-                                <Button Content="📁 انتخاب CSV/Excel" Height="32" Padding="10,0" Background="#3B82F6" Foreground="White" FontWeight="SemiBold" Click="BrowseMarksFileButton_Click" Margin="0,0,8,0" />
-                                <Button Content="📥 ورود" Height="32" Padding="10,0" Background="#16A34A" Foreground="White" FontWeight="Bold" Click="ImportMarksButton_Click" />
-                            </StackPanel>
-                            <TextBox x:Name="MarksCsvTextBox" Grid.Row="1" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
-                                     FontFamily="Consolas" FontSize="12" Padding="8" Background="#F8FAFC" BorderBrush="#CBD5E1" />
+                                <TextBlock Text="&#x633;&#x627;&#x644; &#x62A;&#x639;&#x644;&#x6CC;&#x645;&#x6CC;:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
+                                <ComboBox x:Name="MarksYearComboBox" Height="32" Width="100" DisplayMemberPath="YearName" SelectedValuePath="AcademicYearId" Margin="0,0,0,0" />
+                            </WrapPanel>
+                            <WrapPanel Grid.Row="1" Margin="0,0,0,8">
+                                <Button Content="&#x2B07; &#x62F;&#x627;&#x646;&#x644;&#x648;&#x62F; &#x641;&#x627;&#x631;&#x645;&#x62A; &#x646;&#x645;&#x648;&#x646;&#x647;" Height="32" Padding="10,0" Background="#7C3AED" Foreground="White" FontWeight="SemiBold" Click="DownloadMarksTemplate_Click" Margin="0,0,8,0" />
+                                <Button Content="&#x1F4C1; &#x627;&#x646;&#x62A;&#x62E;&#x627;&#x628; CSV/Excel" Height="32" Padding="10,0" Background="#3B82F6" Foreground="White" FontWeight="SemiBold" Click="BrowseMarksFileButton_Click" Margin="0,0,8,0" />
+                                <Button Content="&#x1F4E5; &#x648;&#x631;&#x648;&#x62F;" Height="32" Padding="10,0" Background="#16A34A" Foreground="White" FontWeight="Bold" Click="ImportMarksButton_Click" />
+                            </WrapPanel>
+                            <Border Grid.Row="2" Background="#F0FDF4" BorderBrush="#86EFAC" BorderThickness="1" CornerRadius="4" Padding="10,6" Margin="0,0,0,8">
+                                <TextBlock FontSize="12" Foreground="#166534">
+                                    <Run FontWeight="Bold">&#x641;&#x627;&#x631;&#x645;&#x62A;: </Run><Run FontFamily="Consolas">RollNumber | MidtermScore | FinalScore</Run>
+                                </TextBlock>
+                            </Border>
+                            <TextBox x:Name="MarksCsvTextBox" Grid.Row="3" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="12" Padding="8" Background="#F8FAFC" BorderBrush="#CBD5E1" />
                         </Grid>
                     </Border>
-
                     <Border Grid.Column="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
                         <StackPanel>
-                            <TextBlock Text="نتایج" FontWeight="Bold" FontSize="15" Foreground="#334155" Margin="0,0,0,12" />
-                            <TextBlock x:Name="MarksSummaryTextBlock" Text="۰ ردیف وارد شد" FontWeight="SemiBold" Margin="0,0,0,8" />
-                            <TextBox x:Name="MarksErrorsTextBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
-                                     VerticalScrollBarVisibility="Auto" Height="200" FontSize="11" Background="#FEF2F2" Foreground="#DC2626" />
+                            <TextBlock Text="&#x646;&#x62A;&#x627;&#x6CC;&#x62C;" FontWeight="Bold" FontSize="15" Foreground="#334155" Margin="0,0,0,12" />
+                            <TextBlock x:Name="MarksSummaryTextBlock" Text="&#x6F0; &#x631;&#x62F;&#x6CC;&#x641; &#x648;&#x627;&#x631;&#x62F; &#x634;&#x62F;" FontWeight="SemiBold" Margin="0,0,0,8" />
+                            <TextBox x:Name="MarksErrorsTextBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Height="200" FontSize="11" Background="#FEF2F2" Foreground="#DC2626" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- Multi-Subject Marks Tab -->
+            <TabItem Header="&#x1F4DA; &#x646;&#x645;&#x631;&#x627;&#x62A; &#x686;&#x646;&#x62F; &#x645;&#x636;&#x645;&#x648;&#x646;">
+                <Grid Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="330" />
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <WrapPanel Margin="0,0,0,8">
+                                <TextBlock Text="&#x635;&#x646;&#x641;:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
+                                <ComboBox x:Name="MultiMarksClassComboBox" Height="32" Width="130" DisplayMemberPath="GradeName" SelectedValuePath="ClassId" SelectionChanged="MultiMarksClassComboBox_SelectionChanged" Margin="0,0,10,0" />
+                                <TextBlock Text="&#x633;&#x627;&#x644; &#x62A;&#x639;&#x644;&#x6CC;&#x645;&#x6CC;:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
+                                <ComboBox x:Name="MultiMarksYearComboBox" Height="32" Width="110" DisplayMemberPath="YearName" SelectedValuePath="AcademicYearId" Margin="0,0,0,0" />
+                            </WrapPanel>
+                            <WrapPanel Grid.Row="1" Margin="0,0,0,8">
+                                <Button Content="&#x2B07; &#x62F;&#x627;&#x646;&#x644;&#x648;&#x62F; &#x641;&#x627;&#x631;&#x645;&#x62A; &#x646;&#x645;&#x648;&#x646;&#x647; (&#x628;&#x627; &#x645;&#x636;&#x627;&#x645;&#x6CC;&#x646;)" Height="32" Padding="10,0" Background="#7C3AED" Foreground="White" FontWeight="SemiBold" Click="DownloadMultiMarksTemplate_Click" Margin="0,0,8,0" />
+                                <Button Content="&#x1F4C1; &#x627;&#x646;&#x62A;&#x62E;&#x627;&#x628; Excel" Height="32" Padding="10,0" Background="#3B82F6" Foreground="White" FontWeight="SemiBold" Click="BrowseMultiMarksFileButton_Click" Margin="0,0,8,0" />
+                                <Button Content="&#x1F4E5; &#x648;&#x631;&#x648;&#x62F; &#x647;&#x645;&#x647; &#x645;&#x636;&#x627;&#x645;&#x6CC;&#x646;" Height="32" Padding="10,0" Background="#16A34A" Foreground="White" FontWeight="Bold" Click="ImportMultiMarksButton_Click" />
+                            </WrapPanel>
+                            <Border Grid.Row="2" Background="#FFF7ED" BorderBrush="#FED7AA" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,0,0,8">
+                                <TextBlock FontSize="12" Foreground="#92400E" TextWrapping="Wrap">
+                                    <Run FontWeight="Bold">&#x641;&#x627;&#x631;&#x645;&#x62A;: </Run><Run FontFamily="Consolas">RollNumber | SubjectName_Midterm | SubjectName_Final | ...</Run>
+                                    <LineBreak/>
+                                    <Run>&#x627;&#x628;&#x62A;&#x62F;&#x627; &#x635;&#x646;&#x641; &#x648; &#x633;&#x627;&#x644; &#x62A;&#x639;&#x644;&#x6CC;&#x645;&#x6CC; &#x631;&#x627; &#x627;&#x646;&#x62A;&#x62E;&#x627;&#x628; &#x6A9;&#x646;&#x6CC;&#x62F;&#x60C; &#x633;&#x67E;&#x633; &#xAB;&#x62F;&#x627;&#x646;&#x644;&#x648;&#x62F; &#x641;&#x627;&#x631;&#x645;&#x62A; &#x646;&#x645;&#x648;&#x646;&#x647;&#xBB; &#x631;&#x627; &#x628;&#x632;&#x646;&#x6CC;&#x62F; &#x62A;&#x627; &#x641;&#x627;&#x6CC;&#x644; &#x628;&#x627; &#x633;&#x62A;&#x648;&#x646;&#x200C;&#x647;&#x627;&#x6CC; &#x645;&#x636;&#x627;&#x645;&#x6CC;&#x646; &#x622;&#x646; &#x635;&#x646;&#x641; &#x633;&#x627;&#x62E;&#x62A;&#x647; &#x634;&#x648;&#x62F;.</Run>
+                                </TextBlock>
+                            </Border>
+                            <TextBlock x:Name="MultiMarksFilePathTextBlock" Grid.Row="3" VerticalAlignment="Top" Foreground="#475569" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap" />
+                        </Grid>
+                    </Border>
+                    <Border Grid.Column="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
+                        <StackPanel>
+                            <TextBlock Text="&#x646;&#x62A;&#x627;&#x6CC;&#x62C;" FontWeight="Bold" FontSize="15" Foreground="#334155" Margin="0,0,0,12" />
+                            <TextBlock x:Name="MultiMarksSummaryTextBlock" Text="&#x6F0; &#x631;&#x62F;&#x6CC;&#x641; &#x648;&#x627;&#x631;&#x62F; &#x634;&#x62F;" FontWeight="SemiBold" Margin="0,0,0,8" />
+                            <TextBox x:Name="MultiMarksErrorsTextBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Height="200" FontSize="11" Background="#FEF2F2" Foreground="#DC2626" />
+                            <TextBlock Margin="0,12,0,0" FontSize="11" Foreground="#64748B" TextWrapping="Wrap">&#x627;&#x6CC;&#x646; &#x62A;&#x628; &#x628;&#x647; &#x634;&#x645;&#x627; &#x627;&#x62C;&#x627;&#x632;&#x647; &#x645;&#x6CC;&#x200C;&#x62F;&#x647;&#x62F; &#x646;&#x645;&#x631;&#x627;&#x62A; &#x62A;&#x645;&#x627;&#x645; &#x645;&#x636;&#x627;&#x645;&#x6CC;&#x646; &#x6CC;&#x6A9; &#x635;&#x646;&#x641; &#x631;&#x627; &#x62F;&#x631; &#x6CC;&#x6A9; &#x641;&#x627;&#x6CC;&#x644; Excel &#x6CC;&#x6A9;&#x62C;&#x627; &#x648;&#x627;&#x631;&#x62F; &#x6A9;&#x646;&#x6CC;&#x62F;.</TextBlock>
                         </StackPanel>
                     </Border>
                 </Grid>
             </TabItem>
 
             <!-- Attendance Import Tab -->
-            <TabItem Header="🗓️ حاضری">
+            <TabItem Header="&#x1F5D3;&#xFE0F; &#x62D;&#x627;&#x636;&#x631;&#x6CC;">
                 <Grid Margin="0,10,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="14" />
-                        <ColumnDefinition Width="320" />
+                        <ColumnDefinition Width="330" />
                     </Grid.ColumnDefinitions>
-
                     <Border Grid.Column="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                <TextBlock Text="صنف:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
-                                <ComboBox x:Name="AttendanceClassComboBox" Height="32" Width="120" DisplayMemberPath="GradeName" SelectedValuePath="ClassId" Margin="0,0,10,0" />
-                                <TextBlock Text="سال تعلیمی:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
-                                <ComboBox x:Name="AttendanceYearComboBox" Height="32" Width="100" DisplayMemberPath="YearName" SelectedValuePath="AcademicYearId" Margin="0,0,10,0" />
-                                <Button Content="📁 انتخاب CSV/Excel" Height="32" Padding="10,0" Background="#3B82F6" Foreground="White" FontWeight="SemiBold" Click="BrowseAttendanceFileButton_Click" Margin="0,0,8,0" />
-                                <Button Content="📥 ورود" Height="32" Padding="10,0" Background="#16A34A" Foreground="White" FontWeight="Bold" Click="ImportAttendanceButton_Click" />
-                            </StackPanel>
-                            <TextBox x:Name="AttendanceCsvTextBox" Grid.Row="1" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
-                                     FontFamily="Consolas" FontSize="12" Padding="8" Background="#F8FAFC" BorderBrush="#CBD5E1" />
+                            <WrapPanel Margin="0,0,0,8">
+                                <TextBlock Text="&#x635;&#x646;&#x641;:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
+                                <ComboBox x:Name="AttendanceClassComboBox" Height="32" Width="130" DisplayMemberPath="GradeName" SelectedValuePath="ClassId" Margin="0,0,10,0" />
+                                <TextBlock Text="&#x633;&#x627;&#x644; &#x62A;&#x639;&#x644;&#x6CC;&#x645;&#x6CC;:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
+                                <ComboBox x:Name="AttendanceYearComboBox" Height="32" Width="110" DisplayMemberPath="YearName" SelectedValuePath="AcademicYearId" Margin="0,0,10,0" />
+                            </WrapPanel>
+                            <WrapPanel Grid.Row="1" Margin="0,0,0,8">
+                                <Button Content="&#x2B07; &#x62F;&#x627;&#x646;&#x644;&#x648;&#x62F; &#x641;&#x627;&#x631;&#x645;&#x62A; &#x646;&#x645;&#x648;&#x646;&#x647;" Height="32" Padding="10,0" Background="#7C3AED" Foreground="White" FontWeight="SemiBold" Click="DownloadAttendanceTemplate_Click" Margin="0,0,8,0" />
+                                <Button Content="&#x1F4C1; &#x627;&#x646;&#x62A;&#x62E;&#x627;&#x628; CSV/Excel" Height="32" Padding="10,0" Background="#3B82F6" Foreground="White" FontWeight="SemiBold" Click="BrowseAttendanceFileButton_Click" Margin="0,0,8,0" />
+                                <Button Content="&#x1F4E5; &#x648;&#x631;&#x648;&#x62F;" Height="32" Padding="10,0" Background="#16A34A" Foreground="White" FontWeight="Bold" Click="ImportAttendanceButton_Click" />
+                            </WrapPanel>
+                            <Border Grid.Row="2" Background="#F0FDF4" BorderBrush="#86EFAC" BorderThickness="1" CornerRadius="4" Padding="10,6" Margin="0,0,0,8">
+                                <TextBlock FontSize="12" Foreground="#166534">
+                                    <Run FontWeight="Bold">&#x641;&#x627;&#x631;&#x645;&#x62A;: </Run><Run FontFamily="Consolas">RollNumber | Date (YYYY-MM-DD) | Status (Present/Absent/Late)</Run>
+                                </TextBlock>
+                            </Border>
+                            <TextBox x:Name="AttendanceCsvTextBox" Grid.Row="3" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="12" Padding="8" Background="#F8FAFC" BorderBrush="#CBD5E1" />
                         </Grid>
                     </Border>
-
                     <Border Grid.Column="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
                         <StackPanel>
-                            <TextBlock Text="نتایج" FontWeight="Bold" FontSize="15" Foreground="#334155" Margin="0,0,0,12" />
-                            <TextBlock x:Name="AttendanceSummaryTextBlock" Text="۰ ردیف وارد شد" FontWeight="SemiBold" Margin="0,0,0,8" />
-                            <TextBox x:Name="AttendanceErrorsTextBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
-                                     VerticalScrollBarVisibility="Auto" Height="200" FontSize="11" Background="#FEF2F2" Foreground="#DC2626" />
+                            <TextBlock Text="&#x646;&#x62A;&#x627;&#x6CC;&#x62C;" FontWeight="Bold" FontSize="15" Foreground="#334155" Margin="0,0,0,12" />
+                            <TextBlock x:Name="AttendanceSummaryTextBlock" Text="&#x6F0; &#x631;&#x62F;&#x6CC;&#x641; &#x648;&#x627;&#x631;&#x62F; &#x634;&#x62F;" FontWeight="SemiBold" Margin="0,0,0,8" />
+                            <TextBox x:Name="AttendanceErrorsTextBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Height="200" FontSize="11" Background="#FEF2F2" Foreground="#DC2626" />
                         </StackPanel>
                     </Border>
                 </Grid>

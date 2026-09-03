@@ -44,6 +44,9 @@ public class PromotionServiceTests
         public Task<IReadOnlyList<Subject>> GetSubjectsByClassAsync(int classId, CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyList<Subject>>(Subjects.Where(s => s.ClassId == classId).ToList());
 
+        public Task<IReadOnlyList<Subject>> GetAllSubjectsAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<Subject>>(Subjects);
+
         public Task<int> CreateClassAsync(SchoolClass schoolClass, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task UpdateClassAsync(SchoolClass schoolClass, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task DeleteClassAsync(int classId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
@@ -81,12 +84,10 @@ public class PromotionServiceTests
         public Task<IReadOnlyList<AttendanceRecord>> GetByStudentAndRangeAsync(int studentId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task SaveOrUpdateBatchAsync(IEnumerable<AttendanceRecord> records, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<int> GetAbsenceDaysByStudentAndRangeAsync(int studentId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-        public Task<int> GetAbsenceDaysByStudentAndYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default)
-            => Task.FromResult(Records.Count(r => r.StudentId == studentId && r.AcademicYearId == academicYearId && r.Status == AttendanceStatus.Absent));
-
+        public Task<int> GetAbsenceDaysByStudentAndYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Records.Count(r => r.StudentId == studentId && r.AcademicYearId == academicYearId && r.Status == AttendanceStatus.Absent));
         public Task<IReadOnlyList<AttendanceRecord>> GetByStudentAndYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyList<AttendanceRecord>>(Records.Where(r => r.StudentId == studentId && r.AcademicYearId == academicYearId).ToList());
-
         public Task<IReadOnlyList<AttendanceRecord>> GetByClassAndYearAsync(int classId, int academicYearId, CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyList<AttendanceRecord>>(Records.Where(r => r.AcademicYearId == academicYearId).ToList());
     }
@@ -102,8 +103,8 @@ public class PromotionServiceTests
             return Task.FromResult(history.PromotionId);
         }
 
-        public Task<IReadOnlyList<StudentPromotionHistory>> GetByStudentAsync(int studentId, CancellationToken cancellationToken = default)
-            => Task.FromResult<IReadOnlyList<StudentPromotionHistory>>(Histories.Where(h => h.StudentId == studentId).ToList());
+        public Task<IReadOnlyList<StudentPromotionHistory>> GetByStudentAsync(int studentId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<StudentPromotionHistory>>(Histories.Where(h => h.StudentId == studentId).ToList());
 
         public Task<IReadOnlyList<PromotionHistoryDto>> GetHistoryAsync(int? academicYearId, int? studentId, CancellationToken cancellationToken = default)
         {
@@ -164,10 +165,10 @@ public class PromotionServiceTests
         var service = new PromotionService(studentRepo, classRepo, markRepo, attendanceRepo, historyRepo);
         var result = await service.RunPromotionForYearAsync(1);
 
-        Assert.Equal(2, result.TotalStudents);
+        Assert.Equal(1, result.TotalStudents);
         Assert.Equal(1, result.PromotedCount);
         Assert.Equal(2, studentRepo.Students[0].ClassId);
-        Assert.Equal(2, historyRepo.Histories.Count);
+        Assert.Single(historyRepo.Histories);
         Assert.Equal("Promoted", historyRepo.Histories[0].Result);
     }
 

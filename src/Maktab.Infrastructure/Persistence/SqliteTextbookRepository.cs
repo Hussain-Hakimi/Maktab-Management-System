@@ -127,21 +127,36 @@ WHERE TextbookID = $textbookId;";
 
     public async Task DeleteTextbookAsync(int textbookId, CancellationToken cancellationToken = default)
     {
-        const string sql = "DELETE FROM tbl_Textbooks WHERE TextbookID = $textbookId;";
-
         await using var connection = new SqliteConnection(connectionStringProvider.GetConnectionString());
         await connection.OpenAsync(cancellationToken);
         await using var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken);
 
         try
         {
-            await using var command = connection.CreateCommand();
-            command.Transaction = transaction;
-            command.CommandText = sql;
-            command.Parameters.AddWithValue("$textbookId", textbookId);
+            // 1. Check if textbook has distribution issues
+            await using (var checkIssuesCmd = connection.CreateCommand())
+            {
+                checkIssuesCmd.Transaction = transaction;
+                checkIssuesCmd.CommandText = "SELECT COUNT(1) FROM tbl_TextbookIssues WHERE TextbookID = $textbookId;";
+                checkIssuesCmd.Parameters.AddWithValue("$textbookId", textbookId);
+                var issuesCount = Convert.ToInt32(await checkIssuesCmd.ExecuteScalarAsync(cancellationToken));
+                if (issuesCount > 0)
+                {
+                    throw new InvalidOperationException("این کتاب درسی دارای سوابق توزیع در سیستم است و قابل حذف نیست. ابتدا باید سوابق توزیع آن را بررسی یا حذف کنید.");
+                }
+            }
 
-            var affected = await command.ExecuteNonQueryAsync(cancellationToken);
-            if (affected == 0) throw new InvalidOperationException("Textbook not found.");
+            // 2. Delete textbook
+            const string sql = "DELETE FROM tbl_Textbooks WHERE TextbookID = $textbookId;";
+            await using (var command = connection.CreateCommand())
+            {
+                command.Transaction = transaction;
+                command.CommandText = sql;
+                command.Parameters.AddWithValue("$textbookId", textbookId);
+
+                var affected = await command.ExecuteNonQueryAsync(cancellationToken);
+                if (affected == 0) throw new InvalidOperationException("کتاب درسی مورد نظر یافت نشد.");
+            }
 
             await transaction.CommitAsync(cancellationToken);
         }

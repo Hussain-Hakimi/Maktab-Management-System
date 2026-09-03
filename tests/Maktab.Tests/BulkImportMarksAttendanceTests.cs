@@ -42,6 +42,14 @@ public class BulkImportMarksAttendanceTests
 
         public Task RemoveStudentAsync(int studentId, CancellationToken cancellationToken = default)
             => throw new NotImplementedException();
+
+        public Task<int> GetNextRollNumberAsync(int classId, CancellationToken cancellationToken = default)
+        {
+            var classStudents = Students.Where(s => s.ClassId == classId).ToList();
+            if (!classStudents.Any()) return Task.FromResult(1);
+            var maxRoll = classStudents.Max(s => int.TryParse(s.RollNumber, out var r) ? r : 0);
+            return Task.FromResult(maxRoll + 1);
+        }
     }
 
     private sealed class InMemoryClassSubjectService : IClassSubjectService
@@ -54,6 +62,10 @@ public class BulkImportMarksAttendanceTests
 
         public Task<IReadOnlyList<Subject>> GetSubjectsByClassAsync(int classId, CancellationToken cancellationToken = default)
             => Task.FromResult<IReadOnlyList<Subject>>(Subjects.Where(s => s.ClassId == classId).ToList());
+
+        public Task<IReadOnlyList<Subject>> GetAllSubjectsAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<Subject>>(Subjects);
+
 
         public Task<int> CreateClassAsync(string gradeName, int numberOfSubjects, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task UpdateClassAsync(int classId, string gradeName, int numberOfSubjects, CancellationToken cancellationToken = default) => throw new NotImplementedException();
@@ -85,7 +97,8 @@ public class BulkImportMarksAttendanceTests
 
     private sealed class InMemoryExcelReader : IExcelReader
     {
-        public IReadOnlyList<string[]> ReadRows(string filePath) => throw new NotImplementedException();
+        public List<string[]> Rows { get; } = [];
+        public IReadOnlyList<string[]> ReadRows(string filePath) => Rows;
     }
 
     private sealed class InMemoryAttendanceService : IAttendanceService
@@ -217,4 +230,34 @@ public class BulkImportMarksAttendanceTests
         Assert.Equal(1, result.FailureCount);
         Assert.Empty(attendanceService.SavedAttendance);
     }
+
+    [Fact]
+    public async Task ImportMultiSubjectMarks_ValidFile_SavesMarksForAllSubjects()
+    {
+        var studentService = new InMemoryStudentService();
+        var classService = new InMemoryClassSubjectService();
+        var examMarkService = new InMemoryExamMarkService();
+        var attendanceService = new InMemoryAttendanceService();
+        var excelReader = new InMemoryExcelReader();
+
+        classService.Classes.Add(new SchoolClass { ClassId = 1, GradeName = "Grade 1", NumberOfSubjects = 2 });
+        classService.Subjects.Add(new Subject { SubjectId = 10, ClassId = 1, SubjectName = "Math" });
+        classService.Subjects.Add(new Subject { SubjectId = 20, ClassId = 1, SubjectName = "Dari" });
+
+        studentService.Students.Add(new Student { StudentId = 100, FirstName = "A", LastName = "B", FatherName = "C", ClassId = 1, RollNumber = "101" });
+
+        excelReader.Rows.Add(new[] { "RollNumber", "Math_Midterm", "Math_Final", "Dari_Midterm", "Dari_Final" });
+        excelReader.Rows.Add(new[] { "101", "18.5", "55", "15", "45" });
+
+        var bulkImport = new BulkImportService(studentService, classService, examMarkService, attendanceService, excelReader);
+
+        var result = await bulkImport.ImportMultiSubjectMarksFromFileAsync("test.xlsx", classId: 1, academicYearId: 1);
+
+        Assert.Equal(1, result.SuccessCount);
+        Assert.Equal(0, result.FailureCount);
+        Assert.Equal(2, examMarkService.SavedMarks.Count);
+        Assert.Contains(examMarkService.SavedMarks, m => m.SubjectId == 10 && m.MidtermScore == 18.5m && m.FinalScore == 55m);
+        Assert.Contains(examMarkService.SavedMarks, m => m.SubjectId == 20 && m.MidtermScore == 15m && m.FinalScore == 45m);
+    }
 }
+

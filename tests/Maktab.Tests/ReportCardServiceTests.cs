@@ -10,16 +10,16 @@ public class ReportCardServiceTests
     private sealed class MockPdfGenerator : IPdfReportCardGenerator
     {
         public List<string> GeneratedPaths { get; } = [];
-        public List<ReportCardTemplateType> TemplateTypes { get; } = [];
+        public List<ReportCardType> ReportTypes { get; } = [];
 
         public Task GeneratePdfReportAsync(
             StudentReportCardDto reportCard,
             string outputFilePath,
-            ReportCardTemplateType templateType,
+            ReportCardType reportType,
             CancellationToken cancellationToken = default)
         {
             GeneratedPaths.Add(outputFilePath);
-            TemplateTypes.Add(templateType);
+            ReportTypes.Add(reportType);
             return Task.CompletedTask;
         }
     }
@@ -39,6 +39,8 @@ public class ReportCardServiceTests
     {
         public Task<IReadOnlyList<SchoolClass>> GetClassesAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<SchoolClass>>([schoolClass]);
         public Task<IReadOnlyList<Subject>> GetSubjectsByClassAsync(int classId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<Subject>>(subjects);
+        public Task<IReadOnlyList<Subject>> GetAllSubjectsAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<Subject>>(subjects);
+
         public Task<int> CreateClassAsync(SchoolClass schoolClass, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task UpdateClassAsync(SchoolClass schoolClass, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task DeleteClassAsync(int classId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
@@ -79,6 +81,23 @@ public class ReportCardServiceTests
             => throw new NotImplementedException();
     }
 
+    private sealed class MockSchoolSettingsService : ISchoolSettingsService
+    {
+        public Task<SchoolSettingsDto> GetSettingsAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult(new SchoolSettingsDto
+            {
+                SchoolName = "مکتب نمونه",
+                SchoolAddress = "کابل",
+                PhoneNumber = "123456",
+                AcademicYear = "۱۴۰۳",
+                GovernmentTitle = "امارت اسلامی افغانستان",
+                ProvincialEducationHeader = "ریاست معارف کابل",
+                DistrictEducationHeader = "مدیریت معارف حوزه سوم"
+            });
+
+        public Task SaveSettingsAsync(SchoolSettingsDto settings, CancellationToken cancellationToken = default) => Task.CompletedTask;
+    }
+
     [Fact]
     public async Task GetStudentReportCardData_WhenStudentPassesAll_IsPromotedIsTrue()
     {
@@ -101,7 +120,8 @@ public class ReportCardServiceTests
             new MockClassSubjectRepository(schoolClass, subjects),
             new MockExamMarkRepository(marks),
             mockPdf,
-            new MockAttendanceService(0));
+            new MockAttendanceService(0),
+            new MockSchoolSettingsService());
 
         var result = await service.GetStudentReportCardDataAsync(1, "۱۴۰۳");
 
@@ -143,7 +163,8 @@ public class ReportCardServiceTests
             new MockClassSubjectRepository(schoolClass, subjects),
             new MockExamMarkRepository(marks),
             mockPdf,
-            new MockAttendanceService(0));
+            new MockAttendanceService(0),
+            new MockSchoolSettingsService());
 
         var result = await service.GetStudentReportCardDataAsync(1, "۱۴۰۳");
 
@@ -153,7 +174,7 @@ public class ReportCardServiceTests
     }
 
     [Fact]
-    public async Task GenerateStudentReportCardPdf_CallsPdfGeneratorWithTemplate()
+    public async Task GenerateStudentReportCardPdf_CallsPdfGeneratorWithReportType()
     {
         var student = new Student { StudentId = 1, FirstName = "Ahmad", LastName = "Karimi", FatherName = "Mohammad", ClassId = 1, RollNumber = "101" };
         var schoolClass = new SchoolClass { ClassId = 1, GradeName = "صنف هفتم", NumberOfSubjects = 1 };
@@ -166,13 +187,14 @@ public class ReportCardServiceTests
             new MockClassSubjectRepository(schoolClass, subjects),
             new MockExamMarkRepository(marks),
             mockPdf,
-            new MockAttendanceService(0));
+            new MockAttendanceService(0),
+            new MockSchoolSettingsService());
 
         var tempDir = Path.Combine(Path.GetTempPath(), "MaktabTests_" + Guid.NewGuid());
-        var path = await service.GenerateStudentReportCardPdfAsync(1, "۱۴۰۳", tempDir, ReportCardTemplateType.Detailed);
+        var path = await service.GenerateStudentReportCardPdfAsync(1, "۱۴۰۳", tempDir, ReportCardType.Annual);
 
         Assert.Single(mockPdf.GeneratedPaths);
         Assert.EndsWith(".pdf", path);
-        Assert.Equal(ReportCardTemplateType.Detailed, mockPdf.TemplateTypes[0]);
+        Assert.Equal(ReportCardType.Annual, mockPdf.ReportTypes[0]);
     }
 }

@@ -20,12 +20,16 @@ public sealed class PromotionService(
         var result = new PromotionResultDto();
         var classes = await classSubjectRepository.GetClassesAsync(cancellationToken);
         var classIds = classes.OrderBy(c => c.ClassId).Select(c => c.ClassId).ToList();
+        var processedStudentIds = new HashSet<int>();
 
         foreach (var classId in classIds)
         {
             var students = await studentRepository.GetStudentsByClassAsync(classId, cancellationToken);
             foreach (var student in students)
             {
+                if (!processedStudentIds.Add(student.StudentId))
+                    continue;
+
                 try
                 {
                     var outcome = await DeterminePromotionAsync(student, classId, academicYearId, cancellationToken);

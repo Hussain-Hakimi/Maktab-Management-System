@@ -8,7 +8,7 @@
 [![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com)
 [![Platform](https://img.shields.io/badge/Platform-Windows-0078D4?logo=windows)](https://www.microsoft.com/windows)
 [![Language](https://img.shields.io/badge/Language-C%23-239120?logo=csharp)](https://docs.microsoft.com/en-us/dotnet/csharp)
-[![Status](https://img.shields.io/badge/Status-Production%20Ready-28a745)](https://github.com/Hussain-Hakimi/Maktab-Management-System)
+[![Status](https://img.shields.io/badge/Status-v1.9.0%20Ready-28a745)](https://github.com/Hussain-Hakimi/Maktab-Management-System)
 
 ---
 
@@ -106,7 +106,10 @@ dotnet run --project src/Maktab.App.Wpf/Maktab.App.Wpf.csproj
 - **Grade Distribution Reports** — Analyze academic performance
 - **Attendance Reports** — Track attendance trends
 - **Excel Export** — Export students, marks, attendance, fees
-- **Excel/CSV Import** — Bulk import for students, marks, and attendance
+- **Excel/CSV Bulk Import** — High-speed import for students, single-subject marks, attendance, and multi-subject marks
+- **Downloadable Excel Templates** — 1-click template file generation (`.xlsx`) with sample data and guidance sheets
+- **Bulk Class Creation Wizard** — Rapid 1-click creation of Grade 1 to 12 classes (`BulkCreateClassesDialog`)
+- **Multi-Subject Marks Import** — Import all subject marks for a class in a single wide Excel spreadsheet
 - **Customizable Reports** — Filter by class, subject, date range
 
 ### 🔔 Smart Alerts
@@ -253,7 +256,11 @@ Maktab-Management-System/
 
 | Version | Release | Focus |
 |---------|---------|-------|
-| **1.5.0** | Current | Data safety, USB backup, grade views, Excel import, backup reminders |
+| **1.9.0** | Current | School onboarding, bulk class wizard, multi-subject marks import, download templates, pre-deletion validation |
+| **1.8.0** | ✓ | Guardian report card, class finalization workflow, database migration v8 |
+| **1.7.0** | ✓ | Teacher exam workflow, restricted mark entry |
+| **1.6.0** | ✓ | Role assignment, simplified navigation tabs |
+| **1.5.0** | ✓ | Data safety, USB backup, grade views, Excel import, backup reminders |
 | **1.4.0** | ✓ | Alerts center, bulk CSV import, enhanced dashboard |
 | **1.3.0** | ✓ | Academic years, promotion, advanced reports, Excel export |
 | **1.2.0** | ✓ | User accounts, roles, audit logging, bulk import |
@@ -261,47 +268,20 @@ Maktab-Management-System/
 | **1.0.1** | ✓ | Core MVP — classes, students, marks, grading, reports |
 
 ---
-### Version 1.6.0 — Role Assignment & Simplified Navigation
 
-Added:
-- Top main tabs with side sub-menus (simplified UI)
-- TeacherSubject and ClassGuardian assignment (Admin)
-- Database migration v6
-- Teacher assignment service/repository
-- UI for assigning teachers to subjects and designating class guardians
+### Version 1.9.0 — School Onboarding & Quality Improvements
 
----
- ### Version 1.7.0 — Teacher Exam Workflow & Restricted Marks
+Added & Enhanced:
+- **Pre-Deletion Validation (SQLite Error 19 Fix)** — User-friendly Persian error messages before deleting classes, students, books, or textbooks with active references.
+- **Downloadable Excel Templates** — 1-click generation of `.xlsx` sample templates (Students, Single-Subject Marks, Attendance, and Multi-Subject Marks) with guidance tabs.
+- **Bulk Class Creation Wizard (`BulkCreateClassesDialog`)** — Create Grade 1 through 12 classes with configured subjects in a single click.
+- **Multi-Subject Marks Bulk Import** — Import marks for all subjects of a class at once from a wide Excel spreadsheet (`RollNumber | SubjectName_Midterm | SubjectName_Final | ...`).
+- **Step-by-Step School Onboarding Guide** — Persian guidance banner embedded at the top of the Bulk Import view for school staff.
+- **Login Window & First-Run Setup** — Auto-login for initial setup.
+- **Student Roll Number Auto-Generation** — Next available integer auto-calculation per class.
+- **Official Headers & Logo Support** — School logo upload and custom government/provincial header configurations for PDF report cards.
+- **Midterm & Annual Report Cards** — Specialized layouts for midterm and annual result distribution.
 
-Added:
-- Exam entity and table (Midterm, Final)
-- Exam creation restricted to assigned teachers
-- Teacher sees only their assigned classes/subjects in mark entry
-- Class guardians can view all subjects in their class but edit only their own
-- “My Subjects” view for teachers
-- Database migration v7
-
-  ---
-
-### Version 1.8.0 — Guardian Report Card & Finalization
-
-Added:
-- Guardian Class View (view all subjects, edit only own)
-- Report card generation restricted to guardians and admins
-- Class finalization workflow (finalize/unfinalize results)
-- Finalization prevents further mark edits
-- Database migration v8
-- --
-### Version 1.9.0 — Improvements & Correctness
-
-Added:
-- Login window with first‑run auto‑login (empty credentials → admin)
-- Removed attendance trend and grade distribution panels from Dashboard
-- Student roll number auto‑generation (next available integer)
-- Textbooks subject dropdown from database
-- Report card types: Annual and Midterm (with different layouts)
-- Configurable official headers (government title, provincial education, district education)
-- School logo upload and display in PDF report cards
 
 - --
 
@@ -466,7 +446,7 @@ If Maktab helps your school, please:
 
 *Bringing reliable technology to education*
 
-![Version](https://img.shields.io/badge/Version-1.5.0-blue)
+![Version](https://img.shields.io/badge/Version-1.9.0-blue)
 ![Status](https://img.shields.io/badge/Status-Active-green)
 ![Last Updated](https://img.shields.io/badge/Updated-2026-orange)
 

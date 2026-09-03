@@ -72,6 +72,167 @@ public sealed class BulkImportService(
         return await ImportAttendanceFromRowsAsync(rows, classId, academicYearId, cancellationToken);
     }
 
+    public async Task<BulkImportResultDto> ImportMultiSubjectMarksFromFileAsync(
+        string filePath,
+        int classId,
+        int academicYearId,
+        CancellationToken cancellationToken = default)
+    {
+        if (classId <= 0) throw new ArgumentOutOfRangeException(nameof(classId));
+        if (academicYearId <= 0) throw new ArgumentOutOfRangeException(nameof(academicYearId));
+
+        var rows = ReadRowsFromFile(filePath);
+        var result = new BulkImportResultDto();
+
+        if (rows.Count == 0) return result;
+
+        // --- Parse header row to discover subject columns ---
+        // Expected column layout: RollNumber | SubjectName_Midterm | SubjectName_Final | ...
+        var header = rows[0];
+        if (header.Length < 3)
+        {
+            result.Errors.Add("فارمت فایل نادرست است. حداقل باید ۳ ستون (RollNumber + یک مضمون Midterm + Final) داشته باشد.");
+            return result;
+        }
+
+        // Build a map of subjectName -> (midtermColIndex, finalColIndex)
+        var subjects = await classSubjectService.GetSubjectsByClassAsync(classId, cancellationToken);
+        var subjectByName = subjects.ToDictionary(
+            s => s.SubjectName.Trim(),
+            s => s.SubjectId,
+            StringComparer.OrdinalIgnoreCase);
+
+        // Detect column pairs from header
+        var columnPairs = new List<(int subjectId, int midtermCol, int finalCol)>();
+        var processedSubjects = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        for (int col = 1; col < header.Length; col++)
+        {
+            var colName = header[col].Trim();
+            if (colName.EndsWith("_Midterm", StringComparison.OrdinalIgnoreCase))
+            {
+                var subjectName = colName[..^"_Midterm".Length].Trim();
+                // Look for matching _Final column
+                var finalColName = $"{subjectName}_Final";
+                int finalCol = -1;
+                for (int fc = col + 1; fc < header.Length; fc++)
+                {
+                    if (string.Equals(header[fc].Trim(), finalColName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        finalCol = fc;
+                        break;
+                    }
+                }
+                if (finalCol == -1)
+                {
+                    result.Errors.Add($"ستون «{colName}» یافت شد ولی ستون متناظر «{finalColName}» یافت نشد.");
+                    continue;
+                }
+                if (!subjectByName.TryGetValue(subjectName, out var subjectId))
+                {
+                    result.Errors.Add($"مضمون «{subjectName}» در صنف انتخابی یافت نشد.");
+                    continue;
+                }
+                if (!processedSubjects.Add(subjectName)) continue; // skip duplicates
+                columnPairs.Add((subjectId, col, finalCol));
+            }
+        }
+
+        if (columnPairs.Count == 0)
+        {
+            result.Errors.Add("هیچ ستون مضمونی یافت نشد. مطمئن شوید که نام ستون‌ها به فارمت «نام‌مضمون_Midterm» و «نام‌مضمون_Final» هستند.");
+            return result;
+        }
+
+        // --- Load students ---
+        var students = await studentService.GetStudentsByClassAsync(classId, cancellationToken);
+        var studentByRoll = students.ToDictionary(
+            s => s.RollNumber.Trim(),
+            s => s.StudentId,
+            StringComparer.OrdinalIgnoreCase);
+
+        // --- Process data rows ---
+        var allMarks = new List<SaveExamMarkDto>();
+        int lineNumber = 0;
+        foreach (var columns in rows)
+        {
+            lineNumber++;
+            if (lineNumber == 1) continue; // skip header
+            if (columns.Length == 0 || string.IsNullOrWhiteSpace(columns[0])) continue;
+
+            var rollNumber = columns[0].Trim();
+            if (!studentByRoll.TryGetValue(rollNumber, out var studentId))
+            {
+                result.Errors.Add($"خط {lineNumber}: شاگرد با شماره اساس «{rollNumber}» یافت نشد.");
+                continue;
+            }
+
+            bool rowOk = true;
+            var rowMarks = new List<SaveExamMarkDto>();
+
+            foreach (var (subjectId, midtermCol, finalCol) in columnPairs)
+            {
+                var midtermRaw = midtermCol < columns.Length ? columns[midtermCol].Trim() : "";
+                var finalRaw = finalCol < columns.Length ? columns[finalCol].Trim() : "";
+
+                if (string.IsNullOrWhiteSpace(midtermRaw) && string.IsNullOrWhiteSpace(finalRaw))
+                    continue; // skip empty cells — allow partial entry
+
+                if (!decimal.TryParse(midtermRaw, NumberStyles.Number, CultureInfo.InvariantCulture, out var midterm))
+                {
+                    result.Errors.Add($"خط {lineNumber}: نمره چهارونیم‌ماهه برای ستون {header[midtermCol]} نامعتبر است.");
+                    rowOk = false; break;
+                }
+                if (!decimal.TryParse(finalRaw, NumberStyles.Number, CultureInfo.InvariantCulture, out var final))
+                {
+                    result.Errors.Add($"خط {lineNumber}: نمره سالانه برای ستون {header[finalCol]} نامعتبر است.");
+                    rowOk = false; break;
+                }
+                if (midterm < 0m || midterm > GradingPolicy.MidtermMax)
+                {
+                    result.Errors.Add($"خط {lineNumber}: نمره چهارونیم‌ماهه ({header[midtermCol]}) باید بین ۰ و {GradingPolicy.MidtermMax} باشد.");
+                    rowOk = false; break;
+                }
+                if (final < 0m || final > GradingPolicy.FinalMax)
+                {
+                    result.Errors.Add($"خط {lineNumber}: نمره سالانه ({header[finalCol]}) باید بین ۰ و {GradingPolicy.FinalMax} باشد.");
+                    rowOk = false; break;
+                }
+
+                rowMarks.Add(new SaveExamMarkDto(
+                    StudentId: studentId,
+                    SubjectId: subjectId,
+                    MidtermScore: midterm,
+                    FinalScore: final,
+                    AcademicYearId: academicYearId));
+            }
+
+            if (rowOk)
+            {
+                allMarks.AddRange(rowMarks);
+                result.SuccessCount++;
+            }
+        }
+
+        result.TotalRows = lineNumber - 1;
+        if (result.TotalRows < 0) result.TotalRows = 0;
+
+        if (allMarks.Count > 0)
+        {
+            try
+            {
+                await examMarkService.SaveMarksBatchAsync(allMarks, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                result.Errors.Add($"خطا در ذخیره نمرات: {ex.Message}");
+                result.SuccessCount = 0;
+            }
+        }
+
+        return result;
+    }
+
     // ---------- Core row processing ----------
 
     private async Task<BulkImportResultDto> ImportStudentsFromRowsAsync(

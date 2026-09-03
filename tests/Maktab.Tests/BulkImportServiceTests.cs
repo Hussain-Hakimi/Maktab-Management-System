@@ -21,10 +21,11 @@ public class BulkImportServiceTests
 
         public Task UpdateStudentAsync(int studentId, string firstName, string lastName, string fatherName, int classId, string rollNumber, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task RemoveStudentAsync(int studentId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-    }
+        public Task<int> GetNextRollNumberAsync(int classId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        }
 
-    private sealed class MockClassSubjectService : IClassSubjectService
-    {
+        private sealed class MockClassSubjectService : IClassSubjectService
+        {
         public Task<IReadOnlyList<SchoolClass>> GetClassesAsync(CancellationToken cancellationToken = default)
             => Task.FromResult<IReadOnlyList<SchoolClass>>([new SchoolClass { ClassId = 1, GradeName = "صنف هفتم", NumberOfSubjects = 8 }]);
 
@@ -35,7 +36,8 @@ public class BulkImportServiceTests
         public Task<int> CreateSubjectAsync(int classId, string subjectName, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task UpdateSubjectAsync(int subjectId, int classId, string subjectName, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task DeleteSubjectAsync(int subjectId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-    }
+        public Task<IReadOnlyList<Subject>> GetAllSubjectsAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        }
 
     private sealed class MockExamMarkService : IExamMarkService
     {

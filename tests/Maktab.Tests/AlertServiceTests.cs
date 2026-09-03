@@ -83,6 +83,7 @@ public class AlertServiceTests
         public Task<int> RegisterStudentAsync(string firstName, string lastName, string fatherName, int classId, string rollNumber, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task UpdateStudentAsync(int studentId, string firstName, string lastName, string fatherName, int classId, string rollNumber, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task RemoveStudentAsync(int studentId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<int> GetNextRollNumberAsync(int classId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
     [Fact]

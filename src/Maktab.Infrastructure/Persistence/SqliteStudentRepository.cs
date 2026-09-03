@@ -152,21 +152,49 @@ WHERE StudentID = $studentId;";
 
     public async Task DeleteStudentAsync(int studentId, CancellationToken cancellationToken = default)
     {
-        const string sql = "DELETE FROM tbl_Students WHERE StudentID = $studentId;";
-
         await using var connection = new SqliteConnection(connectionStringProvider.GetConnectionString());
         await connection.OpenAsync(cancellationToken);
         await using var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken);
 
         try
         {
-            await using var command = connection.CreateCommand();
-            command.Transaction = transaction;
-            command.CommandText = sql;
-            command.Parameters.AddWithValue("$studentId", studentId);
+            // 1. Check if student has book issues
+            await using (var checkBooksCmd = connection.CreateCommand())
+            {
+                checkBooksCmd.Transaction = transaction;
+                checkBooksCmd.CommandText = "SELECT COUNT(1) FROM tbl_BookIssues WHERE StudentID = $studentId;";
+                checkBooksCmd.Parameters.AddWithValue("$studentId", studentId);
+                var bookIssuesCount = Convert.ToInt32(await checkBooksCmd.ExecuteScalarAsync(cancellationToken));
+                if (bookIssuesCount > 0)
+                {
+                    throw new InvalidOperationException("این شاگرد دارای سوابق امانت‌دهی کتاب در کتابخانه است و قابل حذف نیست. ابتدا باید سوابق امانت‌دهی وی را بررسی یا حذف کنید.");
+                }
+            }
 
-            var affected = await command.ExecuteNonQueryAsync(cancellationToken);
-            if (affected == 0) throw new InvalidOperationException("Student not found.");
+            // 2. Check if student has textbook issues
+            await using (var checkTextbooksCmd = connection.CreateCommand())
+            {
+                checkTextbooksCmd.Transaction = transaction;
+                checkTextbooksCmd.CommandText = "SELECT COUNT(1) FROM tbl_TextbookIssues WHERE StudentID = $studentId;";
+                checkTextbooksCmd.Parameters.AddWithValue("$studentId", studentId);
+                var textbookIssuesCount = Convert.ToInt32(await checkTextbooksCmd.ExecuteScalarAsync(cancellationToken));
+                if (textbookIssuesCount > 0)
+                {
+                    throw new InvalidOperationException("این شاگرد دارای سوابق دریافت کتاب‌های درسی است و قابل حذف نیست. ابتدا باید سوابق کتاب‌های درسی وی را بررسی یا حذف کنید.");
+                }
+            }
+
+            // 3. Delete student
+            const string sql = "DELETE FROM tbl_Students WHERE StudentID = $studentId;";
+            await using (var command = connection.CreateCommand())
+            {
+                command.Transaction = transaction;
+                command.CommandText = sql;
+                command.Parameters.AddWithValue("$studentId", studentId);
+
+                var affected = await command.ExecuteNonQueryAsync(cancellationToken);
+                if (affected == 0) throw new InvalidOperationException("شاگرد مورد نظر یافت نشد.");
+            }
 
             await transaction.CommitAsync(cancellationToken);
         }

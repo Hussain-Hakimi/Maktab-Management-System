@@ -38,6 +38,14 @@ public class BulkImportExcelTests
 
         public Task UpdateStudentAsync(int studentId, string firstName, string lastName, string fatherName, int classId, string rollNumber, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task RemoveStudentAsync(int studentId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+
+        public Task<int> GetNextRollNumberAsync(int classId, CancellationToken cancellationToken = default)
+        {
+            var classStudents = Students.Where(s => s.ClassId == classId).ToList();
+            if (!classStudents.Any()) return Task.FromResult(1);
+            var maxRoll = classStudents.Max(s => int.TryParse(s.RollNumber, out var r) ? r : 0);
+            return Task.FromResult(maxRoll + 1);
+        }
     }
 
     private sealed class InMemoryClassSubjectService : IClassSubjectService
@@ -50,6 +58,9 @@ public class BulkImportExcelTests
 
         public Task<IReadOnlyList<Subject>> GetSubjectsByClassAsync(int classId, CancellationToken cancellationToken = default)
             => Task.FromResult<IReadOnlyList<Subject>>(Subjects.Where(s => s.ClassId == classId).ToList());
+
+        public Task<IReadOnlyList<Subject>> GetAllSubjectsAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<Subject>>(Subjects);
 
         public Task<int> CreateClassAsync(string gradeName, int numberOfSubjects, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task UpdateClassAsync(int classId, string gradeName, int numberOfSubjects, CancellationToken cancellationToken = default) => throw new NotImplementedException();

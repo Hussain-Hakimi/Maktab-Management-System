@@ -1,6 +1,7 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 using Maktab.Application.Abstractions;
 using Maktab.Infrastructure.Persistence;
@@ -43,7 +44,24 @@ public partial class SchoolSettingsView : UserControl
             SchoolAddressTextBox.Text = settings.SchoolAddress;
             PhoneNumberTextBox.Text = settings.PhoneNumber;
             AcademicYearTextBox.Text = settings.AcademicYear;
-            LogoPathTextBox.Text = settings.LogoPath ?? string.Empty;
+            SchoolLogoPathTextBox.Text = settings.LogoPath ?? string.Empty;
+            GovernmentTitleTextBox.Text = settings.GovernmentTitle;
+            ProvincialEducationHeaderTextBox.Text = settings.ProvincialEducationHeader;
+            DistrictEducationHeaderTextBox.Text = settings.DistrictEducationHeader;
+
+            if (!string.IsNullOrWhiteSpace(settings.LogoPath) && File.Exists(settings.LogoPath))
+            {
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.UriSource = new Uri(settings.LogoPath, UriKind.Absolute);
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.EndInit();
+                LogoPreviewImage.Source = bitmap;
+            }
+            else
+            {
+                LogoPreviewImage.Source = null;
+            }
         }
         catch (Exception ex)
         {
@@ -55,13 +73,19 @@ public partial class SchoolSettingsView : UserControl
     {
         var openFileDialog = new OpenFileDialog
         {
-            Filter = "Image Files (*.png;*.jpg;*.jpeg;*.bmp;*.gif)|*.png;*.jpg;*.jpeg;*.bmp;*.gif|All Files (*.*)|*.*",
+            Filter = "Image Files (*.png;*.jpg;*.jpeg;*.bmp)|*.png;*.jpg;*.jpeg;*.bmp|All Files (*.*)|*.*",
             Title = "انتخاب تصویر لوگو"
         };
 
         if (openFileDialog.ShowDialog() == true)
         {
-            LogoPathTextBox.Text = openFileDialog.FileName;
+            SchoolLogoPathTextBox.Text = openFileDialog.FileName;
+            var bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.UriSource = new Uri(openFileDialog.FileName, UriKind.Absolute);
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.EndInit();
+            LogoPreviewImage.Source = bitmap;
         }
     }
 
@@ -82,7 +106,10 @@ public partial class SchoolSettingsView : UserControl
                 SchoolAddress = SchoolAddressTextBox.Text.Trim(),
                 PhoneNumber = PhoneNumberTextBox.Text.Trim(),
                 AcademicYear = AcademicYearTextBox.Text.Trim(),
-                LogoPath = CopyLogoIfNeeded(LogoPathTextBox.Text.Trim())
+                LogoPath = CopyLogoIfNeeded(SchoolLogoPathTextBox.Text.Trim()),
+                GovernmentTitle = GovernmentTitleTextBox.Text.Trim(),
+                ProvincialEducationHeader = ProvincialEducationHeaderTextBox.Text.Trim(),
+                DistrictEducationHeader = DistrictEducationHeaderTextBox.Text.Trim()
             };
 
             await _settingsService.SaveSettingsAsync(settings);

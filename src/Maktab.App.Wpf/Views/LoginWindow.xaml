@@ -104,7 +104,6 @@
                         Foreground="White"
                         FontSize="15"
                         FontWeight="Bold"
-                        CornerRadius="6"
                         BorderThickness="0"
                         Cursor="Hand"
                         Click="LoginButton_Click" />
