@@ -138,8 +138,8 @@ public partial class App : System.Windows.Application
                 var path = await backupService.CreateBackupAsync();
                 logger.LogInfo($"Startup auto-backup created: {path}");
 
-                await backupService.PruneOldBackupsAsync(retentionDays: 7);
-                logger.LogInfo("Old backups pruned (7-day retention).");
+                await backupService.PruneOldBackupsAsync(retentionDays: 30);
+                logger.LogInfo("Old backups pruned (30-day daily + 180-day weekly retention).");
             }
             catch (Exception ex)
             {
