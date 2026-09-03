@@ -7,7 +7,8 @@ namespace Maktab.Application.Services;
 public sealed class ExamMarkService(
     IExamMarkRepository markRepository,
     IStudentRepository studentRepository,
-    IClassSubjectRepository classSubjectRepository) : IExamMarkService
+    IClassSubjectRepository classSubjectRepository,
+    IAuthorizationService authorizationService) : IExamMarkService
 {
     public async Task<IReadOnlyList<StudentExamMarkDto>> GetClassSubjectMarksAsync(
         int classId,
@@ -146,17 +147,36 @@ public sealed class ExamMarkService(
     {
         ArgumentNullException.ThrowIfNull(marks);
 
+        var markDtos = marks.ToList();
+        if (markDtos.Count == 0)
+            return;
+
         var domainMarks = new List<ExamMark>();
-        foreach (var m in marks)
+        var authorizedScopes = new HashSet<(int ClassId, int SubjectId, int AcademicYearId)>();
+
+        foreach (var m in markDtos)
         {
             if (m.StudentId <= 0) throw new ArgumentOutOfRangeException(nameof(m.StudentId));
             if (m.SubjectId <= 0) throw new ArgumentOutOfRangeException(nameof(m.SubjectId));
+            if (m.AcademicYearId <= 0) throw new ArgumentOutOfRangeException(nameof(m.AcademicYearId));
 
             if (m.MidtermScore < 0m || m.MidtermScore > GradingPolicy.MidtermMax)
                 throw new ArgumentOutOfRangeException(nameof(m.MidtermScore), $"نمره صنفی/چهارونیم‌ماهه باید بین ۰ و {GradingPolicy.MidtermMax} باشد.");
 
             if (m.FinalScore < 0m || m.FinalScore > GradingPolicy.FinalMax)
                 throw new ArgumentOutOfRangeException(nameof(m.FinalScore), $"نمره سالانه باید بین ۰ و {GradingPolicy.FinalMax} باشد.");
+
+            var student = await studentRepository.GetStudentByIdAsync(m.StudentId, cancellationToken);
+            if (student is null)
+                throw new InvalidOperationException($"Student {m.StudentId} was not found.");
+
+            var scope = (student.ClassId, m.SubjectId, m.AcademicYearId);
+            if (authorizedScopes.Add(scope))
+                await authorizationService.RequireCanEditMarksAsync(scope.ClassId, scope.SubjectId, scope.AcademicYearId, cancellationToken);
+
+            var subjects = await classSubjectRepository.GetSubjectsByClassAsync(student.ClassId, cancellationToken);
+            if (!subjects.Any(s => s.SubjectId == m.SubjectId))
+                throw new InvalidOperationException("The subject is not assigned to the student's class.");
 
             domainMarks.Add(new ExamMark
             {
