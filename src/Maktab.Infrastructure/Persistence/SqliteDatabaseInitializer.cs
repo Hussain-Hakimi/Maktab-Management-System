@@ -19,7 +19,6 @@ PRAGMA synchronous = NORMAL;
         await ExecuteNonQueryAsync(connection, pragmas, cancellationToken);
 
         await RunMigrationsAsync(connection, cancellationToken);
-        await SeedDefaultAdminAsync(connection, cancellationToken);
         await SeedDefaultSettingsAsync(connection, cancellationToken);
         await SeedDefaultSchoolSettingsAsync(connection, cancellationToken);
         await SeedDefaultAcademicYearAsync(connection, cancellationToken);
@@ -50,28 +49,6 @@ PRAGMA synchronous = NORMAL;
         }
     }
 
-    private static async Task SeedDefaultAdminAsync(
-        SqliteConnection connection,
-        CancellationToken cancellationToken)
-    {
-        await using var checkCmd = connection.CreateCommand();
-        checkCmd.CommandText = "SELECT COUNT(1) FROM tbl_Users;";
-        var count = Convert.ToInt32(await checkCmd.ExecuteScalarAsync(cancellationToken));
-        if (count > 0)
-            return;
-
-        const string insertSql = @"
-INSERT INTO tbl_Users (Username, PasswordHash, FullName, Role, IsActive)
-VALUES ($username, $passwordHash, $fullName, 'Admin', 1);";
-
-        await using var command = connection.CreateCommand();
-        command.CommandText = insertSql;
-        command.Parameters.AddWithValue("$username", "admin");
-        command.Parameters.AddWithValue("$passwordHash", PasswordHasher.HashPassword("admin123"));
-        command.Parameters.AddWithValue("$fullName", "مدیر سیستم");
-        await command.ExecuteNonQueryAsync(cancellationToken);
-    }
-
     private static async Task SeedDefaultSettingsAsync(
         SqliteConnection connection,
         CancellationToken cancellationToken)
@@ -91,8 +68,6 @@ VALUES ($username, $passwordHash, $fullName, 'Admin', 1);";
         await ExecuteUpsertIfNotExistsAsync(connection, "School.Phone", "", cancellationToken);
         await ExecuteUpsertIfNotExistsAsync(connection, "School.AcademicYear", AcademicYearProvider.GetCurrentAcademicYear(), cancellationToken);
         await ExecuteUpsertIfNotExistsAsync(connection, "School.LogoPath", "", cancellationToken);
-
-        // New keys for official headers
         await ExecuteUpsertIfNotExistsAsync(connection, "GovernmentTitle", "امارت اسلامی افغانستان", cancellationToken);
         await ExecuteUpsertIfNotExistsAsync(connection, "ProvincialEducationHeader", "ریاست معارف ولایت کابل", cancellationToken);
         await ExecuteUpsertIfNotExistsAsync(connection, "DistrictEducationHeader", "مدیریت معارف ولسوالی", cancellationToken);

@@ -30,7 +30,6 @@ public partial class App : System.Windows.Application
                         .AddApplicationCore()
                         .AddInfrastructureCore();
 
-                    // Register all views as singletons
                     services.AddSingleton<ClassSubjectView>();
                     services.AddSingleton<StudentManagementView>();
                     services.AddSingleton<MarksEntryView>();
@@ -68,6 +67,20 @@ public partial class App : System.Windows.Application
             await databaseInitializer.InitializeAsync();
 
             var userService = _host.Services.GetRequiredService<IUserService>();
+            var users = await userService.GetAllUsersAsync();
+
+            if (users.Count == 0)
+            {
+                var setupWindow = new FirstRunAdminSetupWindow(userService);
+                var setupResult = setupWindow.ShowDialog();
+
+                if (setupResult != true || setupWindow.CreatedAdmin is null)
+                {
+                    Shutdown(0);
+                    return;
+                }
+            }
+
             var loginWindow = new LoginWindow(userService);
             var loginResult = loginWindow.ShowDialog();
 
@@ -115,7 +128,6 @@ public partial class App : System.Windows.Application
             return;
         }
 
-        // Auto-backup
         _ = Task.Run(async () =>
         {
             try
@@ -171,7 +183,6 @@ public partial class App : System.Windows.Application
         }
         catch
         {
-            // Logging must never crash the application
         }
     }
 
