@@ -54,10 +54,20 @@ public class ReportCardServiceTests
         public Task<IReadOnlyList<ExamMark>> GetMarksByClassAndSubjectAsync(int classId, int subjectId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<IReadOnlyList<ExamMark>> GetMarksByClassSubjectAndYearAsync(int classId, int subjectId, int academicYearId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<IReadOnlyList<ExamMark>> GetMarksByStudentAsync(int studentId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<ExamMark>>(marks);
-        public Task<IReadOnlyList<ExamMark>> GetMarksByStudentAndYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<ExamMark>>(marks);
+        public Task<IReadOnlyList<ExamMark>> GetMarksByStudentAndYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<ExamMark>>(marks.Where(m => m.StudentId == studentId && m.AcademicYearId == academicYearId).ToList());
         public Task<IReadOnlyList<ExamMark>> GetMarksByClassAsync(int classId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<ExamMark>>(marks);
         public Task SaveOrUpdateMarkAsync(ExamMark mark, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task SaveOrUpdateMarksBatchAsync(IEnumerable<ExamMark> marks, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    }
+
+    private sealed class MockAcademicYearRepository(List<AcademicYear> years) : IAcademicYearRepository
+    {
+        public Task<AcademicYear?> GetActiveAsync(CancellationToken cancellationToken = default) => Task.FromResult(years.FirstOrDefault(y => y.IsActive));
+        public Task<AcademicYear?> GetByIdAsync(int academicYearId, CancellationToken cancellationToken = default) => Task.FromResult(years.FirstOrDefault(y => y.AcademicYearId == academicYearId));
+        public Task<IReadOnlyList<AcademicYear>> GetAllAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<AcademicYear>>(years);
+        public Task<int> CreateAsync(AcademicYear academicYear, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task SetActiveAsync(int academicYearId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
     private sealed class MockAttendanceService(int absenceDays = 0) : IAttendanceService
@@ -98,6 +108,11 @@ public class ReportCardServiceTests
         public Task SaveSettingsAsync(SchoolSettingsDto settings, CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 
+    private static MockAcademicYearRepository AcademicYears() => new([
+        new AcademicYear { AcademicYearId = 1, YearName = "۱۴۰۳", StartDate = new DateTime(2024, 1, 1), EndDate = new DateTime(2024, 12, 31), IsActive = true },
+        new AcademicYear { AcademicYearId = 2, YearName = "۱۴۰۴", StartDate = new DateTime(2025, 1, 1), EndDate = new DateTime(2025, 12, 31), IsActive = false }
+    ]);
+
     [Fact]
     public async Task GetStudentReportCardData_WhenStudentPassesAll_IsPromotedIsTrue()
     {
@@ -110,8 +125,8 @@ public class ReportCardServiceTests
         };
         var marks = new List<ExamMark>
         {
-            new() { StudentId = 1, SubjectId = 1, MidtermScore = 35m, FinalScore = 50m },
-            new() { StudentId = 1, SubjectId = 2, MidtermScore = 30m, FinalScore = 40m }
+            new() { StudentId = 1, SubjectId = 1, MidtermScore = 35m, FinalScore = 50m, AcademicYearId = 1 },
+            new() { StudentId = 1, SubjectId = 2, MidtermScore = 30m, FinalScore = 40m, AcademicYearId = 1 }
         };
 
         var mockPdf = new MockPdfGenerator();
@@ -121,7 +136,8 @@ public class ReportCardServiceTests
             new MockExamMarkRepository(marks),
             mockPdf,
             new MockAttendanceService(0),
-            new MockSchoolSettingsService());
+            new MockSchoolSettingsService(),
+            AcademicYears());
 
         var result = await service.GetStudentReportCardDataAsync(1, "۱۴۰۳");
 
@@ -138,6 +154,53 @@ public class ReportCardServiceTests
     }
 
     [Fact]
+    public async Task GetStudentReportCardData_UsesOnlyMarksFromRequestedAcademicYear()
+    {
+        var student = new Student { StudentId = 1, FirstName = "Ahmad", LastName = "Karimi", FatherName = "Mohammad", ClassId = 1, RollNumber = "101" };
+        var schoolClass = new SchoolClass { ClassId = 1, GradeName = "صنف هفتم", NumberOfSubjects = 1 };
+        var subjects = new List<Subject> { new() { SubjectId = 1, ClassId = 1, SubjectName = "ریاضی" } };
+        var marks = new List<ExamMark>
+        {
+            new() { StudentId = 1, SubjectId = 1, MidtermScore = 35m, FinalScore = 50m, AcademicYearId = 1 },
+            new() { StudentId = 1, SubjectId = 1, MidtermScore = 10m, FinalScore = 20m, AcademicYearId = 2 }
+        };
+
+        var service = new ReportCardService(
+            new MockStudentRepository(student),
+            new MockClassSubjectRepository(schoolClass, subjects),
+            new MockExamMarkRepository(marks),
+            new MockPdfGenerator(),
+            new MockAttendanceService(0),
+            new MockSchoolSettingsService(),
+            AcademicYears());
+
+        var result = await service.GetStudentReportCardDataAsync(1, "۱۴۰۳");
+
+        Assert.Equal(85m, result.SubjectMarks.Single().TotalScore);
+        Assert.Equal(85m, result.TotalObtainedScore);
+        Assert.Equal(85m, result.AveragePercentage);
+    }
+
+    [Fact]
+    public async Task GetStudentReportCardData_WhenAcademicYearDoesNotExist_Throws()
+    {
+        var student = new Student { StudentId = 1, FirstName = "Ahmad", LastName = "Karimi", FatherName = "Mohammad", ClassId = 1, RollNumber = "101" };
+        var subjects = new List<Subject> { new() { SubjectId = 1, ClassId = 1, SubjectName = "دری" } };
+        var schoolClass = new SchoolClass { ClassId = 1, GradeName = "صنف هفتم", NumberOfSubjects = 1 };
+
+        var service = new ReportCardService(
+            new MockStudentRepository(student),
+            new MockClassSubjectRepository(schoolClass, subjects),
+            new MockExamMarkRepository([]),
+            new MockPdfGenerator(),
+            new MockAttendanceService(0),
+            new MockSchoolSettingsService(),
+            AcademicYears());
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetStudentReportCardDataAsync(1, "۱۴۰۵"));
+    }
+
+    [Fact]
     public async Task GetStudentReportCardData_WhenStudentFailsMoreThan3_IsPromotedIsFalse()
     {
         var student = new Student { StudentId = 1, FirstName = "Mahmood", LastName = "Rahimi", FatherName = "Ali", ClassId = 1, RollNumber = "102" };
@@ -151,10 +214,10 @@ public class ReportCardServiceTests
         };
         var marks = new List<ExamMark>
         {
-            new() { StudentId = 1, SubjectId = 1, MidtermScore = 10m, FinalScore = 20m },
-            new() { StudentId = 1, SubjectId = 2, MidtermScore = 12m, FinalScore = 15m },
-            new() { StudentId = 1, SubjectId = 3, MidtermScore = 10m, FinalScore = 25m },
-            new() { StudentId = 1, SubjectId = 4, MidtermScore = 10m, FinalScore = 20m }
+            new() { StudentId = 1, SubjectId = 1, MidtermScore = 10m, FinalScore = 20m, AcademicYearId = 1 },
+            new() { StudentId = 1, SubjectId = 2, MidtermScore = 12m, FinalScore = 15m, AcademicYearId = 1 },
+            new() { StudentId = 1, SubjectId = 3, MidtermScore = 10m, FinalScore = 25m, AcademicYearId = 1 },
+            new() { StudentId = 1, SubjectId = 4, MidtermScore = 10m, FinalScore = 20m, AcademicYearId = 1 }
         };
 
         var mockPdf = new MockPdfGenerator();
@@ -164,7 +227,8 @@ public class ReportCardServiceTests
             new MockExamMarkRepository(marks),
             mockPdf,
             new MockAttendanceService(0),
-            new MockSchoolSettingsService());
+            new MockSchoolSettingsService(),
+            AcademicYears());
 
         var result = await service.GetStudentReportCardDataAsync(1, "۱۴۰۳");
 
@@ -179,7 +243,7 @@ public class ReportCardServiceTests
         var student = new Student { StudentId = 1, FirstName = "Ahmad", LastName = "Karimi", FatherName = "Mohammad", ClassId = 1, RollNumber = "101" };
         var schoolClass = new SchoolClass { ClassId = 1, GradeName = "صنف هفتم", NumberOfSubjects = 1 };
         var subjects = new List<Subject> { new() { SubjectId = 1, ClassId = 1, SubjectName = "دری" } };
-        var marks = new List<ExamMark> { new() { StudentId = 1, SubjectId = 1, MidtermScore = 30m, FinalScore = 50m } };
+        var marks = new List<ExamMark> { new() { StudentId = 1, SubjectId = 1, MidtermScore = 30m, FinalScore = 50m, AcademicYearId = 1 } };
 
         var mockPdf = new MockPdfGenerator();
         var service = new ReportCardService(
@@ -188,7 +252,8 @@ public class ReportCardServiceTests
             new MockExamMarkRepository(marks),
             mockPdf,
             new MockAttendanceService(0),
-            new MockSchoolSettingsService());
+            new MockSchoolSettingsService(),
+            AcademicYears());
 
         var tempDir = Path.Combine(Path.GetTempPath(), "MaktabTests_" + Guid.NewGuid());
         var path = await service.GenerateStudentReportCardPdfAsync(1, "۱۴۰۳", tempDir, ReportCardType.Annual);
