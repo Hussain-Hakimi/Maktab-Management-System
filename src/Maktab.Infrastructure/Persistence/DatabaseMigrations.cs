@@ -50,8 +50,7 @@ CREATE TABLE IF NOT EXISTS tbl_StudentPromotionHistory (
     FOREIGN KEY (FromClassID) REFERENCES tbl_Classes(ClassID) ON DELETE RESTRICT,
     FOREIGN KEY (ToClassID) REFERENCES tbl_Classes(ClassID) ON DELETE RESTRICT,
     FOREIGN KEY (AcademicYearID) REFERENCES tbl_AcademicYears(AcademicYearID) ON DELETE RESTRICT
-);
-"),
+);"),
             new(6, @"
 CREATE TABLE IF NOT EXISTS tbl_TeacherSubjects (
     TeacherSubjectID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -70,8 +69,7 @@ CREATE TABLE IF NOT EXISTS tbl_ClassGuardians (
     ClassID INTEGER NOT NULL,
     FOREIGN KEY (TeacherUserID) REFERENCES tbl_Users(UserID) ON DELETE CASCADE,
     UNIQUE (TeacherUserID, ClassID)
-);
-"),
+);"),
             new(7, @"
 CREATE TABLE IF NOT EXISTS tbl_Exams (
     ExamID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -85,8 +83,7 @@ CREATE TABLE IF NOT EXISTS tbl_Exams (
     FOREIGN KEY (ClassID) REFERENCES tbl_Classes(ClassID) ON DELETE CASCADE,
     FOREIGN KEY (AcademicYearID) REFERENCES tbl_AcademicYears(AcademicYearID) ON DELETE CASCADE,
     FOREIGN KEY (CreatedByTeacherUserID) REFERENCES tbl_Users(UserID) ON DELETE CASCADE
-);
-"),
+);"),
             new(8, @"
 CREATE TABLE IF NOT EXISTS tbl_ClassFinalizations (
     ClassFinalizationID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -99,8 +96,7 @@ CREATE TABLE IF NOT EXISTS tbl_ClassFinalizations (
     FOREIGN KEY (AcademicYearID) REFERENCES tbl_AcademicYears(AcademicYearID) ON DELETE CASCADE,
     FOREIGN KEY (FinalizedByTeacherUserID) REFERENCES tbl_Users(UserID) ON DELETE CASCADE,
     UNIQUE (ClassID, AcademicYearID)
-);
-"),
+);"),
             new(9, @"
 BEGIN TRANSACTION;
 
@@ -124,7 +120,6 @@ SELECT MarkID, StudentID, SubjectID, MidtermScore, FinalScore, TotalScore, Acade
 FROM tbl_ExamMarks_Legacy;
 
 DROP TABLE tbl_ExamMarks_Legacy;
-
 CREATE INDEX IF NOT EXISTS idx_exammarks_year ON tbl_ExamMarks(AcademicYearId);
 
 COMMIT;
@@ -147,6 +142,25 @@ CREATE TABLE IF NOT EXISTS tbl_StudentAcademicEnrollments (
 CREATE INDEX IF NOT EXISTS idx_student_enrollments_year ON tbl_StudentAcademicEnrollments(AcademicYearID);
 CREATE INDEX IF NOT EXISTS idx_student_enrollments_class_year ON tbl_StudentAcademicEnrollments(ClassID, AcademicYearID);
 CREATE INDEX IF NOT EXISTS idx_student_enrollments_student ON tbl_StudentAcademicEnrollments(StudentID);
+"),
+            new(11, @"
+INSERT INTO tbl_StudentAcademicEnrollments
+    (StudentID, AcademicYearID, ClassID, RollNumber, EnrollmentDate, Status)
+SELECT s.StudentID,
+       ay.AcademicYearID,
+       s.ClassID,
+       s.RollNumber,
+       s.RegistrationDate,
+       'Active'
+FROM tbl_Students s
+CROSS JOIN tbl_AcademicYears ay
+WHERE ay.IsActive = 1
+  AND NOT EXISTS (
+      SELECT 1
+      FROM tbl_StudentAcademicEnrollments e
+      WHERE e.StudentID = s.StudentID
+        AND e.AcademicYearID = ay.AcademicYearID
+  );
 ")
         };
     }
