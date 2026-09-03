@@ -80,7 +80,9 @@ public class BackupAndLoggingTests : IDisposable
     {
         var logger = new FileAppLogger(_folders);
         var backupService = new SqliteBackupService(_folders, new ConnectionStringProvider(_folders), logger);
-        var now = DateTime.Now;
+        var now = DateTime.Now.Date;
+        var daysFromMonday = ((int)now.DayOfWeek + 6) % 7;
+        var currentWeekStart = now.AddDays(-daysFromMonday);
 
         var weekOneNewest = Path.Combine(_folders.Backups, "maktab_backup_week1_newest.db");
         var weekOneOlder = Path.Combine(_folders.Backups, "maktab_backup_week1_older.db");
@@ -92,10 +94,10 @@ public class BackupAndLoggingTests : IDisposable
         await File.WriteAllTextAsync(weekTwo, "dummy db");
         await File.WriteAllTextAsync(tooOld, "dummy db");
 
-        File.SetCreationTime(weekOneNewest, now.AddDays(-45));
-        File.SetCreationTime(weekOneOlder, now.AddDays(-47));
-        File.SetCreationTime(weekTwo, now.AddDays(-52));
-        File.SetCreationTime(tooOld, now.AddDays(-181));
+        File.SetCreationTime(weekOneNewest, currentWeekStart.AddDays(-42).AddDays(4));
+        File.SetCreationTime(weekOneOlder, currentWeekStart.AddDays(-42).AddDays(1));
+        File.SetCreationTime(weekTwo, currentWeekStart.AddDays(-49).AddDays(3));
+        File.SetCreationTime(tooOld, currentWeekStart.AddDays(-26 * 7));
 
         await backupService.PruneOldBackupsAsync();
 
