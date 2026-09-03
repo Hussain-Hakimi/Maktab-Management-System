@@ -54,27 +54,69 @@ public class BackupAndLoggingTests : IDisposable
     }
 
     [Fact]
-    public async Task PruneOldBackups_RemovesOnlyFilesOlderThanRetentionDays()
+    public async Task PruneOldBackups_KeepsDailyBackupsFor30Days()
+    {
+        var logger = new FileAppLogger(_folders);
+        var backupService = new SqliteBackupService(_folders, new ConnectionStringProvider(_folders), logger);
+        var now = DateTime.Now;
+
+        var recentBackup = Path.Combine(_folders.Backups, "maktab_backup_recent.db");
+        var oldBackup = Path.Combine(_folders.Backups, "maktab_backup_old.db");
+
+        await File.WriteAllTextAsync(recentBackup, "dummy recent db");
+        await File.WriteAllTextAsync(oldBackup, "dummy old db");
+
+        File.SetCreationTime(recentBackup, now.AddDays(-29));
+        File.SetCreationTime(oldBackup, now.AddDays(-31));
+
+        await backupService.PruneOldBackupsAsync();
+
+        Assert.True(File.Exists(recentBackup));
+        Assert.False(File.Exists(oldBackup));
+    }
+
+    [Fact]
+    public async Task PruneOldBackups_KeepsOneBackupPerWeekForOlderBackups()
+    {
+        var logger = new FileAppLogger(_folders);
+        var backupService = new SqliteBackupService(_folders, new ConnectionStringProvider(_folders), logger);
+        var now = DateTime.Now;
+
+        var weekOneNewest = Path.Combine(_folders.Backups, "maktab_backup_week1_newest.db");
+        var weekOneOlder = Path.Combine(_folders.Backups, "maktab_backup_week1_older.db");
+        var weekTwo = Path.Combine(_folders.Backups, "maktab_backup_week2.db");
+        var tooOld = Path.Combine(_folders.Backups, "maktab_backup_too_old.db");
+
+        await File.WriteAllTextAsync(weekOneNewest, "dummy db");
+        await File.WriteAllTextAsync(weekOneOlder, "dummy db");
+        await File.WriteAllTextAsync(weekTwo, "dummy db");
+        await File.WriteAllTextAsync(tooOld, "dummy db");
+
+        File.SetCreationTime(weekOneNewest, now.AddDays(-45));
+        File.SetCreationTime(weekOneOlder, now.AddDays(-47));
+        File.SetCreationTime(weekTwo, now.AddDays(-52));
+        File.SetCreationTime(tooOld, now.AddDays(-181));
+
+        await backupService.PruneOldBackupsAsync();
+
+        Assert.True(File.Exists(weekOneNewest));
+        Assert.False(File.Exists(weekOneOlder));
+        Assert.True(File.Exists(weekTwo));
+        Assert.False(File.Exists(tooOld));
+    }
+
+    [Fact]
+    public async Task PruneOldBackups_DoesNotDeletePreRestoreSafetyBackups()
     {
         var logger = new FileAppLogger(_folders);
         var backupService = new SqliteBackupService(_folders, new ConnectionStringProvider(_folders), logger);
 
-        var oldBackup = Path.Combine(_folders.Backups, "maktab_backup_20200101_000000.db");
-        var recentBackup = Path.Combine(_folders.Backups, "maktab_backup_20260816_120000.db");
+        var safetyBackup = Path.Combine(_folders.Backups, "maktab_pre_restore_20200101_000000_000.db");
+        await File.WriteAllTextAsync(safetyBackup, "safety db");
+        File.SetCreationTime(safetyBackup, DateTime.Now.AddDays(-365));
 
-        await File.WriteAllTextAsync(oldBackup, "dummy old db");
-        await File.WriteAllTextAsync(recentBackup, "dummy recent db");
+        await backupService.PruneOldBackupsAsync();
 
-        File.SetCreationTime(oldBackup, DateTime.Now.AddDays(-15));
-        File.SetCreationTime(recentBackup, DateTime.Now);
-
-        await backupService.PruneOldBackupsAsync(7);
-
-        Assert.False(File.Exists(oldBackup));
-        Assert.True(File.Exists(recentBackup));
-
-        var list = await backupService.GetBackupsListAsync();
-        Assert.Single(list);
-        Assert.Equal("maktab_backup_20260816_120000.db", list[0].FileName);
+        Assert.True(File.Exists(safetyBackup));
     }
 }
