@@ -41,15 +41,7 @@ public sealed class SqliteBackupService(
 
                 // Never report a backup as successful until SQLite confirms the
                 // copied database is internally consistent.
-                await using var integrityCmd = destConnection.CreateCommand();
-                integrityCmd.CommandText = "PRAGMA integrity_check;";
-                var integrityResult = Convert.ToString(await integrityCmd.ExecuteScalarAsync(cancellationToken));
-
-                if (!string.Equals(integrityResult, "ok", StringComparison.OrdinalIgnoreCase))
-                {
-                    throw new InvalidDataException(
-                        $"Backup integrity check failed for '{backupFilePath}'. SQLite reported: {integrityResult}");
-                }
+                await VerifyDatabaseIntegrityAsync(destConnection, cancellationToken);
             }
 
             logger.LogInfo($"Backup created and verified successfully at: {backupFilePath}");
@@ -104,21 +96,38 @@ public sealed class SqliteBackupService(
             throw new FileNotFoundException("فایل نسخه پشتیبان یافت نشد.", backupFilePath);
         }
 
+        var mainDbPath = Path.Combine(folders.Data, "maktab.db");
+        var mainDbWal = Path.Combine(folders.Data, "maktab.db-wal");
+        var mainDbShm = Path.Combine(folders.Data, "maktab.db-shm");
+        var safetyBackupPath = Path.Combine(
+            folders.Backups,
+            $"maktab_pre_restore_{DateTime.Now:yyyyMMdd_HHmmss_fff}.db");
+
         try
         {
+            // Validate the selected backup before making any destructive change.
+            await VerifyDatabaseFileIntegrityAsync(backupFilePath, cancellationToken);
+
             SqliteConnection.ClearAllPools();
 
-            var mainDbPath = Path.Combine(folders.Data, "maktab.db");
-            var mainDbWal = Path.Combine(folders.Data, "maktab.db-wal");
-            var mainDbShm = Path.Combine(folders.Data, "maktab.db-shm");
+            // Preserve the currently running database so a failed restore never
+            // destroys the only known-good copy.
+            if (File.Exists(mainDbPath))
+            {
+                Directory.CreateDirectory(folders.Backups);
+                File.Copy(mainDbPath, safetyBackupPath, overwrite: false);
+                logger.LogInfo($"Pre-restore safety backup created at: {safetyBackupPath}");
+            }
 
             if (File.Exists(mainDbWal)) File.Delete(mainDbWal);
             if (File.Exists(mainDbShm)) File.Delete(mainDbShm);
 
             File.Copy(backupFilePath, mainDbPath, overwrite: true);
 
-            logger.LogInfo($"Database restored successfully from: {backupFilePath}");
-            await Task.CompletedTask;
+            // Validate the database after replacement as an additional guard.
+            await VerifyDatabaseFileIntegrityAsync(mainDbPath, cancellationToken);
+
+            logger.LogInfo($"Database restored and verified successfully from: {backupFilePath}");
         }
         catch (Exception ex)
         {
@@ -157,6 +166,36 @@ public sealed class SqliteBackupService(
         }
 
         return Task.CompletedTask;
+    }
+
+    private static async Task VerifyDatabaseFileIntegrityAsync(
+        string databasePath,
+        CancellationToken cancellationToken)
+    {
+        var builder = new SqliteConnectionStringBuilder
+        {
+            DataSource = databasePath,
+            Mode = SqliteOpenMode.ReadOnly
+        };
+
+        await using var connection = new SqliteConnection(builder.ToString());
+        await connection.OpenAsync(cancellationToken);
+        await VerifyDatabaseIntegrityAsync(connection, cancellationToken);
+    }
+
+    private static async Task VerifyDatabaseIntegrityAsync(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = "PRAGMA integrity_check;";
+        var result = Convert.ToString(await command.ExecuteScalarAsync(cancellationToken));
+
+        if (!string.Equals(result, "ok", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidDataException(
+                $"SQLite database integrity check failed. SQLite reported: {result}");
+        }
     }
 
     private static string FormatFileSize(long bytes)
