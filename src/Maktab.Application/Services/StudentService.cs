@@ -6,30 +6,14 @@ namespace Maktab.Application.Services;
 public sealed class StudentService(IStudentRepository repository) : IStudentService
 {
     public Task<IReadOnlyList<Student>> GetAllStudentsAsync(CancellationToken cancellationToken = default)
-        => repository.GetStudentsAsync(cancellationToken);
+    {
+        return repository.GetStudentsAsync(cancellationToken);
+    }
 
     public Task<IReadOnlyList<Student>> GetStudentsByClassAsync(int classId, CancellationToken cancellationToken = default)
     {
         if (classId <= 0) throw new ArgumentOutOfRangeException(nameof(classId));
         return repository.GetStudentsByClassAsync(classId, cancellationToken);
-    }
-
-    public Task<IReadOnlyList<Student>> GetStudentsByClassAndAcademicYearAsync(
-        int classId,
-        int academicYearId,
-        CancellationToken cancellationToken = default)
-    {
-        if (classId <= 0) throw new ArgumentOutOfRangeException(nameof(classId));
-        if (academicYearId <= 0) throw new ArgumentOutOfRangeException(nameof(academicYearId));
-        return repository.GetStudentsByClassAndAcademicYearAsync(classId, academicYearId, cancellationToken);
-    }
-
-    public Task<IReadOnlyList<StudentAcademicEnrollment>> GetStudentAcademicHistoryAsync(
-        int studentId,
-        CancellationToken cancellationToken = default)
-    {
-        if (studentId <= 0) throw new ArgumentOutOfRangeException(nameof(studentId));
-        return repository.GetStudentAcademicHistoryAsync(studentId, cancellationToken);
     }
 
     public Task<Student?> GetStudentByIdAsync(int studentId, CancellationToken cancellationToken = default)
@@ -49,7 +33,9 @@ public sealed class StudentService(IStudentRepository repository) : IStudentServ
         ValidateStudentInfo(firstName, lastName, fatherName, classId, rollNumber);
 
         if (await repository.ExistsByRollNumberAsync(classId, rollNumber.Trim(), cancellationToken))
+        {
             throw new InvalidOperationException($"Roll number '{rollNumber}' is already taken in this class.");
+        }
 
         var student = new Student
         {
@@ -79,10 +65,13 @@ public sealed class StudentService(IStudentRepository repository) : IStudentServ
         var existing = await repository.GetStudentByIdAsync(studentId, cancellationToken);
         if (existing == null) throw new InvalidOperationException("Student not found.");
 
+        // If class or roll number changed, check uniqueness
         if (existing.ClassId != classId || existing.RollNumber != rollNumber.Trim())
         {
             if (await repository.ExistsByRollNumberAsync(classId, rollNumber.Trim(), cancellationToken))
+            {
                 throw new InvalidOperationException($"Roll number '{rollNumber}' is already taken in this class.");
+            }
         }
 
         var student = new Student
@@ -110,10 +99,14 @@ public sealed class StudentService(IStudentRepository repository) : IStudentServ
         if (classId <= 0) throw new ArgumentOutOfRangeException(nameof(classId));
 
         var students = await repository.GetStudentsByClassAsync(classId, cancellationToken);
+
         int max = 0;
         foreach (var student in students)
         {
-            if (int.TryParse(student.RollNumber, out var num) && num > max) max = num;
+            if (int.TryParse(student.RollNumber, out var num))
+            {
+                if (num > max) max = num;
+            }
         }
 
         return max + 1;
@@ -126,10 +119,19 @@ public sealed class StudentService(IStudentRepository repository) : IStudentServ
         int classId,
         string rollNumber)
     {
-        if (string.IsNullOrWhiteSpace(firstName)) throw new ArgumentException("First name is required.", nameof(firstName));
-        if (string.IsNullOrWhiteSpace(lastName)) throw new ArgumentException("Last name is required.", nameof(lastName));
-        if (string.IsNullOrWhiteSpace(fatherName)) throw new ArgumentException("Father name is required.", nameof(fatherName));
-        if (string.IsNullOrWhiteSpace(rollNumber)) throw new ArgumentException("Roll number is required.", nameof(rollNumber));
-        if (classId <= 0) throw new ArgumentOutOfRangeException(nameof(classId), "Valid class must be selected.");
+        if (string.IsNullOrWhiteSpace(firstName))
+            throw new ArgumentException("First name is required.", nameof(firstName));
+
+        if (string.IsNullOrWhiteSpace(lastName))
+            throw new ArgumentException("Last name is required.", nameof(lastName));
+
+        if (string.IsNullOrWhiteSpace(fatherName))
+            throw new ArgumentException("Father name is required.", nameof(fatherName));
+
+        if (string.IsNullOrWhiteSpace(rollNumber))
+            throw new ArgumentException("Roll number is required.", nameof(rollNumber));
+
+        if (classId <= 0)
+            throw new ArgumentOutOfRangeException(nameof(classId), "Valid class must be selected.");
     }
 }
