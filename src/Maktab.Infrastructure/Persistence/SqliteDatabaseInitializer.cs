@@ -22,6 +22,7 @@ PRAGMA synchronous = NORMAL;
         await SeedDefaultSettingsAsync(connection, cancellationToken);
         await SeedDefaultSchoolSettingsAsync(connection, cancellationToken);
         await SeedDefaultAcademicYearAsync(connection, cancellationToken);
+        await BackfillCurrentStudentEnrollmentsAsync(connection, cancellationToken);
         await LoadPromotionSettingsIntoPolicyAsync(connection, cancellationToken);
     }
 
@@ -111,6 +112,33 @@ SELECT last_insert_rowid();";
         updateFees.CommandText = "UPDATE tbl_Fees SET AcademicYearId = $id WHERE AcademicYearId = 0;";
         updateFees.Parameters.AddWithValue("$id", yearId);
         await updateFees.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private static async Task BackfillCurrentStudentEnrollmentsAsync(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
+    {
+        const string sql = @"
+INSERT INTO tbl_StudentAcademicEnrollments
+    (StudentID, AcademicYearID, ClassID, RollNumber, EnrollmentDate, Status)
+SELECT
+    s.StudentID,
+    ay.AcademicYearID,
+    s.ClassID,
+    s.RollNumber,
+    s.RegistrationDate,
+    'Active'
+FROM tbl_Students s
+CROSS JOIN tbl_AcademicYears ay
+WHERE ay.IsActive = 1
+  AND NOT EXISTS (
+      SELECT 1
+      FROM tbl_StudentAcademicEnrollments e
+      WHERE e.StudentID = s.StudentID
+        AND e.AcademicYearID = ay.AcademicYearID
+  );";
+
+        await ExecuteNonQueryAsync(connection, sql, cancellationToken);
     }
 
     private static async Task ExecuteUpsertIfNotExistsAsync(
