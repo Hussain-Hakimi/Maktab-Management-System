@@ -8,6 +8,9 @@ public sealed class SqliteBackupService(
     IConnectionStringProvider connectionStringProvider,
     IAppLogger logger) : IBackupService
 {
+    private const int DailyRetentionDays = 30;
+    private const int WeeklyRetentionDays = 180;
+
     public async Task<string> CreateBackupAsync(CancellationToken cancellationToken = default)
     {
         Directory.CreateDirectory(folders.Backups);
@@ -30,7 +33,6 @@ public sealed class SqliteBackupService(
                 await sourceConnection.OpenAsync(cancellationToken);
                 await destConnection.OpenAsync(cancellationToken);
 
-                // Checkpoint WAL to flush all active transactions before backup
                 await using (var checkpointCmd = sourceConnection.CreateCommand())
                 {
                     checkpointCmd.CommandText = "PRAGMA wal_checkpoint(TRUNCATE);";
@@ -38,23 +40,17 @@ public sealed class SqliteBackupService(
                 }
 
                 sourceConnection.BackupDatabase(destConnection);
-
-                // Never report a backup as successful until SQLite confirms the
-                // copied database is internally consistent.
                 await VerifyDatabaseIntegrityAsync(destConnection, cancellationToken);
             }
 
             logger.LogInfo($"Backup created and verified successfully at: {backupFilePath}");
 
-            // Auto prune old backups
-            await PruneOldBackupsAsync(7, cancellationToken);
+            await PruneOldBackupsAsync(cancellationToken: cancellationToken);
 
             return backupFilePath;
         }
         catch (Exception ex)
         {
-            // Do not leave a backup file that failed validation and could later
-            // be selected for restore as if it were a valid backup.
             try
             {
                 if (File.Exists(backupFilePath))
@@ -105,13 +101,10 @@ public sealed class SqliteBackupService(
 
         try
         {
-            // Validate the selected backup before making any destructive change.
             await VerifyDatabaseFileIntegrityAsync(backupFilePath, cancellationToken);
 
             SqliteConnection.ClearAllPools();
 
-            // Preserve the currently running database so a failed restore never
-            // destroys the only known-good copy.
             if (File.Exists(mainDbPath))
             {
                 Directory.CreateDirectory(folders.Backups);
@@ -123,8 +116,6 @@ public sealed class SqliteBackupService(
             if (File.Exists(mainDbShm)) File.Delete(mainDbShm);
 
             File.Copy(backupFilePath, mainDbPath, overwrite: true);
-
-            // Validate the database after replacement as an additional guard.
             await VerifyDatabaseFileIntegrityAsync(mainDbPath, cancellationToken);
 
             logger.LogInfo($"Database restored and verified successfully from: {backupFilePath}");
@@ -136,19 +127,47 @@ public sealed class SqliteBackupService(
         }
     }
 
-    public Task PruneOldBackupsAsync(int retentionDays = 7, CancellationToken cancellationToken = default)
+    public Task PruneOldBackupsAsync(int retentionDays = DailyRetentionDays, CancellationToken cancellationToken = default)
     {
-        if (retentionDays < 1) retentionDays = 7;
+        // The parameter remains for API compatibility. Production uses a
+        // 30-day daily window plus a 180-day weekly retention tier.
+        var dailyDays = retentionDays < 1 ? DailyRetentionDays : retentionDays;
+        var weeklyDays = Math.Max(WeeklyRetentionDays, dailyDays);
         Directory.CreateDirectory(folders.Backups);
 
         try
         {
-            var cutoff = DateTime.Now.AddDays(-retentionDays);
+            var now = DateTime.Now;
+            var dailyCutoff = now.AddDays(-dailyDays);
+            var weeklyCutoff = now.AddDays(-weeklyDays);
             var dirInfo = new DirectoryInfo(folders.Backups);
-            var oldFiles = dirInfo.GetFiles("*.db").Where(f => f.CreationTime < cutoff);
 
-            foreach (var file in oldFiles)
+            var regularBackups = dirInfo.GetFiles("maktab_backup_*.db")
+                .Where(f => !f.Name.StartsWith("maktab_pre_restore_", StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(f => f.CreationTime)
+                .ToList();
+
+            // Keep every regular backup for the daily retention window.
+            var weeklyCandidates = regularBackups
+                .Where(f => f.CreationTime >= weeklyCutoff && f.CreationTime < dailyCutoff)
+                .ToList();
+
+            // Beyond the daily window, keep one backup from each calendar week.
+            var weeklyToKeep = weeklyCandidates
+                .GroupBy(f => GetWeekKey(f.CreationTime))
+                .Select(g => g.OrderByDescending(f => f.CreationTime).First())
+                .ToHashSet();
+
+            foreach (var file in regularBackups)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var keep = file.CreationTime >= dailyCutoff
+                    || (file.CreationTime >= weeklyCutoff && weeklyToKeep.Contains(file));
+
+                if (keep)
+                    continue;
+
                 try
                 {
                     file.Delete();
@@ -166,6 +185,14 @@ public sealed class SqliteBackupService(
         }
 
         return Task.CompletedTask;
+    }
+
+    private static string GetWeekKey(DateTime date)
+    {
+        var day = date.Date;
+        var daysFromMonday = ((int)day.DayOfWeek + 6) % 7;
+        var weekStart = day.AddDays(-daysFromMonday);
+        return weekStart.ToString("yyyyMMdd");
     }
 
     private static async Task VerifyDatabaseFileIntegrityAsync(
