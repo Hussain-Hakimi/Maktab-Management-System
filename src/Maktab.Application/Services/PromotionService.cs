@@ -100,7 +100,9 @@ public sealed class PromotionService(
                             ClassId = resultingClassId,
                             RollNumber = student.RollNumber,
                             EnrollmentDate = nextAcademicYear.StartDate,
-                            Status = resultText == "Repeat" ? "Repeating" : "Active"
+                            // Repeating students remain active in the next academic year;
+                            // the promotion history stores the specific Repeat outcome.
+                            Status = "Active"
                         };
                     }
 
