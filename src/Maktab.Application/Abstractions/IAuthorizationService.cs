@@ -9,4 +9,5 @@ public interface IAuthorizationService
     void RequireRole(UserRole role);
     void RequireAnyRole(params UserRole[] roles);
     void RequireSelfOrRole(int userId, UserRole role);
+    Task RequireCanEditMarksAsync(int classId, int subjectId, int academicYearId, CancellationToken cancellationToken = default);
 }
