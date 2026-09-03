@@ -1,6 +1,7 @@
 using Maktab.Application.Abstractions;
 using Maktab.Application.Services;
 using Maktab.Domain.Entities;
+using Maktab.Domain.Enums;
 
 namespace Maktab.Tests;
 
@@ -51,13 +52,16 @@ public class ExamMarkServiceStudentYearTests
 
     public ExamMarkServiceStudentYearTests()
     {
-        _service = new ExamMarkService(_markRepo, _studentRepo, _classRepo);
+        var currentUser = new CurrentUserService
+        {
+            CurrentUser = new UserDto { UserId = 1, Username = "admin", FullName = "Admin", Role = UserRole.Admin, IsActive = true }
+        };
+        _service = new ExamMarkService(_markRepo, _studentRepo, _classRepo, new AuthorizationService(currentUser));
     }
 
     [Fact]
     public async Task GetStudentMarksForYear_ReturnsAllSubjectsWithScores()
     {
-        // Arrange
         var student = new Student { StudentId = 1, ClassId = 1, FirstName = "A", LastName = "B", FatherName = "C", RollNumber = "1" };
         _studentRepo.Student = student;
         _classRepo.Subjects = [
@@ -69,10 +73,8 @@ public class ExamMarkServiceStudentYearTests
             new() { StudentId = 1, SubjectId = 2, MidtermScore = 30m, FinalScore = 40m, AcademicYearId = 1 }
         ];
 
-        // Act
         var result = await _service.GetStudentMarksForYearAsync(1, 1);
 
-        // Assert
         Assert.Equal(2, result.Count);
         Assert.Equal("ریاضی", result[0].SubjectName);
         Assert.Equal(85m, result[0].TotalScore);
@@ -84,9 +86,7 @@ public class ExamMarkServiceStudentYearTests
     public async Task GetStudentMarksForYear_WhenStudentNotFound_ReturnsEmptyList()
     {
         _studentRepo.Student = null;
-
         var result = await _service.GetStudentMarksForYearAsync(999, 1);
-
         Assert.Empty(result);
     }
 }
