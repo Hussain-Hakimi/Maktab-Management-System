@@ -38,9 +38,21 @@ public sealed class SqliteBackupService(
                 }
 
                 sourceConnection.BackupDatabase(destConnection);
+
+                // Never report a backup as successful until SQLite confirms the
+                // copied database is internally consistent.
+                await using var integrityCmd = destConnection.CreateCommand();
+                integrityCmd.CommandText = "PRAGMA integrity_check;";
+                var integrityResult = Convert.ToString(await integrityCmd.ExecuteScalarAsync(cancellationToken));
+
+                if (!string.Equals(integrityResult, "ok", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidDataException(
+                        $"Backup integrity check failed for '{backupFilePath}'. SQLite reported: {integrityResult}");
+                }
             }
 
-            logger.LogInfo($"Backup created successfully at: {backupFilePath}");
+            logger.LogInfo($"Backup created and verified successfully at: {backupFilePath}");
 
             // Auto prune old backups
             await PruneOldBackupsAsync(7, cancellationToken);
@@ -49,6 +61,18 @@ public sealed class SqliteBackupService(
         }
         catch (Exception ex)
         {
+            // Do not leave a backup file that failed validation and could later
+            // be selected for restore as if it were a valid backup.
+            try
+            {
+                if (File.Exists(backupFilePath))
+                    File.Delete(backupFilePath);
+            }
+            catch (Exception cleanupEx)
+            {
+                logger.LogWarning($"Could not remove invalid backup {backupFilePath}: {cleanupEx.Message}");
+            }
+
             logger.LogError($"Failed to create backup: {ex.Message}", ex);
             throw;
         }
@@ -141,25 +165,26 @@ public sealed class SqliteBackupService(
         if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
         return $"{bytes / (1024.0 * 1024.0):F2} MB";
     }
+
     public Task<DateTime?> GetLastBackupDateAsync(CancellationToken cancellationToken = default)
-{
-    if (!Directory.Exists(folders.Backups))
-        return Task.FromResult<DateTime?>(null);
+    {
+        if (!Directory.Exists(folders.Backups))
+            return Task.FromResult<DateTime?>(null);
 
-    var files = Directory.GetFiles(folders.Backups, "*.db");
-    if (files.Length == 0)
-        return Task.FromResult<DateTime?>(null);
+        var files = Directory.GetFiles(folders.Backups, "*.db");
+        if (files.Length == 0)
+            return Task.FromResult<DateTime?>(null);
 
-    var latest = files.Max(f => File.GetCreationTime(f));
-    return Task.FromResult<DateTime?>(latest);
-}
+        var latest = files.Max(f => File.GetCreationTime(f));
+        return Task.FromResult<DateTime?>(latest);
+    }
 
-public Task<IReadOnlyList<string>> GetRemovableDrivePathsAsync()
-{
-    return Task.FromResult<IReadOnlyList<string>>(
-        DriveInfo.GetDrives()
-            .Where(d => d.DriveType == DriveType.Removable && d.IsReady)
-            .Select(d => d.RootDirectory.FullName)
-            .ToList());
-}
+    public Task<IReadOnlyList<string>> GetRemovableDrivePathsAsync()
+    {
+        return Task.FromResult<IReadOnlyList<string>>(
+            DriveInfo.GetDrives()
+                .Where(d => d.DriveType == DriveType.Removable && d.IsReady)
+                .Select(d => d.RootDirectory.FullName)
+                .ToList());
+    }
 }
