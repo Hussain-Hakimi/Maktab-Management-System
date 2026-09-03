@@ -101,6 +101,8 @@ SELECT last_insert_rowid();";
             command.Parameters.AddWithValue("$registrationDate", student.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss"));
 
             var id = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken));
+            await UpsertActiveEnrollmentAsync(connection, transaction, id, student, cancellationToken);
+
             await transaction.CommitAsync(cancellationToken);
             return id;
         }
@@ -141,6 +143,7 @@ WHERE StudentID = $studentId;";
             var affected = await command.ExecuteNonQueryAsync(cancellationToken);
             if (affected == 0) throw new InvalidOperationException("Student not found.");
 
+            await UpsertActiveEnrollmentAsync(connection, transaction, student.StudentId, student, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
         }
         catch
@@ -158,7 +161,6 @@ WHERE StudentID = $studentId;";
 
         try
         {
-            // 1. Check if student has book issues
             await using (var checkBooksCmd = connection.CreateCommand())
             {
                 checkBooksCmd.Transaction = transaction;
@@ -171,7 +173,6 @@ WHERE StudentID = $studentId;";
                 }
             }
 
-            // 2. Check if student has textbook issues
             await using (var checkTextbooksCmd = connection.CreateCommand())
             {
                 checkTextbooksCmd.Transaction = transaction;
@@ -184,7 +185,6 @@ WHERE StudentID = $studentId;";
                 }
             }
 
-            // 3. Delete student
             const string sql = "DELETE FROM tbl_Students WHERE StudentID = $studentId;";
             await using (var command = connection.CreateCommand())
             {
@@ -219,6 +219,35 @@ WHERE StudentID = $studentId;";
 
         var count = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken));
         return count > 0;
+    }
+
+    private static async Task UpsertActiveEnrollmentAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        int studentId,
+        Student student,
+        CancellationToken cancellationToken)
+    {
+        const string sql = @"
+INSERT INTO tbl_StudentAcademicEnrollments
+    (StudentID, AcademicYearID, ClassID, RollNumber, EnrollmentDate, Status)
+SELECT
+    $studentId, AcademicYearID, $classId, $rollNumber, $enrollmentDate, 'Active'
+FROM tbl_AcademicYears
+WHERE IsActive = 1
+ON CONFLICT(StudentID, AcademicYearID) DO UPDATE SET
+    ClassID = excluded.ClassID,
+    RollNumber = excluded.RollNumber,
+    Status = 'Active';";
+
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = sql;
+        command.Parameters.AddWithValue("$studentId", studentId);
+        command.Parameters.AddWithValue("$classId", student.ClassId);
+        command.Parameters.AddWithValue("$rollNumber", student.RollNumber);
+        command.Parameters.AddWithValue("$enrollmentDate", student.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss"));
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private static Student MapStudent(SqliteDataReader reader)
