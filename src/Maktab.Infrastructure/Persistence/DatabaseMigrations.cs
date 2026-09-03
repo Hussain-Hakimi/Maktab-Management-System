@@ -128,6 +128,25 @@ DROP TABLE tbl_ExamMarks_Legacy;
 CREATE INDEX IF NOT EXISTS idx_exammarks_year ON tbl_ExamMarks(AcademicYearId);
 
 COMMIT;
+"),
+            new(10, @"
+CREATE TABLE IF NOT EXISTS tbl_StudentAcademicEnrollments (
+    EnrollmentID INTEGER PRIMARY KEY AUTOINCREMENT,
+    StudentID INTEGER NOT NULL,
+    AcademicYearID INTEGER NOT NULL,
+    ClassID INTEGER NOT NULL,
+    RollNumber TEXT NOT NULL,
+    EnrollmentDate TEXT NOT NULL,
+    Status TEXT NOT NULL DEFAULT 'Active' CHECK (Status IN ('Active', 'Promoted', 'Transferred', 'Withdrawn', 'Completed')),
+    FOREIGN KEY (StudentID) REFERENCES tbl_Students(StudentID) ON DELETE CASCADE,
+    FOREIGN KEY (AcademicYearID) REFERENCES tbl_AcademicYears(AcademicYearID) ON DELETE RESTRICT,
+    FOREIGN KEY (ClassID) REFERENCES tbl_Classes(ClassID) ON DELETE RESTRICT,
+    UNIQUE (StudentID, AcademicYearID)
+);
+
+CREATE INDEX IF NOT EXISTS idx_student_enrollments_year ON tbl_StudentAcademicEnrollments(AcademicYearID);
+CREATE INDEX IF NOT EXISTS idx_student_enrollments_class_year ON tbl_StudentAcademicEnrollments(ClassID, AcademicYearID);
+CREATE INDEX IF NOT EXISTS idx_student_enrollments_student ON tbl_StudentAcademicEnrollments(StudentID);
 ")
         };
     }
