@@ -8,7 +8,8 @@ public sealed class ExamMarkService(
     IExamMarkRepository markRepository,
     IStudentRepository studentRepository,
     IClassSubjectRepository classSubjectRepository,
-    IAuthorizationService authorizationService) : IExamMarkService
+    IAuthorizationService authorizationService,
+    IStudentAcademicEnrollmentRepository enrollmentRepository) : IExamMarkService
 {
     public async Task<IReadOnlyList<StudentExamMarkDto>> GetClassSubjectMarksAsync(
         int classId,
@@ -108,7 +109,15 @@ public sealed class ExamMarkService(
         var student = await studentRepository.GetStudentByIdAsync(studentId, cancellationToken);
         if (student is null) return [];
 
-        var subjects = await classSubjectRepository.GetSubjectsByClassAsync(student.ClassId, cancellationToken);
+        var enrollment = await enrollmentRepository.GetByStudentAndAcademicYearAsync(
+            studentId,
+            academicYearId,
+            cancellationToken);
+
+        if (enrollment is null)
+            return [];
+
+        var subjects = await classSubjectRepository.GetSubjectsByClassAsync(enrollment.ClassId, cancellationToken);
         var existingMarks = await markRepository.GetMarksByStudentAndYearAsync(studentId, academicYearId, cancellationToken);
         var markMap = existingMarks.ToDictionary(m => m.SubjectId);
 
@@ -170,13 +179,26 @@ public sealed class ExamMarkService(
             if (student is null)
                 throw new InvalidOperationException($"Student {m.StudentId} was not found.");
 
-            var scope = (student.ClassId, m.SubjectId, m.AcademicYearId);
-            if (authorizedScopes.Add(scope))
-                await authorizationService.RequireCanEditMarksAsync(scope.ClassId, scope.SubjectId, scope.AcademicYearId, cancellationToken);
+            var enrollment = await enrollmentRepository.GetByStudentAndAcademicYearAsync(
+                m.StudentId,
+                m.AcademicYearId,
+                cancellationToken);
 
-            var subjects = await classSubjectRepository.GetSubjectsByClassAsync(student.ClassId, cancellationToken);
+            if (enrollment is null)
+                throw new InvalidOperationException(
+                    $"Student {m.StudentId} has no enrollment for academic year {m.AcademicYearId}.");
+
+            var scope = (enrollment.ClassId, m.SubjectId, m.AcademicYearId);
+            if (authorizedScopes.Add(scope))
+                await authorizationService.RequireCanEditMarksAsync(
+                    scope.ClassId,
+                    scope.SubjectId,
+                    scope.AcademicYearId,
+                    cancellationToken);
+
+            var subjects = await classSubjectRepository.GetSubjectsByClassAsync(enrollment.ClassId, cancellationToken);
             if (!subjects.Any(s => s.SubjectId == m.SubjectId))
-                throw new InvalidOperationException("The subject is not assigned to the student's class.");
+                throw new InvalidOperationException("The subject is not assigned to the student's class for this academic year.");
 
             domainMarks.Add(new ExamMark
             {
