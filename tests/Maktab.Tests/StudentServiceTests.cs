@@ -9,29 +9,24 @@ public class StudentServiceTests
     private sealed class InMemoryStudentRepository : IStudentRepository
     {
         private readonly List<Student> _students = [];
-        private readonly List<StudentAcademicEnrollment> _enrollments = [];
         private int _nextId = 1;
 
         public Task<IReadOnlyList<Student>> GetStudentsAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult<IReadOnlyList<Student>>(_students.ToList());
-
-        public Task<IReadOnlyList<Student>> GetStudentsByClassAsync(int classId, CancellationToken cancellationToken = default)
-            => Task.FromResult<IReadOnlyList<Student>>(_students.Where(s => s.ClassId == classId).ToList());
-
-        public Task<IReadOnlyList<Student>> GetStudentsByClassAndAcademicYearAsync(int classId, int academicYearId, CancellationToken cancellationToken = default)
         {
-            var studentIds = _enrollments
-                .Where(e => e.ClassId == classId && e.AcademicYearId == academicYearId)
-                .Select(e => e.StudentId)
-                .ToHashSet();
-            return Task.FromResult<IReadOnlyList<Student>>(_students.Where(s => studentIds.Contains(s.StudentId)).ToList());
+            return Task.FromResult<IReadOnlyList<Student>>(_students.ToList());
         }
 
-        public Task<IReadOnlyList<StudentAcademicEnrollment>> GetStudentAcademicHistoryAsync(int studentId, CancellationToken cancellationToken = default)
-            => Task.FromResult<IReadOnlyList<StudentAcademicEnrollment>>(_enrollments.Where(e => e.StudentId == studentId).OrderBy(e => e.AcademicYearId).ToList());
+        public Task<IReadOnlyList<Student>> GetStudentsByClassAsync(int classId, CancellationToken cancellationToken = default)
+        {
+            var filtered = _students.Where(s => s.ClassId == classId).ToList();
+            return Task.FromResult<IReadOnlyList<Student>>(filtered);
+        }
 
         public Task<Student?> GetStudentByIdAsync(int studentId, CancellationToken cancellationToken = default)
-            => Task.FromResult(_students.FirstOrDefault(s => s.StudentId == studentId));
+        {
+            var student = _students.FirstOrDefault(s => s.StudentId == studentId);
+            return Task.FromResult(student);
+        }
 
         public Task<int> CreateStudentAsync(Student student, CancellationToken cancellationToken = default)
         {
@@ -43,21 +38,24 @@ public class StudentServiceTests
         public Task UpdateStudentAsync(Student student, CancellationToken cancellationToken = default)
         {
             var idx = _students.FindIndex(s => s.StudentId == student.StudentId);
-            if (idx >= 0) _students[idx] = student;
+            if (idx >= 0)
+            {
+                _students[idx] = student;
+            }
             return Task.CompletedTask;
         }
 
         public Task DeleteStudentAsync(int studentId, CancellationToken cancellationToken = default)
         {
             _students.RemoveAll(s => s.StudentId == studentId);
-            _enrollments.RemoveAll(e => e.StudentId == studentId);
             return Task.CompletedTask;
         }
 
         public Task<bool> ExistsByRollNumberAsync(int classId, string rollNumber, CancellationToken cancellationToken = default)
-            => Task.FromResult(_students.Any(s => s.ClassId == classId && s.RollNumber.Equals(rollNumber, StringComparison.OrdinalIgnoreCase)));
-
-        public void AddEnrollment(StudentAcademicEnrollment enrollment) => _enrollments.Add(enrollment);
+        {
+            var exists = _students.Any(s => s.ClassId == classId && s.RollNumber.Equals(rollNumber, StringComparison.OrdinalIgnoreCase));
+            return Task.FromResult(exists);
+        }
     }
 
     [Fact]
@@ -76,39 +74,6 @@ public class StudentServiceTests
     }
 
     [Fact]
-    public async Task GetStudentsByClassAndAcademicYear_ReturnsOnlyEnrollmentForRequestedYear()
-    {
-        var repo = new InMemoryStudentRepository();
-        var service = new StudentService(repo);
-        var id = await service.RegisterStudentAsync("Ahmad", "Karimi", "Mohammad", 1, "101");
-
-        repo.AddEnrollment(new StudentAcademicEnrollment { StudentId = id, AcademicYearId = 1403, ClassId = 1, RollNumber = "101", Status = "Completed" });
-        repo.AddEnrollment(new StudentAcademicEnrollment { StudentId = id, AcademicYearId = 1404, ClassId = 2, RollNumber = "12", Status = "Active" });
-
-        var students = await service.GetStudentsByClassAndAcademicYearAsync(1, 1403);
-
-        Assert.Single(students);
-        Assert.Equal(id, students[0].StudentId);
-    }
-
-    [Fact]
-    public async Task GetStudentAcademicHistory_ReturnsEnrollmentHistoryInYearOrder()
-    {
-        var repo = new InMemoryStudentRepository();
-        var service = new StudentService(repo);
-        var id = await service.RegisterStudentAsync("Ahmad", "Karimi", "Mohammad", 1, "101");
-
-        repo.AddEnrollment(new StudentAcademicEnrollment { StudentId = id, AcademicYearId = 1404, ClassId = 2, RollNumber = "12", Status = "Active" });
-        repo.AddEnrollment(new StudentAcademicEnrollment { StudentId = id, AcademicYearId = 1403, ClassId = 1, RollNumber = "101", Status = "Completed" });
-
-        var history = await service.GetStudentAcademicHistoryAsync(id);
-
-        Assert.Equal(2, history.Count);
-        Assert.Equal(1403, history[0].AcademicYearId);
-        Assert.Equal(1404, history[1].AcademicYearId);
-    }
-
-    [Fact]
     public async Task RegisterStudent_WithDuplicateRollNumberInSameClass_ThrowsInvalidOperationException()
     {
         var repo = new InMemoryStudentRepository();
@@ -117,7 +82,9 @@ public class StudentServiceTests
         await service.RegisterStudentAsync("Ahmad", "Karimi", "Mohammad", 1, "101");
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await service.RegisterStudentAsync("Mahmood", "Rahimi", "Ali", 1, "101"));
+        {
+            await service.RegisterStudentAsync("Mahmood", "Rahimi", "Ali", 1, "101");
+        });
     }
 
     [Fact]
@@ -147,7 +114,9 @@ public class StudentServiceTests
         var service = new StudentService(repo);
 
         await Assert.ThrowsAnyAsync<ArgumentException>(async () =>
-            await service.RegisterStudentAsync(fn, ln, father, classId, roll));
+        {
+            await service.RegisterStudentAsync(fn, ln, father, classId, roll);
+        });
     }
 
     [Fact]
