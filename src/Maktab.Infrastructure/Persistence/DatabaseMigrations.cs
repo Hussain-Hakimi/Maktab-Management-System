@@ -69,7 +69,6 @@ CREATE TABLE IF NOT EXISTS tbl_ClassGuardians (
     TeacherUserID INTEGER NOT NULL,
     ClassID INTEGER NOT NULL,
     FOREIGN KEY (TeacherUserID) REFERENCES tbl_Users(UserID) ON DELETE CASCADE,
-    FOREIGN KEY (ClassID) REFERENCES tbl_Classes(ClassID) ON DELETE CASCADE,
     UNIQUE (TeacherUserID, ClassID)
 );
 "),
@@ -101,6 +100,34 @@ CREATE TABLE IF NOT EXISTS tbl_ClassFinalizations (
     FOREIGN KEY (FinalizedByTeacherUserID) REFERENCES tbl_Users(UserID) ON DELETE CASCADE,
     UNIQUE (ClassID, AcademicYearID)
 );
+"),
+            new(9, @"
+BEGIN TRANSACTION;
+
+ALTER TABLE tbl_ExamMarks RENAME TO tbl_ExamMarks_Legacy;
+
+CREATE TABLE tbl_ExamMarks (
+    MarkID INTEGER PRIMARY KEY AUTOINCREMENT,
+    StudentID INTEGER NOT NULL,
+    SubjectID INTEGER NOT NULL,
+    MidtermScore REAL NOT NULL CHECK (MidtermScore >= 0 AND MidtermScore <= 40),
+    FinalScore REAL NOT NULL CHECK (FinalScore >= 0 AND FinalScore <= 60),
+    TotalScore REAL NOT NULL CHECK (TotalScore >= 0 AND TotalScore <= 100),
+    AcademicYearId INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (StudentID) REFERENCES tbl_Students(StudentID) ON DELETE CASCADE,
+    FOREIGN KEY (SubjectID) REFERENCES tbl_Subjects(SubjectID) ON DELETE CASCADE,
+    UNIQUE (StudentID, SubjectID, AcademicYearId)
+);
+
+INSERT INTO tbl_ExamMarks (MarkID, StudentID, SubjectID, MidtermScore, FinalScore, TotalScore, AcademicYearId)
+SELECT MarkID, StudentID, SubjectID, MidtermScore, FinalScore, TotalScore, AcademicYearId
+FROM tbl_ExamMarks_Legacy;
+
+DROP TABLE tbl_ExamMarks_Legacy;
+
+CREATE INDEX IF NOT EXISTS idx_exammarks_year ON tbl_ExamMarks(AcademicYearId);
+
+COMMIT;
 ")
         };
     }
