@@ -40,6 +40,7 @@ public class ExamMarkServiceTests
                 {
                     existing.MidtermScore = mark.MidtermScore;
                     existing.FinalScore = mark.FinalScore;
+                    existing.AcademicYearId = mark.AcademicYearId;
                 }
                 else
                 {
@@ -81,6 +82,23 @@ public class ExamMarkServiceTests
         public Task<IReadOnlyList<Subject>> GetAllSubjectsAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<Subject>>(subjects);
     }
 
+    private sealed class MockEnrollmentRepository : IStudentAcademicEnrollmentRepository
+    {
+        public List<StudentAcademicEnrollment> Enrollments { get; } = [];
+
+        public Task<StudentAcademicEnrollment?> GetByStudentAndAcademicYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Enrollments.FirstOrDefault(e => e.StudentId == studentId && e.AcademicYearId == academicYearId));
+
+        public Task<IReadOnlyList<StudentAcademicEnrollment>> GetByAcademicYearAsync(int academicYearId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<StudentAcademicEnrollment>>(Enrollments.Where(e => e.AcademicYearId == academicYearId).ToList());
+
+        public Task<IReadOnlyList<StudentAcademicEnrollment>> GetByClassAndAcademicYearAsync(int classId, int academicYearId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<StudentAcademicEnrollment>>(Enrollments.Where(e => e.ClassId == classId && e.AcademicYearId == academicYearId).ToList());
+
+        public Task<int> CreateOrUpdateAsync(StudentAcademicEnrollment enrollment, CancellationToken cancellationToken = default) =>
+            Task.FromResult(enrollment.EnrollmentId);
+    }
+
     private static IAuthorizationService AdminAuthorization()
     {
         var currentUser = new CurrentUserService
@@ -90,6 +108,9 @@ public class ExamMarkServiceTests
         return new AuthorizationService(currentUser);
     }
 
+    private static IStudentAcademicEnrollmentRepository ActiveEnrollment(int studentId, int academicYearId, int classId) =>
+        new MockEnrollmentRepository { Enrollments = { new StudentAcademicEnrollment { EnrollmentId = 1, StudentId = studentId, AcademicYearId = academicYearId, ClassId = classId, Status = "Active" } } };
+
     [Fact]
     public async Task GetClassSubjectMarks_CalculatesScoresAndGradesCorrectly()
     {
@@ -98,7 +119,7 @@ public class ExamMarkServiceTests
         var subjects = new List<Subject> { new() { SubjectId = 1, ClassId = 1, SubjectName = "Mathematics" } };
         await markRepo.SaveOrUpdateMarkAsync(new ExamMark { StudentId = 1, SubjectId = 1, MidtermScore = 38m, FinalScore = 55m });
 
-        var service = new ExamMarkService(markRepo, new MockStudentRepository(students), new MockClassSubjectRepository(subjects), AdminAuthorization());
+        var service = new ExamMarkService(markRepo, new MockStudentRepository(students), new MockClassSubjectRepository(subjects), AdminAuthorization(), ActiveEnrollment(1, 1, 1));
         var results = await service.GetClassSubjectMarksAsync(1, 1);
 
         Assert.Single(results);
@@ -110,7 +131,7 @@ public class ExamMarkServiceTests
     public async Task SaveMarksBatch_WhenMidtermExceedsMax_ThrowsArgumentOutOfRangeException()
     {
         var markRepo = new InMemoryExamMarkRepository();
-        var service = new ExamMarkService(markRepo, new MockStudentRepository([]), new MockClassSubjectRepository([]), AdminAuthorization());
+        var service = new ExamMarkService(markRepo, new MockStudentRepository([]), new MockClassSubjectRepository([]), AdminAuthorization(), ActiveEnrollment(1, 1, 1));
         var marks = new List<SaveExamMarkDto> { new(StudentId: 1, SubjectId: 1, MidtermScore: 45m, FinalScore: 50m, AcademicYearId: 1) };
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () => await service.SaveMarksBatchAsync(marks));
     }
@@ -119,7 +140,7 @@ public class ExamMarkServiceTests
     public async Task SaveMarksBatch_WhenFinalExceedsMax_ThrowsArgumentOutOfRangeException()
     {
         var markRepo = new InMemoryExamMarkRepository();
-        var service = new ExamMarkService(markRepo, new MockStudentRepository([]), new MockClassSubjectRepository([]), AdminAuthorization());
+        var service = new ExamMarkService(markRepo, new MockStudentRepository([]), new MockClassSubjectRepository([]), AdminAuthorization(), ActiveEnrollment(1, 1, 1));
         var marks = new List<SaveExamMarkDto> { new(StudentId: 1, SubjectId: 1, MidtermScore: 35m, FinalScore: 65m, AcademicYearId: 1) };
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () => await service.SaveMarksBatchAsync(marks));
     }
@@ -134,7 +155,10 @@ public class ExamMarkServiceTests
             new() { StudentId = 2, ClassId = 1, RollNumber = "2" }
         };
         var subjects = new List<Subject> { new() { SubjectId = 1, ClassId = 1, SubjectName = "Mathematics" } };
-        var service = new ExamMarkService(markRepo, new MockStudentRepository(students), new MockClassSubjectRepository(subjects), AdminAuthorization());
+        var enrollmentRepo = new MockEnrollmentRepository();
+        enrollmentRepo.Enrollments.Add(new StudentAcademicEnrollment { EnrollmentId = 1, StudentId = 1, AcademicYearId = 1, ClassId = 1, Status = "Active" });
+        enrollmentRepo.Enrollments.Add(new StudentAcademicEnrollment { EnrollmentId = 2, StudentId = 2, AcademicYearId = 1, ClassId = 1, Status = "Active" });
+        var service = new ExamMarkService(markRepo, new MockStudentRepository(students), new MockClassSubjectRepository(subjects), AdminAuthorization(), enrollmentRepo);
         var marks = new List<SaveExamMarkDto>
         {
             new(StudentId: 1, SubjectId: 1, MidtermScore: 30m, FinalScore: 45m, AcademicYearId: 1),
