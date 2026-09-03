@@ -28,6 +28,7 @@ public static class DependencyInjection
         services.AddSingleton<ISettingRepository, SqliteSettingRepository>();
         services.AddSingleton<IAcademicYearRepository, SqliteAcademicYearRepository>();
         services.AddSingleton<IStudentPromotionHistoryRepository, SqliteStudentPromotionHistoryRepository>();
+        services.AddSingleton<IPromotionTransactionRepository, SqlitePromotionTransactionRepository>();
         services.AddSingleton<ITeacherAssignmentRepository, SqliteTeacherAssignmentRepository>();
         services.AddSingleton<IExamRepository, SqliteExamRepository>();
         services.AddSingleton<IExcelReader, ExcelReader>();
