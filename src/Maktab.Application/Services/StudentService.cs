@@ -3,7 +3,9 @@ using Maktab.Domain.Entities;
 
 namespace Maktab.Application.Services;
 
-public sealed class StudentService(IStudentRepository repository) : IStudentService
+public sealed class StudentService(
+    IStudentRepository repository,
+    IStudentAcademicEnrollmentRepository enrollmentRepository) : IStudentService
 {
     public Task<IReadOnlyList<Student>> GetAllStudentsAsync(CancellationToken cancellationToken = default)
     {
@@ -14,6 +16,50 @@ public sealed class StudentService(IStudentRepository repository) : IStudentServ
     {
         if (classId <= 0) throw new ArgumentOutOfRangeException(nameof(classId));
         return repository.GetStudentsByClassAsync(classId, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Student>> GetStudentsByClassAndAcademicYearAsync(
+        int classId,
+        int academicYearId,
+        CancellationToken cancellationToken = default)
+    {
+        if (classId <= 0) throw new ArgumentOutOfRangeException(nameof(classId));
+        if (academicYearId <= 0) throw new ArgumentOutOfRangeException(nameof(academicYearId));
+
+        var enrollments = await enrollmentRepository.GetByClassAndAcademicYearAsync(
+            classId,
+            academicYearId,
+            cancellationToken);
+
+        if (enrollments.Count == 0)
+        {
+            return Array.Empty<Student>();
+        }
+
+        var students = new List<Student>(enrollments.Count);
+        foreach (var enrollment in enrollments)
+        {
+            var student = await repository.GetStudentByIdAsync(enrollment.StudentId, cancellationToken);
+            if (student is not null)
+            {
+                students.Add(student);
+            }
+        }
+
+        return students;
+    }
+
+    public async Task<IReadOnlyList<StudentAcademicEnrollment>> GetStudentAcademicHistoryAsync(
+        int studentId,
+        CancellationToken cancellationToken = default)
+    {
+        if (studentId <= 0) throw new ArgumentOutOfRangeException(nameof(studentId));
+
+        var enrollments = await enrollmentRepository.GetByAcademicYearAsync(
+            academicYearId: 0,
+            cancellationToken);
+
+        return enrollments.Where(e => e.StudentId == studentId).ToList();
     }
 
     public Task<Student?> GetStudentByIdAsync(int studentId, CancellationToken cancellationToken = default)
@@ -65,7 +111,6 @@ public sealed class StudentService(IStudentRepository repository) : IStudentServ
         var existing = await repository.GetStudentByIdAsync(studentId, cancellationToken);
         if (existing == null) throw new InvalidOperationException("Student not found.");
 
-        // If class or roll number changed, check uniqueness
         if (existing.ClassId != classId || existing.RollNumber != rollNumber.Trim())
         {
             if (await repository.ExistsByRollNumberAsync(classId, rollNumber.Trim(), cancellationToken))
@@ -82,7 +127,8 @@ public sealed class StudentService(IStudentRepository repository) : IStudentServ
             FatherName = fatherName.Trim(),
             ClassId = classId,
             RollNumber = rollNumber.Trim(),
-            RegistrationDate = existing.RegistrationDate
+            RegistrationDate = existing.RegistrationDate,
+            AdmissionNumber = existing.AdmissionNumber
         };
 
         await repository.UpdateStudentAsync(student, cancellationToken);
@@ -103,9 +149,9 @@ public sealed class StudentService(IStudentRepository repository) : IStudentServ
         int max = 0;
         foreach (var student in students)
         {
-            if (int.TryParse(student.RollNumber, out var num))
+            if (int.TryParse(student.RollNumber, out var num) && num > max)
             {
-                if (num > max) max = num;
+                max = num;
             }
         }
 
@@ -121,16 +167,12 @@ public sealed class StudentService(IStudentRepository repository) : IStudentServ
     {
         if (string.IsNullOrWhiteSpace(firstName))
             throw new ArgumentException("First name is required.", nameof(firstName));
-
         if (string.IsNullOrWhiteSpace(lastName))
             throw new ArgumentException("Last name is required.", nameof(lastName));
-
         if (string.IsNullOrWhiteSpace(fatherName))
             throw new ArgumentException("Father name is required.", nameof(fatherName));
-
         if (string.IsNullOrWhiteSpace(rollNumber))
             throw new ArgumentException("Roll number is required.", nameof(rollNumber));
-
         if (classId <= 0)
             throw new ArgumentOutOfRangeException(nameof(classId), "Valid class must be selected.");
     }
