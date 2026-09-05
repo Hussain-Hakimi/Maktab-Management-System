@@ -123,6 +123,11 @@ public partial class GuardianClassView : UserControl
 
         try
         {
+            var years = await _academicYearService.GetAllAcademicYearsAsync();
+            var selectedYear = years.FirstOrDefault(y => y.AcademicYearId == yearId);
+            if (selectedYear is null)
+                return;
+
             var enrollments = await _enrollmentRepository.GetByClassAndAcademicYearAsync(classId, yearId);
 
             _students.Clear();
@@ -134,8 +139,7 @@ public partial class GuardianClassView : UserControl
 
                 var report = await _reportCardService.GetStudentReportCardDataAsync(
                     student.StudentId,
-                    (await _academicYearService.GetAllAcademicYearsAsync())
-                        .First(y => y.AcademicYearId == yearId).YearName);
+                    selectedYear.YearName);
 
                 _students.Add(new GuardianStudentSummaryItem
                 {
@@ -189,7 +193,7 @@ public partial class GuardianClassView : UserControl
         }
         if (AcademicYearComboBox.SelectedValue is not int yearId || yearId <= 0)
         {
-            MessageBox.Show("لطفاً سال تعلیمی را انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxButton.OK == MessageBoxResult.Yes ? MessageBoxImage.Warning : MessageBoxImage.Warning);
+            MessageBox.Show("لطفاً سال تعلیمی را انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
