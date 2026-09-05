@@ -54,12 +54,7 @@ public sealed class StudentService(
         CancellationToken cancellationToken = default)
     {
         if (studentId <= 0) throw new ArgumentOutOfRangeException(nameof(studentId));
-
-        var enrollments = await enrollmentRepository.GetByAcademicYearAsync(
-            academicYearId: 0,
-            cancellationToken);
-
-        return enrollments.Where(e => e.StudentId == studentId).ToList();
+        return await enrollmentRepository.GetByStudentAsync(studentId, cancellationToken);
     }
 
     public Task<Student?> GetStudentByIdAsync(int studentId, CancellationToken cancellationToken = default)
