@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using Maktab.Application.Abstractions;
 using Maktab.Domain.Entities;
 using Maktab.Domain.Enums;
+using Maktab.Infrastructure.Persistence;
 
 namespace Maktab.App.Wpf.Views;
 
@@ -29,6 +30,7 @@ public partial class GuardianClassView : UserControl
     private readonly IFinalizationService _finalizationService;
     private readonly IAuditService _auditService;
     private readonly IStudentAcademicEnrollmentRepository _enrollmentRepository;
+    private readonly AppFolders _appFolders;
 
     private readonly ObservableCollection<GuardianStudentSummaryItem> _students = [];
     private List<SchoolClass> _guardianClasses = [];
@@ -42,7 +44,8 @@ public partial class GuardianClassView : UserControl
         ICurrentUserService currentUserService,
         IFinalizationService finalizationService,
         IAuditService auditService,
-        IStudentAcademicEnrollmentRepository enrollmentRepository)
+        IStudentAcademicEnrollmentRepository enrollmentRepository,
+        AppFolders appFolders)
     {
         _assignmentService = assignmentService;
         _classSubjectService = classSubjectService;
@@ -53,6 +56,7 @@ public partial class GuardianClassView : UserControl
         _finalizationService = finalizationService;
         _auditService = auditService;
         _enrollmentRepository = enrollmentRepository;
+        _appFolders = appFolders;
 
         InitializeComponent();
         StudentsDataGrid.ItemsSource = _students;
@@ -175,12 +179,14 @@ public partial class GuardianClassView : UserControl
             FinalizationStatusTextBlock.Text = isFinalized ? "وضعیت: نهایی شده ✅" : "وضعیت: باز است 🔓";
             FinalizeButton.IsEnabled = !isFinalized;
             UnfinalizeButton.IsEnabled = isFinalized;
+            GenerateOfficialReportsButton.IsEnabled = isFinalized;
         }
         catch (Exception ex)
         {
             FinalizationStatusTextBlock.Text = "خطا در بررسی وضعیت";
             FinalizeButton.IsEnabled = false;
             UnfinalizeButton.IsEnabled = false;
+            GenerateOfficialReportsButton.IsEnabled = false;
         }
     }
 
@@ -215,11 +221,90 @@ public partial class GuardianClassView : UserControl
             await _finalizationService.FinalizeClassAsync(classId, yearId, userId.Value);
             await _auditService.LogAsync(_currentUserService.CurrentUser!.Username, $"نهایی‌سازی نتایج صنف {classId} سال {yearId}");
             await UpdateFinalizationStatusAsync();
-            MessageBox.Show("نتایج با موفقیت نهایی شد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show("نتایج با موفقیت نهایی شد. اکنون می‌توانید اطلاع‌نامه رسمی صنف را صادر کنید.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
             MessageBox.Show(ex.Message, "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private async void GenerateOfficialReportsButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (ClassComboBox.SelectedValue is not int classId || classId <= 0)
+        {
+            MessageBox.Show("لطفاً صنف را انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        if (AcademicYearComboBox.SelectedValue is not int yearId || yearId <= 0)
+        {
+            MessageBox.Show("لطفاً سال تعلیمی را انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        if (!await _finalizationService.IsClassFinalizedAsync(classId, yearId))
+        {
+            MessageBox.Show("ابتدا نتایج این صنف را نهایی کنید. اطلاع‌نامه رسمی فقط پس از نهایی‌سازی صادر می‌شود.", "نتایج نهایی نشده", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var userId = _currentUserService.CurrentUser?.UserId;
+        if (userId is null or <= 0)
+            return;
+
+        var years = await _academicYearService.GetAllAcademicYearsAsync();
+        var selectedYear = years.FirstOrDefault(y => y.AcademicYearId == yearId);
+        if (selectedYear is null)
+        {
+            MessageBox.Show("سال تعلیمی انتخاب‌شده یافت نشد.", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        var confirm = MessageBox.Show(
+            "آیا می‌خواهید اطلاع‌نامه رسمی سالانه تمام شاگردان این صنف تولید شود؟",
+            "صدور اطلاع‌نامه رسمی",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (confirm != MessageBoxResult.Yes)
+            return;
+
+        try
+        {
+            var enrollments = await _enrollmentRepository.GetByClassAndAcademicYearAsync(classId, yearId);
+            if (enrollments.Count == 0)
+            {
+                MessageBox.Show("برای این صنف در سال تعلیمی انتخاب‌شده هیچ شاگردی ثبت نشده است.", "اطلاعات موجود نیست", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            Directory.CreateDirectory(_appFolders.Reports);
+            var generatedCount = 0;
+
+            foreach (var enrollment in enrollments)
+            {
+                await _reportCardService.GenerateStudentReportCardPdfAsync(
+                    enrollment.StudentId,
+                    selectedYear.YearName,
+                    _appFolders.Reports,
+                    ReportCardType.Annual);
+                generatedCount++;
+            }
+
+            await _auditService.LogAsync(
+                _currentUserService.CurrentUser!.Username,
+                $"صدور اطلاع‌نامه رسمی {generatedCount} شاگرد صنف {classId} سال {yearId}");
+
+            MessageBox.Show(
+                $"{generatedCount} اطلاع‌نامه رسمی با موفقیت تولید شد.\n\nمحل ذخیره: {_appFolders.Reports}",
+                "صدور موفق",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"خطا در صدور اطلاع‌نامه رسمی:\n{ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
