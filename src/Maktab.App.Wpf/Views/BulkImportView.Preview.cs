@@ -1,6 +1,7 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
 using Maktab.Application.Abstractions;
 using Maktab.Infrastructure.Reports;
@@ -11,7 +12,7 @@ public partial class BulkImportView
 {
     private IBulkImportPreviewService BulkImportPreviewService
         => _bulkImportPreviewService ??= new BulkImportPreviewService(
-            _studentService,
+            App.Services?.GetRequiredService<IStudentService>() ?? throw new InvalidOperationException("Application services are not initialized."),
             _classSubjectService,
             new ExcelReader());
 
