@@ -9,9 +9,14 @@ public interface IStudentAcademicEnrollmentRepository
         int academicYearId,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Returns all enrollments for a student. Implementations may return an empty set when
+    /// historical enrollment storage is not available to the caller.
+    /// </summary>
     Task<IReadOnlyList<StudentAcademicEnrollment>> GetByStudentAsync(
         int studentId,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default)
+        => Task.FromResult<IReadOnlyList<StudentAcademicEnrollment>>(Array.Empty<StudentAcademicEnrollment>());
 
     Task<IReadOnlyList<StudentAcademicEnrollment>> GetByAcademicYearAsync(
         int academicYearId,
