@@ -84,12 +84,9 @@ public class SqliteUserRepositoryIntegrationTests : IDisposable
     }
 
     [Fact]
-    public async Task SeedDefaultAdmin_ExistsAfterInitialization()
+    public async Task DatabaseInitialization_DoesNotCreateDefaultAdmin()
     {
-        // The initializer already ran in constructor; verify admin exists
         var admin = await _userRepository.GetByUsernameAsync("admin");
-        Assert.NotNull(admin);
-        Assert.Equal(UserRole.Admin, admin.Role);
-        Assert.True(admin.IsActive);
+        Assert.Null(admin);
     }
 }
