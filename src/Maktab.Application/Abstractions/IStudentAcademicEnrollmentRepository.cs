@@ -9,6 +9,10 @@ public interface IStudentAcademicEnrollmentRepository
         int academicYearId,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<StudentAcademicEnrollment>> GetByStudentAsync(
+        int studentId,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<StudentAcademicEnrollment>> GetByAcademicYearAsync(
         int academicYearId,
         CancellationToken cancellationToken = default);
