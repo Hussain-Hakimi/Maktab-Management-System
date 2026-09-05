@@ -86,6 +86,15 @@ public class AlertServiceTests
         public Task<int> GetNextRollNumberAsync(int classId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
+    private sealed class MockLogger : IAppLogger
+    {
+        public void LogInfo(string message) { }
+        public void LogWarning(string message) { }
+        public void LogError(string message, Exception? exception = null) { }
+        public Task<IReadOnlyList<string>> ReadRecentLogsAsync(int maxLines = 200, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<string>>(Array.Empty<string>());
+    }
+
     [Fact]
     public async Task GetAlerts_ReturnsOverdueBookAndFeeAlerts()
     {
@@ -107,8 +116,9 @@ public class AlertServiceTests
         var attendanceService = new MockAttendanceService();
         var academicYearService = new MockAcademicYearService { ActiveYear = new AcademicYearDto { AcademicYearId = 1, YearName = "۱۴۰۴ - ۱۴۰۵" } };
         var studentService = new MockStudentService { Students = new List<Student>() };
+        var logger = new MockLogger();
 
-        var alertService = new AlertService(bookService, feeService, attendanceService, academicYearService, studentService);
+        var alertService = new AlertService(bookService, feeService, attendanceService, academicYearService, studentService, logger);
 
         // Act
         var alerts = await alertService.GetAlertsAsync();
@@ -127,8 +137,9 @@ public class AlertServiceTests
         var attendanceService = new MockAttendanceService();
         var academicYearService = new MockAcademicYearService { ActiveYear = null };
         var studentService = new MockStudentService();
+        var logger = new MockLogger();
 
-        var alertService = new AlertService(bookService, feeService, attendanceService, academicYearService, studentService);
+        var alertService = new AlertService(bookService, feeService, attendanceService, academicYearService, studentService, logger);
         var alerts = await alertService.GetAlertsAsync();
 
         Assert.Empty(alerts);
