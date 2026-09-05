@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS tbl_ClassGuardians (
     TeacherUserID INTEGER NOT NULL,
     ClassID INTEGER NOT NULL,
     FOREIGN KEY (TeacherUserID) REFERENCES tbl_Users(UserID) ON DELETE CASCADE,
+    FOREIGN KEY (ClassID) REFERENCES tbl_Classes(ClassID) ON DELETE CASCADE,
     UNIQUE (TeacherUserID, ClassID)
 );"),
             new(7, @"
@@ -161,6 +162,16 @@ WHERE ay.IsActive = 1
       WHERE e.StudentID = s.StudentID
         AND e.AcademicYearID = ay.AcademicYearID
   );
+"),
+            new(12, @"
+ALTER TABLE tbl_Students ADD COLUMN AdmissionNumber TEXT;
+
+UPDATE tbl_Students
+SET AdmissionNumber = 'ADM-' || printf('%08d', StudentID)
+WHERE AdmissionNumber IS NULL OR TRIM(AdmissionNumber) = '';
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_students_admission_number
+ON tbl_Students(AdmissionNumber);
 ")
         };
     }
