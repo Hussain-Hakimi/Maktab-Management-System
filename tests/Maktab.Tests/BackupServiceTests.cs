@@ -33,7 +33,7 @@ public class BackupAndLoggingTests : IDisposable
         }
         catch
         {
-            // Ignore cleanup failure in temp
+            // Best-effort cleanup of isolated test data.
         }
     }
 
@@ -67,7 +67,9 @@ public class BackupAndLoggingTests : IDisposable
         await File.WriteAllTextAsync(oldBackup, "dummy old db");
 
         File.SetCreationTime(recentBackup, now.AddDays(-29));
-        File.SetCreationTime(oldBackup, now.AddDays(-31));
+        // This test targets the final deletion tier. Backups between 30 and
+        // 180 days are intentionally retained by the weekly-retention policy.
+        File.SetCreationTime(oldBackup, now.AddDays(-181));
 
         await backupService.PruneOldBackupsAsync();
 
