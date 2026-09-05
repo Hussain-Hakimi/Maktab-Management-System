@@ -28,6 +28,22 @@ WHERE StudentID = $studentId AND AcademicYearID = $academicYearId;";
         return await reader.ReadAsync(cancellationToken) ? Map(reader) : null;
     }
 
+    public Task<IReadOnlyList<StudentAcademicEnrollment>> GetByStudentAsync(
+        int studentId,
+        CancellationToken cancellationToken = default)
+    {
+        if (studentId <= 0) throw new ArgumentOutOfRangeException(nameof(studentId));
+
+        const string sql = @"
+SELECT EnrollmentID, StudentID, AcademicYearID, ClassID, RollNumber, EnrollmentDate, Status
+FROM tbl_StudentAcademicEnrollments
+WHERE StudentID = $studentId
+ORDER BY AcademicYearID;";
+
+        return QueryAsync(sql, command =>
+            command.Parameters.AddWithValue("$studentId", studentId), cancellationToken);
+    }
+
     public async Task<IReadOnlyList<StudentAcademicEnrollment>> GetByAcademicYearAsync(
         int academicYearId,
         CancellationToken cancellationToken = default)
@@ -72,7 +88,7 @@ VALUES
 ON CONFLICT(StudentID, AcademicYearID) DO UPDATE SET
     ClassID = excluded.ClassID,
     RollNumber = excluded.RollNumber,
-    Status = excluded.Status; 
+    Status = excluded.Status;
 SELECT EnrollmentID
 FROM tbl_StudentAcademicEnrollments
 WHERE StudentID = $studentId AND AcademicYearID = $academicYearId;";
