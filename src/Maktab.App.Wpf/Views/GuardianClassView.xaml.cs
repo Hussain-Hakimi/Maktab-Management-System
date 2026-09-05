@@ -4,7 +4,6 @@ using System.Windows.Controls;
 using Maktab.Application.Abstractions;
 using Maktab.Domain.Entities;
 using Maktab.Domain.Enums;
-using Maktab.Domain.Rules;
 
 namespace Maktab.App.Wpf.Views;
 
@@ -24,7 +23,7 @@ public partial class GuardianClassView : UserControl
     private readonly ITeacherAssignmentService _assignmentService;
     private readonly IClassSubjectService _classSubjectService;
     private readonly IStudentService _studentService;
-    private readonly IExamMarkService _examMarkService;
+    private readonly IReportCardService _reportCardService;
     private readonly IAcademicYearService _academicYearService;
     private readonly ICurrentUserService _currentUserService;
     private readonly IFinalizationService _finalizationService;
@@ -38,7 +37,7 @@ public partial class GuardianClassView : UserControl
         ITeacherAssignmentService assignmentService,
         IClassSubjectService classSubjectService,
         IStudentService studentService,
-        IExamMarkService examMarkService,
+        IReportCardService reportCardService,
         IAcademicYearService academicYearService,
         ICurrentUserService currentUserService,
         IFinalizationService finalizationService,
@@ -48,7 +47,7 @@ public partial class GuardianClassView : UserControl
         _assignmentService = assignmentService;
         _classSubjectService = classSubjectService;
         _studentService = studentService;
-        _examMarkService = examMarkService;
+        _reportCardService = reportCardService;
         _academicYearService = academicYearService;
         _currentUserService = currentUserService;
         _finalizationService = finalizationService;
@@ -125,7 +124,6 @@ public partial class GuardianClassView : UserControl
         try
         {
             var enrollments = await _enrollmentRepository.GetByClassAndAcademicYearAsync(classId, yearId);
-            var subjects = await _classSubjectService.GetSubjectsByClassAsync(classId);
 
             _students.Clear();
             foreach (var enrollment in enrollments)
@@ -134,32 +132,20 @@ public partial class GuardianClassView : UserControl
                 if (student is null)
                     continue;
 
-                var marks = await _examMarkService.GetStudentMarksForYearAsync(student.StudentId, yearId);
-                var markMap = marks.ToDictionary(m => m.SubjectId);
-
-                decimal totalObtained = 0m;
-                int failed = 0;
-                foreach (var subject in subjects)
-                {
-                    markMap.TryGetValue(subject.SubjectId, out var mark);
-                    var total = GradingPolicy.CalculateTotal(mark?.MidtermScore ?? 0m, mark?.FinalScore ?? 0m);
-                    totalObtained += total;
-                    if (!GradingPolicy.IsPass(total)) failed++;
-                }
-
-                var maxScore = subjects.Count * GradingPolicy.TotalMax;
-                var average = maxScore > 0 ? Math.Round((totalObtained / maxScore) * 100m, 2) : 0m;
-                var outcome = PromotionPolicy.GetPromotionOutcome(average, failed, 0);
+                var report = await _reportCardService.GetStudentReportCardDataAsync(
+                    student.StudentId,
+                    (await _academicYearService.GetAllAcademicYearsAsync())
+                        .First(y => y.AcademicYearId == yearId).YearName);
 
                 _students.Add(new GuardianStudentSummaryItem
                 {
-                    StudentId = student.StudentId,
-                    FirstName = student.FirstName,
-                    LastName = student.LastName,
-                    RollNumber = enrollment.RollNumber,
-                    TotalScore = totalObtained,
-                    AveragePercentage = average,
-                    ResultText = outcome switch
+                    StudentId = report.StudentId,
+                    FirstName = report.FirstName,
+                    LastName = report.LastName,
+                    RollNumber = report.RollNumber,
+                    TotalScore = report.TotalObtainedScore,
+                    AveragePercentage = report.AveragePercentage,
+                    ResultText = report.PromotionOutcome switch
                     {
                         PromotionOutcome.Promoted => "کامیاب",
                         PromotionOutcome.Conditional => "مشروط",
@@ -203,7 +189,7 @@ public partial class GuardianClassView : UserControl
         }
         if (AcademicYearComboBox.SelectedValue is not int yearId || yearId <= 0)
         {
-            MessageBox.Show("لطفاً سال تعلیمی را انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show("لطفاً سال تعلیمی را انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxButton.OK == MessageBoxResult.Yes ? MessageBoxImage.Warning : MessageBoxImage.Warning);
             return;
         }
 
