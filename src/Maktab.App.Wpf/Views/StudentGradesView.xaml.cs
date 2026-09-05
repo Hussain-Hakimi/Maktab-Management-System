@@ -101,6 +101,7 @@ public partial class StudentGradesView : UserControl
     private readonly ICurrentUserService _currentUserService;
     private readonly IAuditService _auditService;
     private readonly IFinalizationService _finalizationService;
+    private readonly IAppLogger _logger;
 
     private readonly ObservableCollection<StudentGradeRowItem> _rows = [];
     private List<Student> _students = [];
@@ -113,7 +114,8 @@ public partial class StudentGradesView : UserControl
         ITeacherAssignmentService teacherAssignmentService,
         ICurrentUserService currentUserService,
         IAuditService auditService,
-        IFinalizationService finalizationService)
+        IFinalizationService finalizationService,
+        IAppLogger logger)
     {
         _studentService = studentService;
         _classSubjectService = classSubjectService;
@@ -123,6 +125,7 @@ public partial class StudentGradesView : UserControl
         _currentUserService = currentUserService;
         _auditService = auditService;
         _finalizationService = finalizationService;
+        _logger = logger;
 
         InitializeComponent();
         GradesDataGrid.ItemsSource = _rows;
@@ -266,7 +269,6 @@ public partial class StudentGradesView : UserControl
                 _rows.Add(row);
             }
 
-            // Check finalization
             if (ClassComboBox.SelectedValue is int classIdFinal && AcademicYearComboBox.SelectedValue is int yearIdFinal)
             {
                 bool isFinalized = await _finalizationService.IsClassFinalizedAsync(classIdFinal, yearIdFinal);
@@ -319,7 +321,6 @@ public partial class StudentGradesView : UserControl
             return;
         }
 
-        // Validate ranges
         foreach (var row in _rows)
         {
             if (row.MidtermScore < 0m || row.MidtermScore > GradingPolicy.MidtermMax)
@@ -336,7 +337,6 @@ public partial class StudentGradesView : UserControl
 
         try
         {
-            // Permission check
             var currentUser = _currentUserService.CurrentUser;
             int classId = (int)ClassComboBox.SelectedValue;
             if (currentUser?.Role == Domain.Enums.UserRole.Teacher)
@@ -355,7 +355,6 @@ public partial class StudentGradesView : UserControl
                 }
             }
 
-            // Finalization check
             bool isFinalized = await _finalizationService.IsClassFinalizedAsync(classId, yearId);
             if (isFinalized)
             {
@@ -388,9 +387,9 @@ public partial class StudentGradesView : UserControl
             var userName = _currentUserService.CurrentUser?.Username ?? "Unknown";
             await _auditService.LogAsync(userName, action);
         }
-        catch
+        catch (Exception ex)
         {
-            // ignore audit failures
+            _logger.LogError($"Failed to write student-grades audit entry for action '{action}'.", ex);
         }
     }
 }
