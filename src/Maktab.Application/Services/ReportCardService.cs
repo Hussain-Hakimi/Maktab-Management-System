@@ -11,7 +11,8 @@ public sealed class ReportCardService(
     IPdfReportCardGenerator pdfGenerator,
     IAttendanceService attendanceService,
     ISchoolSettingsService schoolSettingsService,
-    IAcademicYearRepository academicYearRepository) : IReportCardService
+    IAcademicYearRepository academicYearRepository,
+    IStudentAcademicEnrollmentRepository? enrollmentRepository = null) : IReportCardService
 {
     public async Task<StudentReportCardDto> GetStudentReportCardDataAsync(
         int studentId,
@@ -37,14 +38,35 @@ public sealed class ReportCardService(
             throw new InvalidOperationException($"شاگرد با آیدی {studentId} یافت نشد.");
         }
 
-        var classes = await classSubjectRepository.GetClassesAsync(cancellationToken);
-        var schoolClass = classes.FirstOrDefault(c => c.ClassId == student.ClassId);
-        var className = schoolClass?.GradeName ?? $"صنف {student.ClassId}";
+        var academicYearId = selectedAcademicYear.AcademicYearId;
+        var classId = student.ClassId;
+        var rollNumber = student.RollNumber;
 
-        var subjects = await classSubjectRepository.GetSubjectsByClassAsync(student.ClassId, cancellationToken);
+        if (enrollmentRepository is not null)
+        {
+            var enrollment = await enrollmentRepository.GetByStudentAndAcademicYearAsync(
+                studentId,
+                academicYearId,
+                cancellationToken);
+
+            if (enrollment is null)
+            {
+                throw new InvalidOperationException(
+                    $"برای شاگرد {studentId} در سال تعلیمی {requestedAcademicYear} ثبت‌نام صنفی یافت نشد.");
+            }
+
+            classId = enrollment.ClassId;
+            rollNumber = enrollment.RollNumber;
+        }
+
+        var classes = await classSubjectRepository.GetClassesAsync(cancellationToken);
+        var schoolClass = classes.FirstOrDefault(c => c.ClassId == classId);
+        var className = schoolClass?.GradeName ?? $"صنف {classId}";
+
+        var subjects = await classSubjectRepository.GetSubjectsByClassAsync(classId, cancellationToken);
         var marks = await markRepository.GetMarksByStudentAndYearAsync(
             studentId,
-            selectedAcademicYear.AcademicYearId,
+            academicYearId,
             cancellationToken);
         var markMap = marks.ToDictionary(m => m.SubjectId);
 
@@ -93,7 +115,7 @@ public sealed class ReportCardService(
                 promoText = "مشروط (CONDITIONAL)";
                 failureReason = "عدم تکمیل معیار قبولی در برخی مضامین";
                 break;
-            default: // Repeat
+            default:
                 promoText = "تکرار صنف (REPEAT)";
                 if (absenceDays > PromotionPolicy.MaxAllowedAbsenceDays)
                     failureReason = $"بیش از {PromotionPolicy.MaxAllowedAbsenceDays} روز غیرحاضری ({absenceDays} روز)";
@@ -112,8 +134,8 @@ public sealed class ReportCardService(
             FirstName = student.FirstName,
             LastName = student.LastName,
             FatherName = student.FatherName,
-            RollNumber = student.RollNumber,
-            ClassId = student.ClassId,
+            RollNumber = rollNumber,
+            ClassId = classId,
             ClassName = className,
             AcademicYear = requestedAcademicYear,
             IssueDate = DateTime.Now.ToString("yyyy/MM/dd"),
@@ -143,16 +165,40 @@ public sealed class ReportCardService(
     {
         if (classId <= 0) throw new ArgumentOutOfRangeException(nameof(classId));
 
-        var students = await studentRepository.GetStudentsByClassAsync(classId, cancellationToken);
-        var list = new List<StudentReportCardDto>();
+        var students = enrollmentRepository is not null
+            ? (await ResolveClassStudentIdsAsync(classId, academicYear, cancellationToken))
+                .Select(id => id)
+                .ToList()
+            : (await studentRepository.GetStudentsByClassAsync(classId, cancellationToken))
+                .Select(s => s.StudentId)
+                .ToList();
 
-        foreach (var student in students)
+        var list = new List<StudentReportCardDto>();
+        foreach (var studentId in students)
         {
-            var data = await GetStudentReportCardDataAsync(student.StudentId, academicYear, cancellationToken);
+            var data = await GetStudentReportCardDataAsync(studentId, academicYear, cancellationToken);
             list.Add(data);
         }
 
         return list;
+    }
+
+    private async Task<IReadOnlyList<int>> ResolveClassStudentIdsAsync(
+        int classId,
+        string academicYear,
+        CancellationToken cancellationToken)
+    {
+        var years = await academicYearRepository.GetAllAsync(cancellationToken);
+        var selectedYear = years.FirstOrDefault(y => y.YearName == academicYear.Trim());
+        if (selectedYear is null)
+            throw new InvalidOperationException($"سال تعلیمی {academicYear} یافت نشد.");
+
+        var enrollments = await enrollmentRepository!.GetByClassAndAcademicYearAsync(
+            classId,
+            selectedYear.AcademicYearId,
+            cancellationToken);
+
+        return enrollments.Select(e => e.StudentId).ToList();
     }
 
     public async Task<string> GenerateStudentReportCardPdfAsync(
