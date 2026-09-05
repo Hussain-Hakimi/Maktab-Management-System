@@ -29,6 +29,7 @@ public partial class GuardianClassView : UserControl
     private readonly ICurrentUserService _currentUserService;
     private readonly IFinalizationService _finalizationService;
     private readonly IAuditService _auditService;
+    private readonly IStudentAcademicEnrollmentRepository _enrollmentRepository;
 
     private readonly ObservableCollection<GuardianStudentSummaryItem> _students = [];
     private List<SchoolClass> _guardianClasses = [];
@@ -41,7 +42,8 @@ public partial class GuardianClassView : UserControl
         IAcademicYearService academicYearService,
         ICurrentUserService currentUserService,
         IFinalizationService finalizationService,
-        IAuditService auditService)
+        IAuditService auditService,
+        IStudentAcademicEnrollmentRepository enrollmentRepository)
     {
         _assignmentService = assignmentService;
         _classSubjectService = classSubjectService;
@@ -51,6 +53,7 @@ public partial class GuardianClassView : UserControl
         _currentUserService = currentUserService;
         _finalizationService = finalizationService;
         _auditService = auditService;
+        _enrollmentRepository = enrollmentRepository;
 
         InitializeComponent();
         StudentsDataGrid.ItemsSource = _students;
@@ -121,12 +124,16 @@ public partial class GuardianClassView : UserControl
 
         try
         {
-            var students = await _studentService.GetStudentsByClassAsync(classId);
+            var enrollments = await _enrollmentRepository.GetByClassAndAcademicYearAsync(classId, yearId);
             var subjects = await _classSubjectService.GetSubjectsByClassAsync(classId);
 
             _students.Clear();
-            foreach (var student in students)
+            foreach (var enrollment in enrollments)
             {
+                var student = await _studentService.GetStudentByIdAsync(enrollment.StudentId);
+                if (student is null)
+                    continue;
+
                 var marks = await _examMarkService.GetStudentMarksForYearAsync(student.StudentId, yearId);
                 var markMap = marks.ToDictionary(m => m.SubjectId);
 
@@ -149,7 +156,7 @@ public partial class GuardianClassView : UserControl
                     StudentId = student.StudentId,
                     FirstName = student.FirstName,
                     LastName = student.LastName,
-                    RollNumber = student.RollNumber,
+                    RollNumber = enrollment.RollNumber,
                     TotalScore = totalObtained,
                     AveragePercentage = average,
                     ResultText = outcome switch
