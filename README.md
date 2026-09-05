@@ -8,7 +8,7 @@
 [![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com)
 [![Platform](https://img.shields.io/badge/Platform-Windows-0078D4?logo=windows)](https://www.microsoft.com/windows)
 [![Language](https://img.shields.io/badge/Language-C%23-239120?logo=csharp)](https://docs.microsoft.com/en-us/dotnet/csharp)
-[![Status](https://img.shields.io/badge/Status-v1.9.0%20Ready-28a745)](https://github.com/Hussain-Hakimi/Maktab-Management-System)
+[![Status](https://img.shields.io/badge/Status-v1.9.1%20Hardening-28a745)](https://github.com/Hussain-Hakimi/Maktab-Management-System)
 
 ---
 
@@ -22,9 +22,9 @@
 - ✅ **Built for Afghan Schools** — Dari/Persian RTL interface, Afghan grading system
 - ✅ **All-in-One** — No separate tools needed
 - ✅ **Fast & Lightweight** — Runs smoothly on modest hardware
-- ✅ **Secure** — Database encryption, audit logging, role-based access
-- ✅ **Data-Safe** — Automatic backups, USB export, restore tools
-- ✅ **Production Ready** — v1.5 stable release, actively maintained
+- ✅ **Secure** — PBKDF2 password hashing, role-based access, authorization checks, and audit logging
+- ✅ **Data-Safe** — Automatic backups, USB export, integrity verification, and restore safety checks
+- 🚧 **Production Hardening** — v1.9.1 hardening is in progress; complete verification and school pilot are still required before a production release
 
 ---
 
@@ -41,7 +41,10 @@
 1. **Download** the latest release from [GitHub Releases](https://github.com/Hussain-Hakimi/Maktab-Management-System/releases)
 2. **Extract** the publish folder to your desired location
 3. **Run** `Maktab.App.Wpf.exe`
-4. **Login** with default credentials (set up on first run)
+4. **First run:** If no user accounts exist, create the initial administrator account using the first-run setup window.
+5. **Login** with the administrator account you created.
+
+> **Security note:** The application does not use a default administrator password or an automatic authentication bypass.
 
 ### For Development
 
@@ -80,6 +83,7 @@ dotnet run --project src/Maktab.App.Wpf/Maktab.App.Wpf.csproj
 - **Attendance Tracking** — Daily entry with statuses (Present, Absent, Ill, Permission)
 - **User Accounts** — Role-based access (Admin, Teacher, Librarian, Accountant)
 - **Secure Authentication** — PBKDF2 password hashing
+- **Authorization** — Application-level role and teacher-assignment checks for protected operations
 - **Audit Logging** — Complete audit trail of user actions
 - **School Settings** — Name, address, phone, logo, academic year
 
@@ -121,11 +125,12 @@ dotnet run --project src/Maktab.App.Wpf/Maktab.App.Wpf.csproj
 
 ### 💾 Data Management
 
-- **Backup & Restore** — Manual and automatic backups
+- **Backup & Restore** — Manual and automatic backups with integrity verification
 - **USB Export** — One-click copy backup to USB drive
-- **Backup Reminders** — Notifications if last backup > 7 days
+- **Backup Reminders** — Notifications if the last backup is more than 7 days old
 - **Database Migrations** — Safe schema updates
 - **WAL Mode** — Write-ahead logging for data integrity
+- **Backup Retention** — Recent backups are retained daily for 30 days, with older backups retained weekly through 180 days; pre-restore safety backups are protected from automatic pruning
 
 ---
 
@@ -230,25 +235,32 @@ Maktab-Management-System/
 
 ### Authentication & Authorization
 
-- PBKDF2 password hashing (NIST-compliant)
+- PBKDF2 password hashing
 - Role-based access control (RBAC)
-- Session management
+- Application-service authorization for protected mark and user operations
+- First-run administrator creation instead of default credentials
+- Session/current-user management
 - Password change functionality
 
 ### Data Protection
 
 - SQLite database with WAL mode
 - Automatic startup backups
-- Backup encryption & integrity checks
+- SQLite integrity verification for created and restored backups
+- Pre-restore safety backup before replacing the live database
 - USB backup with offline storage
-- Complete audit logs of all changes
+- Complete audit logs of user actions
 
-### Integrity
+> **Encryption:** The current implementation does **not** provide SQLite database encryption or backup-file encryption. Do not treat backups as encrypted at rest; use appropriate OS/file-system access controls and secure physical storage.
+
+### Integrity & Recovery
 
 - Database migrations with version control
-- Transaction support for critical operations
+- Transaction support for critical operations, including promotion
 - Data validation at application and database levels
 - Foreign key constraints
+- Backup validation before restore and after restore
+- Daily/weekly backup retention policy with protected pre-restore safety copies
 
 ---
 
@@ -256,7 +268,8 @@ Maktab-Management-System/
 
 | Version | Release | Focus |
 |---------|---------|-------|
-| **1.9.0** | Current | School onboarding, bulk class wizard, multi-subject marks import, download templates, pre-deletion validation |
+| **1.9.1** | In progress | Production hardening: security, academic-year integrity, transactional promotion, authorization, backup/recovery hardening, tests, CI, logging, and version alignment |
+| **1.9.0** | ✓ | School onboarding, bulk class wizard, multi-subject marks import, download templates, pre-deletion validation |
 | **1.8.0** | ✓ | Guardian report card, class finalization workflow, database migration v8 |
 | **1.7.0** | ✓ | Teacher exam workflow, restricted mark entry |
 | **1.6.0** | ✓ | Role assignment, simplified navigation tabs |
@@ -269,31 +282,34 @@ Maktab-Management-System/
 
 ---
 
-### Version 1.9.0 — School Onboarding & Quality Improvements
+### Version 1.9.1 — Production Hardening (In Progress)
 
-Added & Enhanced:
-- **Pre-Deletion Validation (SQLite Error 19 Fix)** — User-friendly Persian error messages before deleting classes, students, books, or textbooks with active references.
-- **Downloadable Excel Templates** — 1-click generation of `.xlsx` sample templates (Students, Single-Subject Marks, Attendance, and Multi-Subject Marks) with guidance tabs.
-- **Bulk Class Creation Wizard (`BulkCreateClassesDialog`)** — Create Grade 1 through 12 classes with configured subjects in a single click.
-- **Multi-Subject Marks Bulk Import** — Import marks for all subjects of a class at once from a wide Excel spreadsheet (`RollNumber | SubjectName_Midterm | SubjectName_Final | ...`).
-- **Step-by-Step School Onboarding Guide** — Persian guidance banner embedded at the top of the Bulk Import view for school staff.
-- **Login Window & First-Run Setup** — Auto-login for initial setup.
-- **Student Roll Number Auto-Generation** — Next available integer auto-calculation per class.
-- **Official Headers & Logo Support** — School logo upload and custom government/provincial header configurations for PDF report cards.
-- **Midterm & Annual Report Cards** — Specialized layouts for midterm and annual result distribution.
+Implemented on the hardening branch:
+- **Authentication Hardening** — Removed the empty-credential authentication bypass and replaced automatic default-admin creation with secure first-run administrator setup.
+- **Academic-Year Data Integrity** — Exam-mark uniqueness and report-card retrieval are scoped by academic year.
+- **Student Academic History** — Added academic-year enrollment records and synchronized current-student compatibility data.
+- **Transactional Promotion** — Student class/enrollment changes and promotion history are committed atomically.
+- **Authorization Hardening** — Protected application-service operations with role, teacher-assignment, academic-year, enrollment, and finalization checks where applicable.
+- **Backup Integrity & Recovery** — Added backup integrity verification, safer restore validation, pre-restore safety copies, and production retention rules.
+- **Test Coverage** — Added real SQLite integration coverage for promotion transaction commit/rollback behavior and updated affected service tests.
+- **CI** — GitHub Actions now runs on pushes to `main` and `fix-and-update1`, plus pull requests targeting `main`.
+- **Error Logging** — Audited and improved selected production silent exception paths without changing intentional defensive catches.
+- **Version Metadata** — Application project version aligned to `1.9.1`.
 
+> **Release status:** v1.9.1 is a hardening candidate, not yet a production release. A full regression run and real-school pilot are still required before merging to `main` and declaring production readiness.
 
-- --
+---
 
 ## 🗺️ Roadmap
 
-### V1.6 (Planning)
-- Enhanced fee management (installments, discounts, receipts)
-- Attendance periods & tracking
-- Admin password reset functionality
-- Advanced PDF report templates
+### V1.9.1 — Production Release Gate
+- Full regression test on Windows
+- Real-school pilot
+- Fix pilot findings
+- Final security/recovery review
+- Merge hardening branch to `main`
 
-### V2.0 (Future)
+### V2.0 — Future
 - Multi-user network support (optional)
 - Advanced analytics & dashboards
 - Integration APIs
@@ -303,7 +319,7 @@ Added & Enhanced:
 
 ## 🧪 Testing
 
-The project includes comprehensive unit and integration tests:
+The project includes unit and integration tests:
 
 ```bash
 dotnet test
@@ -315,7 +331,10 @@ Tests cover:
 - Database migrations
 - Excel/CSV import/export
 - Report generation
-- User authentication
+- User authentication and authorization
+- SQLite integration scenarios for critical transactional behavior
+
+> **CI note:** GitHub Actions is configured to restore, build, and test the solution on Windows for pushes to `main` and `fix-and-update1`, and for pull requests targeting `main`.
 
 ---
 
@@ -342,11 +361,17 @@ dotnet publish src/Maktab.App.Wpf/Maktab.App.Wpf.csproj \
 
 ## 🔁 Continuous Integration
 
-Every commit triggers:
-- ✅ Code build on Windows runner
-- ✅ Unit test suite
-- ✅ Integration tests
-- ✅ Release artifact generation
+GitHub Actions is configured to run on:
+- ✅ Pushes to `main`
+- ✅ Pushes to `fix-and-update1`
+- ✅ Pull requests targeting `main`
+
+The workflow performs:
+- ✅ Dependency restore
+- ✅ Release build on a Windows runner
+- ✅ Test suite execution
+
+> The current workflow does **not** generate or publish release artifacts automatically.
 
 Status: [![CI/CD](https://github.com/Hussain-Hakimi/Maktab-Management-System/actions/workflows/dotnet.yml/badge.svg)](https://github.com/Hussain-Hakimi/Maktab-Management-System/actions)
 
@@ -358,8 +383,8 @@ We welcome contributions! Here's how to get started:
 
 1. **Fork** the repository
 2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
-4. **Push** to the branch (`git push origin feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'Add amazing-feature'`)
+4. **Push** to GitHub (`git push origin feature/amazing-feature`)
 5. **Open** a Pull Request
 
 ### Development Guidelines
@@ -446,8 +471,8 @@ If Maktab helps your school, please:
 
 *Bringing reliable technology to education*
 
-![Version](https://img.shields.io/badge/Version-1.9.0-blue)
-![Status](https://img.shields.io/badge/Status-Active-green)
+![Version](https://img.shields.io/badge/Version-1.9.1-blue)
+![Status](https://img.shields.io/badge/Status-Hardening-green)
 ![Last Updated](https://img.shields.io/badge/Updated-2026-orange)
 
 </div>
