@@ -48,16 +48,9 @@ public class ExamMarkServiceStudentYearTests
     private sealed class MockEnrollmentRepository : IStudentAcademicEnrollmentRepository
     {
         public List<StudentAcademicEnrollment> Enrollments { get; } = [];
-
-        public Task<StudentAcademicEnrollment?> GetByStudentAndAcademicYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default) =>
-            Task.FromResult(Enrollments.FirstOrDefault(e => e.StudentId == studentId && e.AcademicYearId == academicYearId));
-
-        public Task<IReadOnlyList<StudentAcademicEnrollment>> GetByAcademicYearAsync(int academicYearId, CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<StudentAcademicEnrollment>>(Enrollments.Where(e => e.AcademicYearId == academicYearId).ToList());
-
-        public Task<IReadOnlyList<StudentAcademicEnrollment>> GetByClassAndAcademicYearAsync(int classId, int academicYearId, CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<StudentAcademicEnrollment>>(Enrollments.Where(e => e.ClassId == classId && e.AcademicYearId == academicYearId).ToList());
-
+        public Task<StudentAcademicEnrollment?> GetByStudentAndAcademicYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default) => Task.FromResult(Enrollments.FirstOrDefault(e => e.StudentId == studentId && e.AcademicYearId == academicYearId));
+        public Task<IReadOnlyList<StudentAcademicEnrollment>> GetByAcademicYearAsync(int academicYearId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<StudentAcademicEnrollment>>(Enrollments.Where(e => e.AcademicYearId == academicYearId).ToList());
+        public Task<IReadOnlyList<StudentAcademicEnrollment>> GetByClassAndAcademicYearAsync(int classId, int academicYearId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<StudentAcademicEnrollment>>(Enrollments.Where(e => e.ClassId == classId && e.AcademicYearId == academicYearId).ToList());
         public Task<int> CreateOrUpdateAsync(StudentAcademicEnrollment enrollment, CancellationToken cancellationToken = default) => Task.FromResult(enrollment.EnrollmentId);
     }
 
@@ -81,17 +74,9 @@ public class ExamMarkServiceStudentYearTests
     {
         _studentRepo.Student = new Student { StudentId = 1, ClassId = 2, FirstName = "A", LastName = "B", FatherName = "C", RollNumber = "1" };
         _enrollmentRepo.Enrollments.Add(new StudentAcademicEnrollment { EnrollmentId = 1, StudentId = 1, AcademicYearId = 1, ClassId = 1, RollNumber = "1", Status = "Active" });
-        _classRepo.Subjects = [
-            new() { SubjectId = 1, ClassId = 1, SubjectName = "ریاضی" },
-            new() { SubjectId = 2, ClassId = 1, SubjectName = "فزیک" }
-        ];
-        _markRepo.Marks = [
-            new() { StudentId = 1, SubjectId = 1, MidtermScore = 35m, FinalScore = 50m, AcademicYearId = 1 },
-            new() { StudentId = 1, SubjectId = 2, MidtermScore = 30m, FinalScore = 40m, AcademicYearId = 1 }
-        ];
-
+        _classRepo.Subjects = [new() { SubjectId = 1, ClassId = 1, SubjectName = "ریاضی" }, new() { SubjectId = 2, ClassId = 1, SubjectName = "فزیک" }];
+        _markRepo.Marks = [new() { StudentId = 1, SubjectId = 1, MidtermScore = 35m, FinalScore = 50m, AcademicYearId = 1 }, new() { StudentId = 1, SubjectId = 2, MidtermScore = 30m, FinalScore = 40m, AcademicYearId = 1 }];
         var result = await _service.GetStudentMarksForYearAsync(1, 1);
-
         Assert.Equal(2, result.Count);
         Assert.Equal("ریاضی", result[0].SubjectName);
         Assert.Equal(85m, result[0].TotalScore);
@@ -102,10 +87,8 @@ public class ExamMarkServiceStudentYearTests
     [Fact]
     public async Task GetStudentMarksForYear_WhenStudentHasNoEnrollment_ReturnsEmptyList()
     {
-        _studentRepo.Student = new Student { StudentId = 1, ClassId = 1, RollNumber = "1" };
-
+        _studentRepo.Student = new Student { StudentId = 1, ClassId = 1, FirstName = "A", LastName = "B", FatherName = "C", RollNumber = "1" };
         var result = await _service.GetStudentMarksForYearAsync(1, 1);
-
         Assert.Empty(result);
     }
 
@@ -114,13 +97,8 @@ public class ExamMarkServiceStudentYearTests
     {
         _studentRepo.Student = new Student { StudentId = 1, ClassId = 2, FirstName = "A", LastName = "B", FatherName = "C", RollNumber = "1" };
         _enrollmentRepo.Enrollments.Add(new StudentAcademicEnrollment { EnrollmentId = 1, StudentId = 1, AcademicYearId = 1, ClassId = 1, RollNumber = "1", Status = "Active" });
-        _classRepo.Subjects = [
-            new() { SubjectId = 1, ClassId = 1, SubjectName = "ریاضی" },
-            new() { SubjectId = 2, ClassId = 2, SubjectName = "فزیک فعلی" }
-        ];
-
+        _classRepo.Subjects = [new() { SubjectId = 1, ClassId = 1, SubjectName = "ریاضی" }, new() { SubjectId = 2, ClassId = 2, SubjectName = "فزیک فعلی" }];
         var result = await _service.GetStudentMarksForYearAsync(1, 1);
-
         Assert.Single(result);
         Assert.Equal("ریاضی", result[0].SubjectName);
     }

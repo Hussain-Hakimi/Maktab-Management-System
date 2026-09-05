@@ -11,61 +11,32 @@ public class StudentServiceTests
         private readonly List<Student> _students = [];
         private int _nextId = 1;
 
-        public Task<IReadOnlyList<Student>> GetStudentsAsync(CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult<IReadOnlyList<Student>>(_students.ToList());
-        }
-
-        public Task<IReadOnlyList<Student>> GetStudentsByClassAsync(int classId, CancellationToken cancellationToken = default)
-        {
-            var filtered = _students.Where(s => s.ClassId == classId).ToList();
-            return Task.FromResult<IReadOnlyList<Student>>(filtered);
-        }
-
-        public Task<Student?> GetStudentByIdAsync(int studentId, CancellationToken cancellationToken = default)
-        {
-            var student = _students.FirstOrDefault(s => s.StudentId == studentId);
-            return Task.FromResult(student);
-        }
-
-        public Task<int> CreateStudentAsync(Student student, CancellationToken cancellationToken = default)
-        {
-            student.StudentId = _nextId++;
-            _students.Add(student);
-            return Task.FromResult(student.StudentId);
-        }
-
-        public Task UpdateStudentAsync(Student student, CancellationToken cancellationToken = default)
-        {
-            var idx = _students.FindIndex(s => s.StudentId == student.StudentId);
-            if (idx >= 0)
-            {
-                _students[idx] = student;
-            }
-            return Task.CompletedTask;
-        }
-
-        public Task DeleteStudentAsync(int studentId, CancellationToken cancellationToken = default)
-        {
-            _students.RemoveAll(s => s.StudentId == studentId);
-            return Task.CompletedTask;
-        }
-
-        public Task<bool> ExistsByRollNumberAsync(int classId, string rollNumber, CancellationToken cancellationToken = default)
-        {
-            var exists = _students.Any(s => s.ClassId == classId && s.RollNumber.Equals(rollNumber, StringComparison.OrdinalIgnoreCase));
-            return Task.FromResult(exists);
-        }
+        public Task<IReadOnlyList<Student>> GetStudentsAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<Student>>(_students.ToList());
+        public Task<IReadOnlyList<Student>> GetStudentsByClassAsync(int classId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<Student>>(_students.Where(s => s.ClassId == classId).ToList());
+        public Task<Student?> GetStudentByIdAsync(int studentId, CancellationToken cancellationToken = default) => Task.FromResult(_students.FirstOrDefault(s => s.StudentId == studentId));
+        public Task<int> CreateStudentAsync(Student student, CancellationToken cancellationToken = default) { student.StudentId = _nextId++; _students.Add(student); return Task.FromResult(student.StudentId); }
+        public Task UpdateStudentAsync(Student student, CancellationToken cancellationToken = default) { var idx = _students.FindIndex(s => s.StudentId == student.StudentId); if (idx >= 0) _students[idx] = student; return Task.CompletedTask; }
+        public Task DeleteStudentAsync(int studentId, CancellationToken cancellationToken = default) { _students.RemoveAll(s => s.StudentId == studentId); return Task.CompletedTask; }
+        public Task<bool> ExistsByRollNumberAsync(int classId, string rollNumber, CancellationToken cancellationToken = default) => Task.FromResult(_students.Any(s => s.ClassId == classId && s.RollNumber.Equals(rollNumber, StringComparison.OrdinalIgnoreCase)));
     }
+
+    private sealed class InMemoryEnrollmentRepository : IStudentAcademicEnrollmentRepository
+    {
+        public Task<StudentAcademicEnrollment?> GetByStudentAndAcademicYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default) => Task.FromResult<StudentAcademicEnrollment?>(null);
+        public Task<IReadOnlyList<StudentAcademicEnrollment>> GetByAcademicYearAsync(int academicYearId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<StudentAcademicEnrollment>>([]);
+        public Task<IReadOnlyList<StudentAcademicEnrollment>> GetByClassAndAcademicYearAsync(int classId, int academicYearId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<StudentAcademicEnrollment>>([]);
+        public Task<int> CreateOrUpdateAsync(StudentAcademicEnrollment enrollment, CancellationToken cancellationToken = default) => Task.FromResult(enrollment.EnrollmentId);
+    }
+
+    private static StudentService CreateService(InMemoryStudentRepository repo)
+        => new(repo, new InMemoryEnrollmentRepository());
 
     [Fact]
     public async Task RegisterStudent_WithValidData_ReturnsNewStudentId()
     {
         var repo = new InMemoryStudentRepository();
-        var service = new StudentService(repo);
-
+        var service = CreateService(repo);
         var id = await service.RegisterStudentAsync("Ahmad", "Karimi", "Mohammad", 1, "101");
-
         Assert.True(id > 0);
         var students = await service.GetStudentsByClassAsync(1);
         Assert.Single(students);
@@ -77,25 +48,18 @@ public class StudentServiceTests
     public async Task RegisterStudent_WithDuplicateRollNumberInSameClass_ThrowsInvalidOperationException()
     {
         var repo = new InMemoryStudentRepository();
-        var service = new StudentService(repo);
-
+        var service = CreateService(repo);
         await service.RegisterStudentAsync("Ahmad", "Karimi", "Mohammad", 1, "101");
-
-        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-        {
-            await service.RegisterStudentAsync("Mahmood", "Rahimi", "Ali", 1, "101");
-        });
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await service.RegisterStudentAsync("Mahmood", "Rahimi", "Ali", 1, "101"));
     }
 
     [Fact]
     public async Task RegisterStudent_WithSameRollNumberInDifferentClass_Succeeds()
     {
         var repo = new InMemoryStudentRepository();
-        var service = new StudentService(repo);
-
+        var service = CreateService(repo);
         var id1 = await service.RegisterStudentAsync("Ahmad", "Karimi", "Mohammad", 1, "101");
         var id2 = await service.RegisterStudentAsync("Mahmood", "Rahimi", "Ali", 2, "101");
-
         Assert.True(id1 > 0);
         Assert.True(id2 > 0);
         Assert.NotEqual(id1, id2);
@@ -111,23 +75,17 @@ public class StudentServiceTests
     public async Task RegisterStudent_WithInvalidData_ThrowsArgumentException(string fn, string ln, string father, int classId, string roll)
     {
         var repo = new InMemoryStudentRepository();
-        var service = new StudentService(repo);
-
-        await Assert.ThrowsAnyAsync<ArgumentException>(async () =>
-        {
-            await service.RegisterStudentAsync(fn, ln, father, classId, roll);
-        });
+        var service = CreateService(repo);
+        await Assert.ThrowsAnyAsync<ArgumentException>(async () => await service.RegisterStudentAsync(fn, ln, father, classId, roll));
     }
 
     [Fact]
     public async Task UpdateStudent_WhenValid_UpdatesCorrectly()
     {
         var repo = new InMemoryStudentRepository();
-        var service = new StudentService(repo);
-
+        var service = CreateService(repo);
         var id = await service.RegisterStudentAsync("Ahmad", "Karimi", "Mohammad", 1, "101");
         await service.UpdateStudentAsync(id, "Ahmad Zia", "Karimi", "Mohammad", 1, "101");
-
         var student = await service.GetStudentByIdAsync(id);
         Assert.NotNull(student);
         Assert.Equal("Ahmad Zia", student.FirstName);
@@ -137,11 +95,9 @@ public class StudentServiceTests
     public async Task RemoveStudent_RemovesFromRepository()
     {
         var repo = new InMemoryStudentRepository();
-        var service = new StudentService(repo);
-
+        var service = CreateService(repo);
         var id = await service.RegisterStudentAsync("Ahmad", "Karimi", "Mohammad", 1, "101");
         await service.RemoveStudentAsync(id);
-
         var students = await service.GetAllStudentsAsync();
         Assert.Empty(students);
     }
