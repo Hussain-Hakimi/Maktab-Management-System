@@ -25,6 +25,37 @@ public sealed class UserService(
         return MapToDto(user);
     }
 
+    // Available before authentication only to determine whether first-run setup is required.
+    public async Task<bool> HasUsersAsync(CancellationToken cancellationToken = default)
+    {
+        var users = await repository.GetAllAsync(cancellationToken);
+        return users.Count > 0;
+    }
+
+    // Secure bootstrap path: allowed only while there are no existing user accounts.
+    public async Task<int> CreateInitialAdminAsync(SaveUserDto user, CancellationToken cancellationToken = default)
+    {
+        if (await HasUsersAsync(cancellationToken))
+            throw new InvalidOperationException("Initial administrator setup is only available when no user accounts exist.");
+
+        ValidateUser(user);
+        if (user.Role != UserRole.Admin)
+            throw new ArgumentException("The initial account must have the Admin role.", nameof(user));
+
+        var entity = new User
+        {
+            Username = user.Username.Trim(),
+            PasswordHash = PasswordHasher.HashPassword(user.Password),
+            FullName = user.FullName.Trim(),
+            Role = UserRole.Admin,
+            IsActive = true
+        };
+
+        var id = await repository.CreateAsync(entity, cancellationToken);
+        logger.LogInfo($"Initial administrator '{entity.Username}' created.");
+        return id;
+    }
+
     public async Task<IReadOnlyList<UserDto>> GetAllUsersAsync(CancellationToken cancellationToken = default)
     {
         authorizationService.RequireRole(UserRole.Admin);
