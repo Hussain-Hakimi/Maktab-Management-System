@@ -26,19 +26,19 @@ public partial class FirstRunAdminSetupWindow : Window
 
         if (string.IsNullOrWhiteSpace(fullName) || string.IsNullOrWhiteSpace(username))
         {
-            StatusTextBlock.Text = "نام کامل و نام کاربری الزامی است.";
+            ShowStatus("نام کامل و نام کاربری الزامی است.");
             return;
         }
 
         if (password.Length < 8)
         {
-            StatusTextBlock.Text = "رمز عبور باید حداقل ۸ کاراکتر باشد.";
+            ShowStatus("رمز عبور باید حداقل ۸ کاراکتر باشد.");
             return;
         }
 
         if (!string.Equals(password, confirmation, StringComparison.Ordinal))
         {
-            StatusTextBlock.Text = "رمزهای عبور یکسان نیستند.";
+            ShowStatus("رمزهای عبور یکسان نیستند.");
             return;
         }
 
@@ -70,8 +70,19 @@ public partial class FirstRunAdminSetupWindow : Window
         }
         catch (Exception ex)
         {
-            StatusTextBlock.Text = $"ایجاد حساب با خطا مواجه شد: {ex.Message}";
             CreateButton.IsEnabled = true;
+            ShowStatus($"ایجاد حساب با خطا مواجه شد: {ex.Message}");
+            MessageBox.Show(
+                $"حساب مدیر ایجاد نشد.\n\nجزئیات خطا:\n{ex.Message}",
+                "خطا در ایجاد حساب",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
         }
+    }
+
+    private void ShowStatus(string message)
+    {
+        StatusTextBlock.Text = message;
+        StatusTextBlock.ScrollIntoView();
     }
 }
