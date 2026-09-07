@@ -176,8 +176,8 @@ ON tbl_Students(AdmissionNumber);
             new(13, @"
 UPDATE tbl_FeePayments
 SET ReceiptNumber = ReceiptNumber || '-' || PaymentID
-WHERE PaymentID IN (
-    SELECT PaymentID
+WHERE ReceiptNumber IN (
+    SELECT ReceiptNumber
     FROM tbl_FeePayments
     GROUP BY ReceiptNumber
     HAVING COUNT(*) > 1
