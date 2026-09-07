@@ -48,6 +48,7 @@ public partial class ReportCardsView : UserControl
     private string? _lastGeneratedPdfPath;
     private bool _isCurrentUserGuardianOfSelectedClass;
     private bool _isAdmin;
+    private bool _isViewInitialized;
 
     public ReportCardsView(
         IReportCardService reportCardService,
@@ -68,11 +69,15 @@ public partial class ReportCardsView : UserControl
 
         AcademicYearTextBox.Text = AcademicYearProvider.GetCurrentAcademicYear();
         PreviewMarksDataGrid.ItemsSource = _previewMarks;
+        _isViewInitialized = true;
         Loaded += ReportCardsView_Loaded;
     }
 
     private async void ReportCardsView_Loaded(object sender, RoutedEventArgs e)
     {
+        if (!_isViewInitialized)
+            return;
+
         await LoadClassesAsync();
         ApplyPermissionUi();
         UpdatePreviewColumns(GetSelectedReportType());
@@ -80,6 +85,9 @@ public partial class ReportCardsView : UserControl
 
     public async Task InitializeDataAsync()
     {
+        if (!_isViewInitialized)
+            return;
+
         await LoadClassesAsync();
         ApplyPermissionUi();
         UpdatePreviewColumns(GetSelectedReportType());
@@ -93,6 +101,9 @@ public partial class ReportCardsView : UserControl
 
     private void UpdatePreviewColumns(ReportCardType reportType)
     {
+        if (!_isViewInitialized || PreviewMarksDataGrid is null)
+            return;
+
         PreviewMarksDataGrid.Columns.Clear();
 
         if (reportType == ReportCardType.Midterm)
@@ -199,6 +210,9 @@ public partial class ReportCardsView : UserControl
 
     private async void ClassComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (!_isViewInitialized)
+            return;
+
         if (ClassComboBox.SelectedValue is int classId && classId > 0)
         {
             await LoadStudentsForClassAsync(classId);
@@ -226,9 +240,7 @@ public partial class ReportCardsView : UserControl
 
         if (currentUser is not null && currentUser.Role == UserRole.Teacher)
         {
-            _isCurrentUserGuardianOfSelectedClass = await _teacherAssignmentService.IsClassGuardianAsync(
-                currentUser.UserId,
-                classId);
+            _isCurrentUserGuardianOfSelectedClass = await _teacherAssignmentService.IsClassGuardianAsync(currentUser.UserId, classId);
         }
         else
         {
@@ -276,17 +288,26 @@ public partial class ReportCardsView : UserControl
 
     private async void StudentComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (!_isViewInitialized)
+            return;
+
         await LoadStudentReportPreviewAsync();
     }
 
     private async void ReportTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (!_isViewInitialized)
+            return;
+
         UpdatePreviewColumns(GetSelectedReportType());
         await LoadStudentReportPreviewAsync();
     }
 
     private async Task LoadStudentReportPreviewAsync()
     {
+        if (!_isViewInitialized)
+            return;
+
         if (StudentComboBox.SelectedValue is not int studentId || studentId <= 0)
         {
             ClearPreview();
@@ -307,7 +328,6 @@ public partial class ReportCardsView : UserControl
 
             if (reportType == ReportCardType.Midterm)
             {
-                // For midterm, only show midterm scores and percentage
                 TotalScoreTextBlock.Text = $"مجموع نمرات: {data.SubjectMarks.Sum(m => m.MidtermScore)} از {data.SubjectMarks.Count * 40}";
                 AveragePercentageTextBlock.Text = $"اوسط فیصدی: {data.AveragePercentage:0.##}%";
                 PassedFailedTextBlock.Text = $"کامیاب: {data.PassedSubjectsCount} | ناکام: {data.FailedSubjectsCount}";
@@ -319,7 +339,6 @@ public partial class ReportCardsView : UserControl
                 PassedFailedTextBlock.Text = $"کامیاب: {data.PassedSubjectsCount} | ناکام: {data.FailedSubjectsCount}";
             }
 
-            // Promotion badge (only for Annual)
             if (reportType == ReportCardType.Annual)
             {
                 switch (data.PromotionOutcome)
@@ -356,15 +375,14 @@ public partial class ReportCardsView : UserControl
             _previewMarks.Clear();
             foreach (var m in data.SubjectMarks)
             {
-                var item = new PreviewMarkItem
+                _previewMarks.Add(new PreviewMarkItem
                 {
                     SubjectName = m.SubjectName,
                     MidtermScore = m.MidtermScore,
                     FinalScore = m.FinalScore,
                     TotalScore = m.TotalScore,
                     IsPassText = m.IsPass ? "کامیاب" : "ناکام"
-                };
-                _previewMarks.Add(item);
+                });
             }
         }
         catch (Exception ex)
@@ -393,10 +411,7 @@ public partial class ReportCardsView : UserControl
         _previewMarks.Clear();
     }
 
-    private bool HasReportCardPermission()
-    {
-        return _isAdmin || _isCurrentUserGuardianOfSelectedClass;
-    }
+    private bool HasReportCardPermission() => _isAdmin || _isCurrentUserGuardianOfSelectedClass;
 
     private async void GenerateSinglePdfButton_Click(object sender, RoutedEventArgs e)
     {
@@ -424,9 +439,7 @@ public partial class ReportCardsView : UserControl
 
             var openNow = MessageBox.Show($"کارنامه با موفقیت ایجاد شد.\nمحل فایل:\n{filePath}\n\nآیا می‌خواهید فایل باز شود؟", "صدور موفق", MessageBoxButton.YesNo, MessageBoxImage.Information);
             if (openNow == MessageBoxResult.Yes)
-            {
                 OpenPdf(filePath);
-            }
         }
         catch (Exception ex)
         {
@@ -462,7 +475,6 @@ public partial class ReportCardsView : UserControl
 
             StatusTextBlock.Text = $"✅ تعداد {paths.Count} فایل کارنامه PDF برای این صنف صادر گردید.";
             MessageBox.Show($"تعداد {paths.Count} کارنامه PDF با موفقیت در پوشه Reports ایجاد گردید.", "صدور دسته‌جمعی موفق", MessageBoxButton.OK, MessageBoxImage.Information);
-
             OpenFolder(_appFolders.Reports);
         }
         catch (Exception ex)
@@ -474,9 +486,7 @@ public partial class ReportCardsView : UserControl
     private void OpenGeneratedPdfButton_Click(object sender, RoutedEventArgs e)
     {
         if (!string.IsNullOrWhiteSpace(_lastGeneratedPdfPath) && File.Exists(_lastGeneratedPdfPath))
-        {
             OpenPdf(_lastGeneratedPdfPath);
-        }
     }
 
     private void OpenReportsFolderButton_Click(object sender, RoutedEventArgs e)
