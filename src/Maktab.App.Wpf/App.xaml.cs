@@ -69,9 +69,9 @@ public partial class App : System.Windows.Application
             await databaseInitializer.InitializeAsync();
 
             var userService = _host.Services.GetRequiredService<IUserService>();
-            var users = await userService.GetAllUsersAsync();
+            var hasUsers = await userService.HasUsersAsync();
 
-            if (users.Count == 0)
+            if (!hasUsers)
             {
                 var setupWindow = new FirstRunAdminSetupWindow(userService);
                 var setupResult = setupWindow.ShowDialog();
