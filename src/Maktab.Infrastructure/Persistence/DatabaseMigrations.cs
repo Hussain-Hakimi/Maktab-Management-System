@@ -172,6 +172,22 @@ WHERE AdmissionNumber IS NULL OR TRIM(AdmissionNumber) = '';
 
 CREATE UNIQUE INDEX IF NOT EXISTS ux_students_admission_number
 ON tbl_Students(AdmissionNumber);
+"),
+            new(13, @"
+UPDATE tbl_FeePayments
+SET ReceiptNumber = ReceiptNumber || '-' || PaymentID
+WHERE PaymentID IN (
+    SELECT PaymentID
+    FROM tbl_FeePayments
+    GROUP BY ReceiptNumber
+    HAVING COUNT(*) > 1
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_fee_payments_receipt_number
+ON tbl_FeePayments(ReceiptNumber);
+
+CREATE INDEX IF NOT EXISTS idx_fees_academic_year
+ON tbl_Fees(AcademicYearId);
 ")
         };
     }

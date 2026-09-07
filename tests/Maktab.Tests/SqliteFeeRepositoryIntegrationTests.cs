@@ -1,5 +1,4 @@
 using Microsoft.Data.Sqlite;
-using Maktab.Application.Abstractions;
 using Maktab.Domain.Entities;
 using Maktab.Infrastructure.Persistence;
 
@@ -106,6 +105,45 @@ public class SqliteFeeRepositoryIntegrationTests : IDisposable
 
         var totalPaid = await _feeRepository.GetTotalPaidByFeeAsync(feeId);
         Assert.Equal(600m, totalPaid);
+    }
+
+    [Fact]
+    public async Task RecordPayment_WhenAmountExceedsRemainingBalance_IsRejectedAtomically()
+    {
+        var classId = await _classSubjectRepository.CreateClassAsync(new SchoolClass { GradeName = "صنف هفتم", NumberOfSubjects = 8 });
+        var studentId = await _studentRepository.CreateStudentAsync(new Student
+        {
+            FirstName = "Ahmad", LastName = "Karimi", FatherName = "Mohammad", ClassId = classId, RollNumber = "101"
+        });
+
+        var feeId = await _feeRepository.CreateFeeAsync(new Fee
+        {
+            StudentId = studentId,
+            FeeType = "Tuition",
+            Amount = 1000m,
+            DueDate = DateTime.Today.AddDays(30),
+            CreatedDate = DateTime.Now
+        });
+
+        await _feeRepository.RecordPaymentAsync(new FeePayment
+        {
+            FeeId = feeId,
+            StudentId = studentId,
+            Amount = 700m,
+            PaymentDate = DateTime.Today,
+            ReceiptNumber = "RCP-003"
+        });
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _feeRepository.RecordPaymentAsync(new FeePayment
+        {
+            FeeId = feeId,
+            StudentId = studentId,
+            Amount = 400m,
+            PaymentDate = DateTime.Today,
+            ReceiptNumber = "RCP-004"
+        }));
+
+        Assert.Equal(700m, await _feeRepository.GetTotalPaidByFeeAsync(feeId));
     }
 
     [Fact]

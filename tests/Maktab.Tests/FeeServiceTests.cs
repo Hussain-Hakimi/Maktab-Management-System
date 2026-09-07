@@ -135,18 +135,33 @@ public class FeeServiceTests
     }
 
     [Fact]
-    public async Task DeleteFee_RemovesFeeAndPayments()
+    public async Task DeleteFee_WithRecordedPayment_IsRejected()
     {
         var repo = new InMemoryFeeRepository();
         var service = new FeeService(repo);
         var feeId = await service.AddFeeAsync(new SaveFeeDto(1, "Tuition", 1000m, DateTime.Today.AddDays(30), 1));
         await service.RecordPaymentAsync(new RecordPaymentDto(feeId, 500m, DateTime.Today));
 
-        await service.DeleteFeeAsync(feeId);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.DeleteFeeAsync(feeId));
 
         var fees = await service.GetFeesAsync();
         var payments = await service.GetPaymentsAsync();
-        Assert.Empty(fees);
-        Assert.Empty(payments);
+        Assert.Single(fees);
+        Assert.Single(payments);
+    }
+
+    [Fact]
+    public async Task RecordPayment_GeneratesUniqueReceiptNumbersForSameFeeAndDate()
+    {
+        var repo = new InMemoryFeeRepository();
+        var service = new FeeService(repo);
+        var feeId = await service.AddFeeAsync(new SaveFeeDto(1, "Tuition", 1000m, DateTime.Today.AddDays(30), 1));
+
+        await service.RecordPaymentAsync(new RecordPaymentDto(feeId, 400m, DateTime.Today));
+        await service.RecordPaymentAsync(new RecordPaymentDto(feeId, 600m, DateTime.Today));
+
+        var payments = await service.GetPaymentsAsync();
+        Assert.Equal(2, payments.Count);
+        Assert.NotEqual(payments[0].ReceiptNumber, payments[1].ReceiptNumber);
     }
 }
