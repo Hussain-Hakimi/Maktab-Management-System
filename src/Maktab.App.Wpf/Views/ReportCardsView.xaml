@@ -59,7 +59,7 @@
 
                 <TextBlock Grid.Column="9" Text="نوع اطلاع‌نامه:" VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,6,0" />
                 <ComboBox x:Name="ReportTypeComboBox" Grid.Column="10" Height="32" SelectionChanged="ReportTypeComboBox_SelectionChanged">
-                    <ComboBoxItem Content="سالانه (Annual)" Tag="Annual" IsSelected="True" />
+                    <ComboBoxItem Content="سالانه (Annual)" Tag="Annual" />
                     <ComboBoxItem Content="چهارماهه (Midterm)" Tag="Midterm" />
                 </ComboBox>
 
