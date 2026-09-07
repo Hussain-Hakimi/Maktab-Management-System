@@ -47,7 +47,7 @@ public partial class FirstRunAdminSetupWindow : Window
             CreateButton.IsEnabled = false;
             StatusTextBlock.Text = "در حال ایجاد حساب مدیر...";
 
-            var userId = await _userService.CreateUserAsync(
+            var userId = await _userService.CreateInitialAdminAsync(
                 new SaveUserDto(username, password, fullName, UserRole.Admin, true));
 
             CreatedAdmin = new UserDto
