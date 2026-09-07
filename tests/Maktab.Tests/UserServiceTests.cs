@@ -101,6 +101,59 @@ public class UserServiceTests
     }
 
     [Fact]
+    public async Task HasUsers_WhenRepositoryIsEmpty_ReturnsFalseWithoutAuthentication()
+    {
+        var result = await _service.HasUsersAsync();
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task HasUsers_WhenRepositoryContainsUsers_ReturnsTrueWithoutAuthentication()
+    {
+        _repo.Users.Add(new User { UserId = 1, Username = "admin", PasswordHash = "hash", FullName = "Admin", Role = UserRole.Admin, IsActive = true });
+
+        var result = await _service.HasUsersAsync();
+
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task CreateInitialAdmin_WhenNoUsersExist_CreatesAdminWithoutAuthentication()
+    {
+        var dto = new SaveUserDto("admin", "secure-pass", "School Administrator", UserRole.Admin, true);
+
+        var id = await _service.CreateInitialAdminAsync(dto);
+
+        Assert.Equal(1, id);
+        var created = Assert.Single(_repo.Users);
+        Assert.Equal(UserRole.Admin, created.Role);
+        Assert.True(created.IsActive);
+        Assert.NotEqual("secure-pass", created.PasswordHash);
+    }
+
+    [Fact]
+    public async Task CreateInitialAdmin_WhenUserAlreadyExists_IsRejected()
+    {
+        _repo.Users.Add(new User { UserId = 1, Username = "existing", PasswordHash = "hash", FullName = "Existing", Role = UserRole.Admin, IsActive = true });
+        var dto = new SaveUserDto("admin2", "secure-pass", "Second Admin", UserRole.Admin, true);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await _service.CreateInitialAdminAsync(dto));
+
+        Assert.Single(_repo.Users);
+    }
+
+    [Fact]
+    public async Task CreateInitialAdmin_WithNonAdminRole_IsRejected()
+    {
+        var dto = new SaveUserDto("teacher", "secure-pass", "Teacher", UserRole.Teacher, true);
+
+        await Assert.ThrowsAsync<ArgumentException>(async () => await _service.CreateInitialAdminAsync(dto));
+
+        Assert.Empty(_repo.Users);
+    }
+
+    [Fact]
     public async Task ChangePassword_ForAnotherUser_AsNonAdmin_IsRejected()
     {
         SignInAs(2, UserRole.Teacher);
