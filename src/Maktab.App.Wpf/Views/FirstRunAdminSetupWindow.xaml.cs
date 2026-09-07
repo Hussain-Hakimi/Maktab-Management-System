@@ -83,6 +83,6 @@ public partial class FirstRunAdminSetupWindow : Window
     private void ShowStatus(string message)
     {
         StatusTextBlock.Text = message;
-        StatusTextBlock.ScrollIntoView();
+        StatusTextBlock.BringIntoView();
     }
 }
