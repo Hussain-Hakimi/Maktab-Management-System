@@ -17,6 +17,7 @@ public partial class MainWindow : Window
     private readonly IAuditService _auditService;
     private readonly ICurrentUserService _currentUserService;
     private readonly IBackupService _backupService;
+    private readonly IAppLogger _logger;
 
     private UserDto? _currentUser;
 
@@ -74,7 +75,8 @@ public partial class MainWindow : Window
         IUserService userService,
         IAuditService auditService,
         ICurrentUserService currentUserService,
-        IBackupService backupService)
+        IBackupService backupService,
+        IAppLogger logger)
     {
         InitializeComponent();
 
@@ -107,6 +109,7 @@ public partial class MainWindow : Window
         _auditService = auditService;
         _currentUserService = currentUserService;
         _backupService = backupService;
+        _logger = logger;
 
         _navigationService = new NavigationService(MainContentArea);
 
@@ -156,8 +159,9 @@ public partial class MainWindow : Window
             CurrentDateTextBlock.Text = $"📅 {shamsiYear}/{shamsiMonth:D2}/{shamsiDay:D2} — {now:yyyy/MM/dd}";
             SchoolYearTextBlock.Text = $"سال تحصیلی: {AcademicYearProvider.GetCurrentAcademicYear(now)}";
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError("Failed to load the main window date and academic year display.", ex);
             CurrentDateTextBlock.Text = $"📅 {DateTime.Now:yyyy/MM/dd}";
         }
 
@@ -300,9 +304,9 @@ public partial class MainWindow : Window
                     e.Cancel = true;
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore backup check errors
+            _logger.LogError("Failed to check the last backup before application shutdown.", ex);
         }
     }
 }

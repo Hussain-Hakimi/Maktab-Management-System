@@ -18,13 +18,13 @@ public interface IReportCardService
         int studentId,
         string academicYear,
         string outputDirectory,
-        ReportCardTemplateType templateType,
+        ReportCardType reportType = ReportCardType.Annual,
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<string>> GenerateClassReportCardsPdfAsync(
         int classId,
         string academicYear,
         string outputDirectory,
-        ReportCardTemplateType templateType,
+        ReportCardType reportType = ReportCardType.Annual,
         CancellationToken cancellationToken = default);
 }

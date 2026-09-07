@@ -130,21 +130,36 @@ WHERE BookID = $bookId;";
 
     public async Task DeleteBookAsync(int bookId, CancellationToken cancellationToken = default)
     {
-        const string sql = "DELETE FROM tbl_Books WHERE BookID = $bookId;";
-
         await using var connection = new SqliteConnection(connectionStringProvider.GetConnectionString());
         await connection.OpenAsync(cancellationToken);
         await using var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken);
 
         try
         {
-            await using var command = connection.CreateCommand();
-            command.Transaction = transaction;
-            command.CommandText = sql;
-            command.Parameters.AddWithValue("$bookId", bookId);
+            // 1. Check if book has borrowing issues
+            await using (var checkIssuesCmd = connection.CreateCommand())
+            {
+                checkIssuesCmd.Transaction = transaction;
+                checkIssuesCmd.CommandText = "SELECT COUNT(1) FROM tbl_BookIssues WHERE BookID = $bookId;";
+                checkIssuesCmd.Parameters.AddWithValue("$bookId", bookId);
+                var issuesCount = Convert.ToInt32(await checkIssuesCmd.ExecuteScalarAsync(cancellationToken));
+                if (issuesCount > 0)
+                {
+                    throw new InvalidOperationException("این کتاب دارای سوابق امانت‌دهی در سیستم است و قابل حذف نیست. ابتدا باید سوابق امانت‌دهی آن را بررسی یا حذف کنید.");
+                }
+            }
 
-            var affected = await command.ExecuteNonQueryAsync(cancellationToken);
-            if (affected == 0) throw new InvalidOperationException("Book not found.");
+            // 2. Delete book
+            const string sql = "DELETE FROM tbl_Books WHERE BookID = $bookId;";
+            await using (var command = connection.CreateCommand())
+            {
+                command.Transaction = transaction;
+                command.CommandText = sql;
+                command.Parameters.AddWithValue("$bookId", bookId);
+
+                var affected = await command.ExecuteNonQueryAsync(cancellationToken);
+                if (affected == 0) throw new InvalidOperationException("کتاب مورد نظر یافت نشد.");
+            }
 
             await transaction.CommitAsync(cancellationToken);
         }

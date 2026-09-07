@@ -13,12 +13,13 @@ public partial class App : System.Windows.Application
 {
     private IHost? _host;
 
+    internal static IServiceProvider? Services { get; private set; }
+
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
-
         RegisterGlobalExceptionHandlers();
 
         try
@@ -30,7 +31,6 @@ public partial class App : System.Windows.Application
                         .AddApplicationCore()
                         .AddInfrastructureCore();
 
-                    // Register all views as singletons
                     services.AddSingleton<ClassSubjectView>();
                     services.AddSingleton<StudentManagementView>();
                     services.AddSingleton<MarksEntryView>();
@@ -59,6 +59,7 @@ public partial class App : System.Windows.Application
                 })
                 .Build();
 
+            Services = _host.Services;
             await _host.StartAsync();
 
             var appFolders = _host.Services.GetRequiredService<AppFolders>();
@@ -68,9 +69,21 @@ public partial class App : System.Windows.Application
             await databaseInitializer.InitializeAsync();
 
             var userService = _host.Services.GetRequiredService<IUserService>();
+            var users = await userService.GetAllUsersAsync();
+
+            if (users.Count == 0)
+            {
+                var setupWindow = new FirstRunAdminSetupWindow(userService);
+                var setupResult = setupWindow.ShowDialog();
+                if (setupResult != true || setupWindow.CreatedAdmin is null)
+                {
+                    Shutdown(0);
+                    return;
+                }
+            }
+
             var loginWindow = new LoginWindow(userService);
             var loginResult = loginWindow.ShowDialog();
-
             if (loginResult != true || loginWindow.AuthenticatedUser is null)
             {
                 Shutdown(0);
@@ -94,11 +107,7 @@ public partial class App : System.Windows.Application
             catch (Exception ex)
             {
                 LogException("Failed to show main window", ex);
-                MessageBox.Show(
-                    $"باز کردن پنجره اصلی با خطا مواجه شد:\n{ex.Message}",
-                    "خطا",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                MessageBox.Show($"باز کردن پنجره اصلی با خطا مواجه شد:\n{ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
                 Shutdown(1);
                 return;
             }
@@ -106,28 +115,21 @@ public partial class App : System.Windows.Application
         catch (Exception ex)
         {
             LogException("Application startup failed", ex);
-            MessageBox.Show(
-                $"برنامه به درستی راه‌اندازی نشد. لطفاً فایل لاگ را بررسی نمایید.\n\nجزئیات: {ex.Message}",
-                "خطا در راه‌اندازی برنامه",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
+            MessageBox.Show($"برنامه به درستی راه‌اندازی نشد. لطفاً فایل لاگ را بررسی نمایید.\n\nجزئیات: {ex.Message}", "خطا در راه‌اندازی برنامه", MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown(1);
             return;
         }
 
-        // Auto-backup
         _ = Task.Run(async () =>
         {
             try
             {
                 var backupService = _host.Services.GetRequiredService<IBackupService>();
                 var logger = _host.Services.GetRequiredService<IAppLogger>();
-
                 var path = await backupService.CreateBackupAsync();
                 logger.LogInfo($"Startup auto-backup created: {path}");
-
-                await backupService.PruneOldBackupsAsync(retentionDays: 7);
-                logger.LogInfo("Old backups pruned (7-day retention).");
+                await backupService.PruneOldBackupsAsync(retentionDays: 30);
+                logger.LogInfo("Old backups pruned (30-day daily + 180-day weekly retention).");
             }
             catch (Exception ex)
             {
@@ -142,24 +144,11 @@ public partial class App : System.Windows.Application
         DispatcherUnhandledException += (sender, args) =>
         {
             LogException("Unhandled UI exception", args.Exception);
-            MessageBox.Show(
-                $"یک خطای غیرمنتظره رخ داد. برنامه به کار خود ادامه می‌دهد، اما عملیات فعلی کامل نشد.\n\nجزئیات: {args.Exception.Message}",
-                "خطای غیرمنتظره",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
+            MessageBox.Show($"یک خطای غیرمنتظره رخ داد. برنامه به کار خود ادامه می‌دهد، اما عملیات فعلی کامل نشد.\n\nجزئیات: {args.Exception.Message}", "خطای غیرمنتظره", MessageBoxButton.OK, MessageBoxImage.Error);
             args.Handled = true;
         };
-
-        AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
-        {
-            LogException("Unhandled non-UI exception", args.ExceptionObject as Exception);
-        };
-
-        TaskScheduler.UnobservedTaskException += (sender, args) =>
-        {
-            LogException("Unobserved task exception", args.Exception);
-            args.SetObserved();
-        };
+        AppDomain.CurrentDomain.UnhandledException += (sender, args) => LogException("Unhandled non-UI exception", args.ExceptionObject as Exception);
+        TaskScheduler.UnobservedTaskException += (sender, args) => { LogException("Unobserved task exception", args.Exception); args.SetObserved(); };
     }
 
     private void LogException(string message, Exception? exception)
@@ -169,10 +158,7 @@ public partial class App : System.Windows.Application
             var logger = _host?.Services.GetService<IAppLogger>();
             logger?.LogError(message, exception);
         }
-        catch
-        {
-            // Logging must never crash the application
-        }
+        catch { }
     }
 
     protected override async void OnExit(ExitEventArgs e)
@@ -182,7 +168,7 @@ public partial class App : System.Windows.Application
             await _host.StopAsync();
             _host.Dispose();
         }
-
+        Services = null;
         base.OnExit(e);
     }
 }

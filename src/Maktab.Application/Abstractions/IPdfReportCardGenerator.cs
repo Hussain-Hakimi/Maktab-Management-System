@@ -7,6 +7,6 @@ public interface IPdfReportCardGenerator
     Task GeneratePdfReportAsync(
         StudentReportCardDto reportCard,
         string outputFilePath,
-        ReportCardTemplateType templateType,
+        ReportCardType reportType,
         CancellationToken cancellationToken = default);
 }

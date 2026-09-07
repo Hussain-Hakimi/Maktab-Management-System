@@ -4,7 +4,10 @@ using Maktab.Domain.Enums;
 
 namespace Maktab.Application.Services;
 
-public sealed class UserService(IUserRepository repository, IAppLogger logger) : IUserService
+public sealed class UserService(
+    IUserRepository repository,
+    IAppLogger logger,
+    IAuthorizationService authorizationService) : IUserService
 {
     public async Task<UserDto?> AuthenticateAsync(LoginDto login, CancellationToken cancellationToken = default)
     {
@@ -24,12 +27,15 @@ public sealed class UserService(IUserRepository repository, IAppLogger logger) :
 
     public async Task<IReadOnlyList<UserDto>> GetAllUsersAsync(CancellationToken cancellationToken = default)
     {
+        authorizationService.RequireRole(UserRole.Admin);
+
         var users = await repository.GetAllAsync(cancellationToken);
         return users.Select(MapToDto).ToList();
     }
 
     public async Task<int> CreateUserAsync(SaveUserDto user, CancellationToken cancellationToken = default)
     {
+        authorizationService.RequireRole(UserRole.Admin);
         ValidateUser(user);
 
         var existing = await repository.GetByUsernameAsync(user.Username.Trim(), cancellationToken);
@@ -52,6 +58,7 @@ public sealed class UserService(IUserRepository repository, IAppLogger logger) :
 
     public async Task UpdateUserAsync(int userId, SaveUserDto user, CancellationToken cancellationToken = default)
     {
+        authorizationService.RequireRole(UserRole.Admin);
         if (userId <= 0) throw new ArgumentOutOfRangeException(nameof(userId));
         ValidateUser(user, isUpdate: true);
 
@@ -84,6 +91,7 @@ public sealed class UserService(IUserRepository repository, IAppLogger logger) :
 
     public async Task DeleteUserAsync(int userId, CancellationToken cancellationToken = default)
     {
+        authorizationService.RequireRole(UserRole.Admin);
         if (userId <= 0) throw new ArgumentOutOfRangeException(nameof(userId));
         await repository.DeleteAsync(userId, cancellationToken);
         logger.LogInfo($"User ID {userId} deleted.");
@@ -91,7 +99,7 @@ public sealed class UserService(IUserRepository repository, IAppLogger logger) :
 
     public async Task ChangePasswordAsync(int userId, string oldPassword, string newPassword, CancellationToken cancellationToken = default)
     {
-        if (userId <= 0) throw new ArgumentOutOfRangeException(nameof(userId));
+        authorizationService.RequireSelfOrRole(userId, UserRole.Admin);
         if (string.IsNullOrWhiteSpace(oldPassword)) throw new ArgumentException("Old password is required.", nameof(oldPassword));
         if (string.IsNullOrWhiteSpace(newPassword)) throw new ArgumentException("New password is required.", nameof(newPassword));
 

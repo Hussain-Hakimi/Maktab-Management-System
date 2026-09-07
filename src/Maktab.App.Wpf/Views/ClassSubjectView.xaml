@@ -46,11 +46,12 @@
                         <TextBlock Text="تعداد مضامین (Number of Subjects)" FontWeight="SemiBold" Foreground="#334155" />
                         <TextBox x:Name="NumberOfSubjectsTextBox" Margin="0,4,0,10" Height="32" MaxLength="3" FontSize="14" Padding="6,4" />
 
-                        <UniformGrid Columns="4" Rows="1">
+                        <UniformGrid Columns="5" Rows="1">
                             <Button Margin="0,0,6,0" Height="34" Content="➕ افزودن" Background="#059669" Foreground="White" FontWeight="Bold" Click="AddClassButton_Click" />
                             <Button Margin="0,0,6,0" Height="34" Content="✏️ ویرایش" Background="#2563EB" Foreground="White" FontWeight="Bold" Click="UpdateClassButton_Click" />
                             <Button Margin="0,0,6,0" Height="34" Content="🗑️ حذف" Background="#DC2626" Foreground="White" FontWeight="Bold" Click="DeleteClassButton_Click" />
-                            <Button Height="34" Content="🔄 پاک‌سازی" Background="#6B7280" Foreground="White" FontWeight="SemiBold" Click="ClearClassButton_Click" />
+                            <Button Margin="0,0,6,0" Height="34" Content="🔄 پاک‌سازی" Background="#6B7280" Foreground="White" FontWeight="SemiBold" Click="ClearClassButton_Click" />
+                            <Button Height="34" Content="🏫 دسته‌جمعی" Background="#7C3AED" Foreground="White" FontWeight="SemiBold" Click="BulkCreateClassesButton_Click" />
                         </UniformGrid>
                     </StackPanel>
 

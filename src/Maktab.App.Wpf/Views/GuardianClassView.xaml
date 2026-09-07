@@ -43,6 +43,8 @@
                     Content="🔒 نهایی کردن نتایج" Click="FinalizeButton_Click" />
             <Button x:Name="UnfinalizeButton" Height="32" Padding="12,0" Background="#DC2626" Foreground="White" FontWeight="Bold"
                     Content="🔓 بازگشایی نتایج" Click="UnfinalizeButton_Click" Margin="8,0,0,0" />
+            <Button x:Name="GenerateOfficialReportsButton" Height="32" Padding="12,0" Background="#4338CA" Foreground="White" FontWeight="Bold"
+                    Content="📑 صدور اطلاع‌نامه رسمی صنف" Click="GenerateOfficialReportsButton_Click" Margin="8,0,0,0" />
             <TextBlock x:Name="FinalizationStatusTextBlock" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#047857" Margin="12,0,0,0" />
         </StackPanel>
 

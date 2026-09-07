@@ -68,32 +68,89 @@ public partial class ReportCardsView : UserControl
 
         AcademicYearTextBox.Text = AcademicYearProvider.GetCurrentAcademicYear();
         PreviewMarksDataGrid.ItemsSource = _previewMarks;
-
-        LoadTemplateComboBox();
         Loaded += ReportCardsView_Loaded;
-    }
-
-    private void LoadTemplateComboBox()
-    {
-        TemplateComboBox.ItemsSource = new List<TemplateItem>
-        {
-            new() { Name = "ساده", Value = ReportCardTemplateType.Simple },
-            new() { Name = "استاندارد", Value = ReportCardTemplateType.Standard },
-            new() { Name = "تفصیلی", Value = ReportCardTemplateType.Detailed }
-        };
-        TemplateComboBox.SelectedIndex = 1; // Standard default
     }
 
     private async void ReportCardsView_Loaded(object sender, RoutedEventArgs e)
     {
         await LoadClassesAsync();
         ApplyPermissionUi();
+        UpdatePreviewColumns(GetSelectedReportType());
     }
 
     public async Task InitializeDataAsync()
     {
         await LoadClassesAsync();
         ApplyPermissionUi();
+        UpdatePreviewColumns(GetSelectedReportType());
+    }
+
+    private ReportCardType GetSelectedReportType()
+    {
+        var selected = ReportTypeComboBox.SelectedItem as ComboBoxItem;
+        return selected?.Tag?.ToString() == "Midterm" ? ReportCardType.Midterm : ReportCardType.Annual;
+    }
+
+    private void UpdatePreviewColumns(ReportCardType reportType)
+    {
+        PreviewMarksDataGrid.Columns.Clear();
+
+        if (reportType == ReportCardType.Midterm)
+        {
+            PreviewMarksDataGrid.Columns.Add(new DataGridTextColumn
+            {
+                Header = "نام مضمون",
+                Binding = new System.Windows.Data.Binding("SubjectName"),
+                Width = new DataGridLength(1, DataGridLengthUnitType.Star)
+            });
+            PreviewMarksDataGrid.Columns.Add(new DataGridTextColumn
+            {
+                Header = "نمره چهارماهه (۴۰)",
+                Binding = new System.Windows.Data.Binding("MidtermScore") { StringFormat = "{}{0:0.##}" },
+                Width = 120
+            });
+            PreviewMarksDataGrid.Columns.Add(new DataGridTextColumn
+            {
+                Header = "فیصدی",
+                Binding = new System.Windows.Data.Binding("Percentage") { StringFormat = "{}{0:0.##}%" },
+                Width = 80
+            });
+        }
+        else
+        {
+            PreviewMarksDataGrid.Columns.Add(new DataGridTextColumn
+            {
+                Header = "نام مضمون",
+                Binding = new System.Windows.Data.Binding("SubjectName"),
+                Width = new DataGridLength(1, DataGridLengthUnitType.Star)
+            });
+            PreviewMarksDataGrid.Columns.Add(new DataGridTextColumn
+            {
+                Header = "چهارونیم‌ماهه (۴۰)",
+                Binding = new System.Windows.Data.Binding("MidtermScore") { StringFormat = "{}{0:0.##}" },
+                Width = 120
+            });
+            PreviewMarksDataGrid.Columns.Add(new DataGridTextColumn
+            {
+                Header = "سالانه (۶۰)",
+                Binding = new System.Windows.Data.Binding("FinalScore") { StringFormat = "{}{0:0.##}" },
+                Width = 100
+            });
+            PreviewMarksDataGrid.Columns.Add(new DataGridTextColumn
+            {
+                Header = "مجموع (۱۰۰)",
+                Binding = new System.Windows.Data.Binding("TotalScore") { StringFormat = "{}{0:0.##}" },
+                Width = 100,
+                FontWeight = FontWeights.Bold
+            });
+            PreviewMarksDataGrid.Columns.Add(new DataGridTextColumn
+            {
+                Header = "نتیجه",
+                Binding = new System.Windows.Data.Binding("IsPassText"),
+                Width = 80,
+                FontWeight = FontWeights.Bold
+            });
+        }
     }
 
     private async Task LoadClassesAsync()
@@ -112,7 +169,6 @@ public partial class ReportCardsView : UserControl
             }
             else if (currentUser is not null && currentUser.Role == UserRole.Teacher)
             {
-                // Only classes where the teacher is a guardian
                 var guardianships = await _teacherAssignmentService.GetClassGuardiansAsync(currentUser.UserId);
                 var guardianClassIds = guardianships.Select(g => g.ClassId).ToHashSet();
                 _classes.Clear();
@@ -182,9 +238,9 @@ public partial class ReportCardsView : UserControl
 
     private void ApplyPermissionUi()
     {
-        bool canGenerateClass = _isAdmin || (_isCurrentUserGuardianOfSelectedClass);
-        GenerateClassPdfButton.IsEnabled = canGenerateClass;
-        GenerateSinglePdfButton.IsEnabled = canGenerateClass;
+        bool canGenerate = _isAdmin || _isCurrentUserGuardianOfSelectedClass;
+        GenerateClassPdfButton.IsEnabled = canGenerate;
+        GenerateSinglePdfButton.IsEnabled = canGenerate;
     }
 
     private async Task LoadStudentsForClassAsync(int classId)
@@ -223,6 +279,12 @@ public partial class ReportCardsView : UserControl
         await LoadStudentReportPreviewAsync();
     }
 
+    private async void ReportTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        UpdatePreviewColumns(GetSelectedReportType());
+        await LoadStudentReportPreviewAsync();
+    }
+
     private async Task LoadStudentReportPreviewAsync()
     {
         if (StudentComboBox.SelectedValue is not int studentId || studentId <= 0)
@@ -234,51 +296,75 @@ public partial class ReportCardsView : UserControl
         try
         {
             var year = GetAcademicYear();
+            var reportType = GetSelectedReportType();
             var data = await _reportCardService.GetStudentReportCardDataAsync(studentId, year);
+            data.ReportType = reportType;
 
             StudentNameTextBlock.Text = $"نام شاگرد: {data.FirstName} {data.LastName}";
             FatherNameTextBlock.Text = $"نام پدر: {data.FatherName}";
             ClassNameTextBlock.Text = $"صنف: {data.ClassName}";
             RollNumberTextBlock.Text = $"شماره اساس: {data.RollNumber}";
 
-            TotalScoreTextBlock.Text = $"مجموع نمرات: {data.TotalObtainedScore:0.##} از {data.TotalMaxScore:0.##}";
-            AveragePercentageTextBlock.Text = $"اوسط فیصدی: {data.AveragePercentage:0.##}%";
-            PassedFailedTextBlock.Text = $"کامیاب: {data.PassedSubjectsCount} | ناکام: {data.FailedSubjectsCount}";
-
-            switch (data.PromotionOutcome)
+            if (reportType == ReportCardType.Midterm)
             {
-                case PromotionOutcome.Promoted:
-                    PromotionBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(240, 253, 244));
-                    PromotionBadgeBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(34, 197, 94));
-                    PromotionStatusTitleTextBlock.Text = "وضعیت ارتقاء: ✅ ارتقاء به صنف بالا (کامیاب)";
-                    PromotionStatusTitleTextBlock.Foreground = new SolidColorBrush(Color.FromRgb(22, 163, 74));
-                    break;
-                case PromotionOutcome.Conditional:
-                    PromotionBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(254, 252, 232));
-                    PromotionBadgeBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(234, 179, 8));
-                    PromotionStatusTitleTextBlock.Text = "وضعیت ارتقاء: 🟡 مشروط (نیاز به بازنگری)";
-                    PromotionStatusTitleTextBlock.Foreground = new SolidColorBrush(Color.FromRgb(202, 138, 4));
-                    break;
-                default:
-                    PromotionBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(254, 242, 242));
-                    PromotionBadgeBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(239, 68, 68));
-                    PromotionStatusTitleTextBlock.Text = "وضعیت ارتقاء: ❌ تکرار صنف (ناکام)";
-                    PromotionStatusTitleTextBlock.Foreground = new SolidColorBrush(Color.FromRgb(220, 38, 38));
-                    break;
+                // For midterm, only show midterm scores and percentage
+                TotalScoreTextBlock.Text = $"مجموع نمرات: {data.SubjectMarks.Sum(m => m.MidtermScore)} از {data.SubjectMarks.Count * 40}";
+                AveragePercentageTextBlock.Text = $"اوسط فیصدی: {data.AveragePercentage:0.##}%";
+                PassedFailedTextBlock.Text = $"کامیاب: {data.PassedSubjectsCount} | ناکام: {data.FailedSubjectsCount}";
             }
-            PromotionReasonTextBlock.Text = data.FailureReason != null ? $"علت: {data.FailureReason}" : string.Empty;
+            else
+            {
+                TotalScoreTextBlock.Text = $"مجموع نمرات: {data.TotalObtainedScore:0.##} از {data.TotalMaxScore:0.##}";
+                AveragePercentageTextBlock.Text = $"اوسط فیصدی: {data.AveragePercentage:0.##}%";
+                PassedFailedTextBlock.Text = $"کامیاب: {data.PassedSubjectsCount} | ناکام: {data.FailedSubjectsCount}";
+            }
+
+            // Promotion badge (only for Annual)
+            if (reportType == ReportCardType.Annual)
+            {
+                switch (data.PromotionOutcome)
+                {
+                    case PromotionOutcome.Promoted:
+                        PromotionBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(240, 253, 244));
+                        PromotionBadgeBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(34, 197, 94));
+                        PromotionStatusTitleTextBlock.Text = "وضعیت ارتقاء: ✅ ارتقاء به صنف بالا (کامیاب)";
+                        PromotionStatusTitleTextBlock.Foreground = new SolidColorBrush(Color.FromRgb(22, 163, 74));
+                        break;
+                    case PromotionOutcome.Conditional:
+                        PromotionBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(254, 252, 232));
+                        PromotionBadgeBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(234, 179, 8));
+                        PromotionStatusTitleTextBlock.Text = "وضعیت ارتقاء: 🟡 مشروط (نیاز به بازنگری)";
+                        PromotionStatusTitleTextBlock.Foreground = new SolidColorBrush(Color.FromRgb(202, 138, 4));
+                        break;
+                    default:
+                        PromotionBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(254, 242, 242));
+                        PromotionBadgeBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(239, 68, 68));
+                        PromotionStatusTitleTextBlock.Text = "وضعیت ارتقاء: ❌ تکرار صنف (ناکام)";
+                        PromotionStatusTitleTextBlock.Foreground = new SolidColorBrush(Color.FromRgb(220, 38, 38));
+                        break;
+                }
+                PromotionReasonTextBlock.Text = data.FailureReason != null ? $"علت: {data.FailureReason}" : string.Empty;
+            }
+            else
+            {
+                PromotionBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(241, 245, 249));
+                PromotionBadgeBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(203, 213, 225));
+                PromotionStatusTitleTextBlock.Text = "وضعیت ارتقاء: —";
+                PromotionReasonTextBlock.Text = string.Empty;
+            }
 
             _previewMarks.Clear();
             foreach (var m in data.SubjectMarks)
             {
-                _previewMarks.Add(new PreviewMarkItem
+                var item = new PreviewMarkItem
                 {
                     SubjectName = m.SubjectName,
                     MidtermScore = m.MidtermScore,
                     FinalScore = m.FinalScore,
                     TotalScore = m.TotalScore,
                     IsPassText = m.IsPass ? "کامیاب" : "ناکام"
-                });
+                };
+                _previewMarks.Add(item);
             }
         }
         catch (Exception ex)
@@ -307,11 +393,6 @@ public partial class ReportCardsView : UserControl
         _previewMarks.Clear();
     }
 
-    private ReportCardTemplateType GetSelectedTemplate()
-    {
-        return (TemplateComboBox.SelectedItem as TemplateItem)?.Value ?? ReportCardTemplateType.Standard;
-    }
-
     private bool HasReportCardPermission()
     {
         return _isAdmin || _isCurrentUserGuardianOfSelectedClass;
@@ -334,8 +415,8 @@ public partial class ReportCardsView : UserControl
         try
         {
             var year = GetAcademicYear();
-            var templateType = GetSelectedTemplate();
-            var filePath = await _reportCardService.GenerateStudentReportCardPdfAsync(studentId, year, _appFolders.Reports, templateType);
+            var reportType = GetSelectedReportType();
+            var filePath = await _reportCardService.GenerateStudentReportCardPdfAsync(studentId, year, _appFolders.Reports, reportType);
 
             _lastGeneratedPdfPath = filePath;
             OpenGeneratedPdfButton.IsEnabled = true;
@@ -376,8 +457,8 @@ public partial class ReportCardsView : UserControl
         try
         {
             var year = GetAcademicYear();
-            var templateType = GetSelectedTemplate();
-            var paths = await _reportCardService.GenerateClassReportCardsPdfAsync(classId, year, _appFolders.Reports, templateType);
+            var reportType = GetSelectedReportType();
+            var paths = await _reportCardService.GenerateClassReportCardsPdfAsync(classId, year, _appFolders.Reports, reportType);
 
             StatusTextBlock.Text = $"✅ تعداد {paths.Count} فایل کارنامه PDF برای این صنف صادر گردید.";
             MessageBox.Show($"تعداد {paths.Count} کارنامه PDF با موفقیت در پوشه Reports ایجاد گردید.", "صدور دسته‌جمعی موفق", MessageBoxButton.OK, MessageBoxImage.Information);

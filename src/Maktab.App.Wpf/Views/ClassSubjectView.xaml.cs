@@ -90,6 +90,19 @@ public partial class ClassSubjectView : UserControl
         }
     }
 
+    private async void BulkCreateClassesButton_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new BulkCreateClassesDialog(_classSubjectService)
+        {
+            Owner = Window.GetWindow(this)
+        };
+        var result = dialog.ShowDialog();
+        if (result == true)
+        {
+            await RefreshClassesAsync();
+        }
+    }
+
     private async void UpdateClassButton_Click(object sender, RoutedEventArgs e)
     {
         var selected = GetSelectedClass();

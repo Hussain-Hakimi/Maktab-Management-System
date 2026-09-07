@@ -19,8 +19,10 @@ public static class DependencyInjection
         services.AddSingleton<IUserService, UserService>();
         services.AddSingleton<IAuditService, AuditService>();
         services.AddSingleton<ICurrentUserService, CurrentUserService>();
+        services.AddSingleton<IAuthorizationService, AuthorizationService>();
         services.AddSingleton<ISettingService, SettingService>();
         services.AddSingleton<IBulkImportService, BulkImportService>();
+        services.AddSingleton<IBulkImportPreviewService, BulkImportPreviewService>();
         services.AddSingleton<ISchoolSettingsService, SchoolSettingsService>();
         services.AddSingleton<IAcademicYearService, AcademicYearService>();
         services.AddSingleton<IPromotionService, PromotionService>();

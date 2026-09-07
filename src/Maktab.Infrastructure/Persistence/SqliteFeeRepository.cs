@@ -200,8 +200,15 @@ ORDER BY p.PaymentDate DESC;";
     {
         const string sql = @"
 INSERT INTO tbl_FeePayments (FeeID, StudentID, Amount, PaymentDate, ReceiptNumber)
-VALUES ($feeId, $studentId, $amount, $paymentDate, $receiptNumber);
-SELECT last_insert_rowid();";
+SELECT $feeId, $studentId, $amount, $paymentDate, $receiptNumber
+WHERE EXISTS (
+    SELECT 1
+    FROM tbl_Fees
+    WHERE FeeID = $feeId
+      AND StudentID = $studentId
+      AND $amount <= Amount - COALESCE((SELECT SUM(Amount) FROM tbl_FeePayments WHERE FeeID = $feeId), 0)
+)
+RETURNING PaymentID;";
 
         await using var connection = new SqliteConnection(connectionStringProvider.GetConnectionString());
         await connection.OpenAsync(cancellationToken);
@@ -218,7 +225,11 @@ SELECT last_insert_rowid();";
             command.Parameters.AddWithValue("$paymentDate", payment.PaymentDate.ToString("yyyy-MM-dd"));
             command.Parameters.AddWithValue("$receiptNumber", payment.ReceiptNumber);
 
-            var id = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken));
+            var result = await command.ExecuteScalarAsync(cancellationToken);
+            if (result is null || result == DBNull.Value)
+                throw new InvalidOperationException("Payment exceeds the remaining fee balance or the fee does not belong to the student.");
+
+            var id = Convert.ToInt32(result);
             await transaction.CommitAsync(cancellationToken);
             return id;
         }

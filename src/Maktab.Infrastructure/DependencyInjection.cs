@@ -17,6 +17,7 @@ public static class DependencyInjection
         services.AddSingleton<IBackupService, SqliteBackupService>();
         services.AddSingleton<IClassSubjectRepository, SqliteClassSubjectRepository>();
         services.AddSingleton<IStudentRepository, SqliteStudentRepository>();
+        services.AddSingleton<IStudentAcademicEnrollmentRepository, SqliteStudentAcademicEnrollmentRepository>();
         services.AddSingleton<IExamMarkRepository, SqliteExamMarkRepository>();
         services.AddSingleton<IAttendanceRepository, SqliteAttendanceRepository>();
         services.AddSingleton<IBookRepository, SqliteBookRepository>();
@@ -27,6 +28,7 @@ public static class DependencyInjection
         services.AddSingleton<ISettingRepository, SqliteSettingRepository>();
         services.AddSingleton<IAcademicYearRepository, SqliteAcademicYearRepository>();
         services.AddSingleton<IStudentPromotionHistoryRepository, SqliteStudentPromotionHistoryRepository>();
+        services.AddSingleton<IPromotionTransactionRepository, SqlitePromotionTransactionRepository>();
         services.AddSingleton<ITeacherAssignmentRepository, SqliteTeacherAssignmentRepository>();
         services.AddSingleton<IExamRepository, SqliteExamRepository>();
         services.AddSingleton<IExcelReader, ExcelReader>();

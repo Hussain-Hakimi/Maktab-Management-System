@@ -34,16 +34,28 @@ public class UserServiceChangePasswordTests
 
     private readonly MockUserRepository _repo = new();
     private readonly MockLogger _logger = new();
+    private readonly CurrentUserService _currentUser = new();
     private readonly UserService _service;
 
     public UserServiceChangePasswordTests()
     {
-        _service = new UserService(_repo, _logger);
+        var authorizationService = new AuthorizationService(_currentUser);
+        _service = new UserService(_repo, _logger, authorizationService);
     }
+
+    private void SignInAs(int userId, UserRole role) => _currentUser.CurrentUser = new UserDto
+    {
+        UserId = userId,
+        Username = role.ToString().ToLowerInvariant(),
+        FullName = role.ToString(),
+        Role = role,
+        IsActive = true
+    };
 
     [Fact]
     public async Task ChangePassword_WithCorrectOldPassword_UpdatesHash()
     {
+        SignInAs(1, UserRole.Admin);
         var oldHash = PasswordHasher.HashPassword("oldpass");
         var user = new User
         {
@@ -66,6 +78,7 @@ public class UserServiceChangePasswordTests
     [Fact]
     public async Task ChangePassword_WithWrongOldPassword_ThrowsInvalidOperationException()
     {
+        SignInAs(1, UserRole.Admin);
         var oldHash = PasswordHasher.HashPassword("oldpass");
         var user = new User
         {
@@ -87,6 +100,7 @@ public class UserServiceChangePasswordTests
     [Fact]
     public async Task ChangePassword_WhenUserNotFound_ThrowsInvalidOperationException()
     {
+        SignInAs(1, UserRole.Admin);
         _repo.GetByIdResult = null;
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>

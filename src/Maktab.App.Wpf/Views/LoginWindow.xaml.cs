@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Controls;
 using Maktab.Application.Abstractions;
 
 namespace Maktab.App.Wpf.Views;
@@ -18,21 +19,14 @@ public partial class LoginWindow : Window
     private async void LoginButton_Click(object sender, RoutedEventArgs e)
     {
         var username = UsernameTextBox.Text.Trim();
-        var password = PasswordBox.Password;
-
-        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
-        {
-            ErrorTextBlock.Text = "نام کاربری و رمز عبور الزامی است.";
-            return;
-        }
+        var password = GetCurrentPassword();
 
         try
         {
             var user = await _userService.AuthenticateAsync(new LoginDto(username, password));
-            if (user is null)
+            if (user is null || !user.IsActive)
             {
-                ErrorTextBlock.Text = "نام کاربری یا رمز عبور اشتباه است.";
-                PasswordBox.Clear();
+                StatusTextBlock.Text = "نام کاربری یا رمز عبور اشتباه است.";
                 return;
             }
 
@@ -42,7 +36,32 @@ public partial class LoginWindow : Window
         }
         catch (Exception ex)
         {
-            ErrorTextBlock.Text = $"خطا: {ex.Message}";
+            StatusTextBlock.Text = $"خطا: {ex.Message}";
         }
+    }
+
+    private void TogglePasswordVisibilityButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (PasswordBox.Visibility == Visibility.Visible)
+        {
+            // Switch to plain text
+            PasswordTextBox.Text = PasswordBox.Password;
+            PasswordTextBox.Visibility = Visibility.Visible;
+            PasswordBox.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            // Switch to masked
+            PasswordBox.Password = PasswordTextBox.Text;
+            PasswordBox.Visibility = Visibility.Visible;
+            PasswordTextBox.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private string GetCurrentPassword()
+    {
+        return PasswordBox.Visibility == Visibility.Visible
+            ? PasswordBox.Password
+            : PasswordTextBox.Text;
     }
 }

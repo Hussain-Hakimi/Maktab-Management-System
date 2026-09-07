@@ -10,6 +10,9 @@ public sealed class SchoolSettingsService(ISettingRepository repository) : IScho
     private const string PhoneNumberKey = "School.Phone";
     private const string AcademicYearKey = "School.AcademicYear";
     private const string LogoPathKey = "School.LogoPath";
+    private const string GovernmentTitleKey = "GovernmentTitle";
+    private const string ProvincialEducationHeaderKey = "ProvincialEducationHeader";
+    private const string DistrictEducationHeaderKey = "DistrictEducationHeader";
 
     public async Task<SchoolSettingsDto> GetSettingsAsync(CancellationToken cancellationToken = default)
     {
@@ -22,7 +25,10 @@ public sealed class SchoolSettingsService(ISettingRepository repository) : IScho
             SchoolAddress = GetString(dict, SchoolAddressKey, ""),
             PhoneNumber = GetString(dict, PhoneNumberKey, ""),
             AcademicYear = GetString(dict, AcademicYearKey, AcademicYearProvider.GetCurrentAcademicYear()),
-            LogoPath = GetNullableString(dict, LogoPathKey)
+            LogoPath = GetNullableString(dict, LogoPathKey),
+            GovernmentTitle = GetString(dict, GovernmentTitleKey, "امارت اسلامی افغانستان"),
+            ProvincialEducationHeader = GetString(dict, ProvincialEducationHeaderKey, ""),
+            DistrictEducationHeader = GetString(dict, DistrictEducationHeaderKey, "")
         };
     }
 
@@ -36,6 +42,10 @@ public sealed class SchoolSettingsService(ISettingRepository repository) : IScho
         await repository.UpsertAsync(new Setting { Key = PhoneNumberKey, Value = settings.PhoneNumber?.Trim() ?? "" }, cancellationToken);
         await repository.UpsertAsync(new Setting { Key = AcademicYearKey, Value = settings.AcademicYear.Trim() }, cancellationToken);
         await repository.UpsertAsync(new Setting { Key = LogoPathKey, Value = settings.LogoPath ?? "" }, cancellationToken);
+
+        await repository.UpsertAsync(new Setting { Key = GovernmentTitleKey, Value = settings.GovernmentTitle.Trim() }, cancellationToken);
+        await repository.UpsertAsync(new Setting { Key = ProvincialEducationHeaderKey, Value = settings.ProvincialEducationHeader.Trim() }, cancellationToken);
+        await repository.UpsertAsync(new Setting { Key = DistrictEducationHeaderKey, Value = settings.DistrictEducationHeader.Trim() }, cancellationToken);
     }
 
     private static string GetString(Dictionary<string, string> dict, string key, string defaultValue)

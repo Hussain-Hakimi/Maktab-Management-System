@@ -7,7 +7,8 @@ public sealed class AlertService(
     IFeeService feeService,
     IAttendanceService attendanceService,
     IAcademicYearService academicYearService,
-    IStudentService studentService) : IAlertService
+    IStudentService studentService,
+    IAppLogger logger) : IAlertService
 {
     private const decimal AbsenceRateThreshold = 20m;
     private const int OverdueDaysWarning = 7;
@@ -48,9 +49,13 @@ public sealed class AlertService(
                 });
             }
         }
-        catch
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            // Ignore if no data or error
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError("Failed to generate overdue-book alerts.", ex);
         }
     }
 
@@ -73,9 +78,13 @@ public sealed class AlertService(
                 });
             }
         }
-        catch
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            // Ignore if no data or error
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError("Failed to generate outstanding-fee alerts.", ex);
         }
     }
 
@@ -112,9 +121,13 @@ public sealed class AlertService(
                 }
             }
         }
-        catch
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            // Ignore if no data or error
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError("Failed to generate high-absence alerts.", ex);
         }
     }
 }

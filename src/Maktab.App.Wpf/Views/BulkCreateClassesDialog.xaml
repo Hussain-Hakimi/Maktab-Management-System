@@ -1,0 +1,64 @@
+<Window x:Class="Maktab.App.Wpf.Views.BulkCreateClassesDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="&#x633;&#x627;&#x62E;&#x62A;&#x646; &#x635;&#x646;&#x648;&#x641; &#x62F;&#x633;&#x62A;&#x647;&#x200C;&#x62C;&#x645;&#x639;&#x6CC;" Height="540" Width="440"
+        FlowDirection="RightToLeft"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#1E40AF" Padding="12,10" CornerRadius="6" Margin="0,0,0,14">
+            <TextBlock Text="&#x1F3EB; &#x627;&#x6CC;&#x62C;&#x627;&#x62F; &#x635;&#x646;&#x648;&#x641; &#x62F;&#x633;&#x62A;&#x647;&#x200C;&#x62C;&#x645;&#x639;&#x6CC;" FontSize="16" FontWeight="Bold" Foreground="White"/>
+        </Border>
+
+        <!-- Prefix Input -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,10">
+            <TextBlock Text="&#x67E;&#x6CC;&#x634;&#x648;&#x646;&#x62F; &#x646;&#x627;&#x645; &#x635;&#x646;&#x641; (&#x645;&#x62B;&#x644;&#x627;&#x64B;: &#x635;&#x646;&#x641;)" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,4"/>
+            <TextBox x:Name="PrefixTextBox" Height="34" FontSize="14" Padding="8,4" Text="&#x635;&#x646;&#x641;"/>
+        </StackPanel>
+
+        <!-- Number of Subjects -->
+        <StackPanel Grid.Row="2" Margin="0,0,0,10">
+            <TextBlock Text="&#x62A;&#x639;&#x62F;&#x627;&#x62F; &#x645;&#x636;&#x627;&#x645;&#x6CC;&#x646; &#x628;&#x631;&#x627;&#x6CC; &#x647;&#x631; &#x635;&#x646;&#x641;" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,4"/>
+            <TextBox x:Name="NumberOfSubjectsTextBox" Height="34" FontSize="14" Padding="8,4" Text="8"/>
+        </StackPanel>
+
+        <!-- Grade Checkboxes -->
+        <Border Grid.Row="3" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="4" Margin="0,0,0,10">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="GradeCheckBoxPanel" Margin="10">
+                    <CheckBox x:Name="CbAval" Content="&#x635;&#x646;&#x641; &#x627;&#x648;&#x644;" IsChecked="True" Margin="0,4"/>
+                    <CheckBox x:Name="CbDovom" Content="&#x635;&#x646;&#x641; &#x62F;&#x648;&#x645;" IsChecked="True" Margin="0,4"/>
+                    <CheckBox x:Name="CbSevom" Content="&#x635;&#x646;&#x641; &#x633;&#x648;&#x645;" IsChecked="True" Margin="0,4"/>
+                    <CheckBox x:Name="CbChaharom" Content="&#x635;&#x646;&#x641; &#x686;&#x647;&#x627;&#x631;&#x645;" IsChecked="True" Margin="0,4"/>
+                    <CheckBox x:Name="CbPanjom" Content="&#x635;&#x646;&#x641; &#x67E;&#x646;&#x62C;&#x645;" IsChecked="True" Margin="0,4"/>
+                    <CheckBox x:Name="CbSheshom" Content="&#x635;&#x646;&#x641; &#x634;&#x634;&#x645;" IsChecked="True" Margin="0,4"/>
+                    <CheckBox x:Name="CbHaftom" Content="&#x635;&#x646;&#x641; &#x647;&#x641;&#x62A;&#x645;" IsChecked="True" Margin="0,4"/>
+                    <CheckBox x:Name="CbHashtom" Content="&#x635;&#x646;&#x641; &#x647;&#x634;&#x62A;&#x645;" IsChecked="True" Margin="0,4"/>
+                    <CheckBox x:Name="CbNahom" Content="&#x635;&#x646;&#x641; &#x646;&#x647;&#x645;" IsChecked="True" Margin="0,4"/>
+                    <CheckBox x:Name="CbDahom" Content="&#x635;&#x646;&#x641; &#x62F;&#x647;&#x645;" IsChecked="True" Margin="0,4"/>
+                    <CheckBox x:Name="CbYazdhom" Content="&#x635;&#x646;&#x641; &#x6CC;&#x627;&#x632;&#x62F;&#x647;&#x645;" IsChecked="True" Margin="0,4"/>
+                    <CheckBox x:Name="CbDavazdhom" Content="&#x635;&#x646;&#x641; &#x62F;&#x648;&#x627;&#x632;&#x62F;&#x647;&#x645;" IsChecked="True" Margin="0,4"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Status Label -->
+        <TextBlock x:Name="StatusTextBlock" Grid.Row="4" TextWrapping="Wrap" Foreground="#059669" FontSize="12" Margin="0,0,0,10" />
+
+        <!-- Buttons -->
+        <UniformGrid Grid.Row="5" Columns="2" Rows="1">
+            <Button x:Name="CreateButton" Content="&#x2705; &#x627;&#x6CC;&#x62C;&#x627;&#x62F; &#x635;&#x646;&#x648;&#x641;" Height="36" Background="#059669" Foreground="White" FontWeight="Bold" Click="CreateButton_Click" Margin="0,0,6,0"/>
+            <Button x:Name="CancelButton" Content="&#x274C; &#x627;&#x646;&#x635;&#x631;&#x627;&#x641;" Height="36" Background="#6B7280" Foreground="White" FontWeight="SemiBold" Click="CancelButton_Click"/>
+        </UniformGrid>
+    </Grid>
+</Window>

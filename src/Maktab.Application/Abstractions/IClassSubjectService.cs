@@ -6,6 +6,7 @@ public interface IClassSubjectService
 {
     Task<IReadOnlyList<SchoolClass>> GetClassesAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Subject>> GetSubjectsByClassAsync(int classId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Subject>> GetAllSubjectsAsync(CancellationToken cancellationToken = default);
 
     Task<int> CreateClassAsync(string gradeName, int numberOfSubjects, CancellationToken cancellationToken = default);
     Task UpdateClassAsync(int classId, string gradeName, int numberOfSubjects, CancellationToken cancellationToken = default);

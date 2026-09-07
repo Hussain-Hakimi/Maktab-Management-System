@@ -33,4 +33,14 @@ public interface IBulkImportService
         int classId,
         int academicYearId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Imports marks for ALL subjects of a class from a single wide Excel file.
+    /// Columns: RollNumber | SubjectName_Midterm | SubjectName_Final | ...
+    /// </summary>
+    Task<BulkImportResultDto> ImportMultiSubjectMarksFromFileAsync(
+        string filePath,
+        int classId,
+        int academicYearId,
+        CancellationToken cancellationToken = default);
 }

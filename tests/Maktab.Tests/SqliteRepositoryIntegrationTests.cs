@@ -165,15 +165,12 @@ public class SqliteRepositoryIntegrationTests : IDisposable
     }
 
     [Fact]
-    public async Task DeleteClass_WhenStudentsExist_ThrowsSqliteException()
+    public async Task DeleteClass_WhenStudentsExist_ThrowsInvalidOperationException()
     {
         var classId = await CreateClassAsync();
         await CreateStudentAsync(classId, "101");
 
-        // tbl_Students references tbl_Classes with ON DELETE RESTRICT.
-        // This only throws if FK enforcement is active on every connection
-        // (ConnectionStringProvider sets ForeignKeys = true).
-        await Assert.ThrowsAsync<SqliteException>(async () =>
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
         {
             await _classSubjectRepository.DeleteClassAsync(classId);
         });

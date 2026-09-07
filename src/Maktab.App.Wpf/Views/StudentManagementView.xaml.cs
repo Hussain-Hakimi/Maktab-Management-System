@@ -9,6 +9,7 @@ namespace Maktab.App.Wpf.Views;
 public sealed class StudentDisplayItem
 {
     public int StudentId { get; set; }
+    public string AdmissionNumber { get; set; } = string.Empty;
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string FatherName { get; set; } = string.Empty;
@@ -98,6 +99,7 @@ public partial class StudentManagementView : UserControl
             _allStudents = students.Select(s => new StudentDisplayItem
             {
                 StudentId = s.StudentId,
+                AdmissionNumber = s.AdmissionNumber ?? string.Empty,
                 FirstName = s.FirstName,
                 LastName = s.LastName,
                 FatherName = s.FatherName,
@@ -117,7 +119,7 @@ public partial class StudentManagementView : UserControl
 
     private void ApplyFilters()
     {
-        var filtered = _allStudents.AsEnumerable();
+        IEnumerable<StudentDisplayItem> filtered = _allStudents;
 
         if (FilterClassComboBox.SelectedValue is int selectedClassId && selectedClassId > 0)
         {
@@ -128,12 +130,13 @@ public partial class StudentManagementView : UserControl
         if (!string.IsNullOrWhiteSpace(search))
         {
             filtered = filtered.Where(s =>
-                s.FirstName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                s.LastName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                s.FatherName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                s.RollNumber.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                ContainsIgnoreCase(s.AdmissionNumber, search) ||
+                ContainsIgnoreCase(s.FirstName, search) ||
+                ContainsIgnoreCase(s.LastName, search) ||
+                ContainsIgnoreCase(s.FatherName, search) ||
+                ContainsIgnoreCase(s.RollNumber, search) ||
                 s.StudentId.ToString().Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                s.ClassName.Contains(search, StringComparison.OrdinalIgnoreCase));
+                ContainsIgnoreCase(s.ClassName, search));
         }
 
         _displayedStudents.Clear();
@@ -145,7 +148,12 @@ public partial class StudentManagementView : UserControl
         CountTextBlock.Text = $" (تعداد: {_displayedStudents.Count})";
     }
 
+    private static bool ContainsIgnoreCase(string value, string search) =>
+        value.Contains(search, StringComparison.OrdinalIgnoreCase);
+
     private StudentDisplayItem? GetSelectedStudent() => StudentsDataGrid.SelectedItem as StudentDisplayItem;
+
+    private bool IsEditingMode => StudentsDataGrid.SelectedItem is not null;
 
     private async void AddStudentButton_Click(object sender, RoutedEventArgs e)
     {
@@ -267,6 +275,30 @@ public partial class StudentManagementView : UserControl
         await RefreshStudentsListAsync();
     }
 
+    private async void FormClassComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        // Only auto-fill when NOT editing an existing student.
+        if (IsEditingMode)
+        {
+            return;
+        }
+
+        if (FormClassComboBox.SelectedValue is not int classId || classId <= 0)
+        {
+            return;
+        }
+
+        try
+        {
+            var next = await _studentService.GetNextRollNumberAsync(classId);
+            RollNumberTextBox.Text = next.ToString();
+        }
+        catch (Exception ex)
+        {
+            FormStatusTextBlock.Text = $"⚠️ شماره اساس خودکار دریافت نشد: {ex.Message}";
+        }
+    }
+
     private bool ValidateInputs(out string firstName, out string lastName, out string fatherName, out int classId, out string rollNumber)
     {
         firstName = FirstNameTextBox.Text?.Trim() ?? string.Empty;
@@ -331,7 +363,7 @@ public partial class StudentManagementView : UserControl
         }
         catch
         {
-            // Audit logging should not break the operation
+            // Audit logging should not break the operation.
         }
     }
 }

@@ -36,6 +36,10 @@ public sealed class FeeService(IFeeRepository repository) : IFeeService
         var fee = await repository.GetFeeByIdAsync(feeId, cancellationToken);
         if (fee is null) throw new InvalidOperationException("Fee not found.");
 
+        var totalPaid = await repository.GetTotalPaidByFeeAsync(feeId, cancellationToken);
+        if (totalPaid > 0m)
+            throw new InvalidOperationException("A fee with recorded payments cannot be deleted. Preserve the payment history instead.");
+
         await repository.DeleteFeeAsync(feeId, cancellationToken);
     }
 
@@ -71,6 +75,6 @@ public sealed class FeeService(IFeeRepository repository) : IFeeService
 
     private static string GenerateReceiptNumber(int feeId, DateTime date)
     {
-        return $"RCP-{date:yyyyMMddHHmmss}-{feeId}";
+        return $"RCP-{date:yyyyMMddHHmmss}-{feeId}-{Guid.NewGuid():N}".ToUpperInvariant();
     }
 }

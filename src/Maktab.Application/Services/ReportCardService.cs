@@ -9,7 +9,10 @@ public sealed class ReportCardService(
     IClassSubjectRepository classSubjectRepository,
     IExamMarkRepository markRepository,
     IPdfReportCardGenerator pdfGenerator,
-    IAttendanceService attendanceService) : IReportCardService
+    IAttendanceService attendanceService,
+    ISchoolSettingsService schoolSettingsService,
+    IAcademicYearRepository academicYearRepository,
+    IStudentAcademicEnrollmentRepository? enrollmentRepository = null) : IReportCardService
 {
     public async Task<StudentReportCardDto> GetStudentReportCardDataAsync(
         int studentId,
@@ -18,18 +21,53 @@ public sealed class ReportCardService(
     {
         if (studentId <= 0) throw new ArgumentOutOfRangeException(nameof(studentId));
 
+        var requestedAcademicYear = string.IsNullOrWhiteSpace(academicYear)
+            ? AcademicYearProvider.GetCurrentAcademicYear()
+            : academicYear.Trim();
+
+        var academicYears = await academicYearRepository.GetAllAsync(cancellationToken);
+        var selectedAcademicYear = academicYears.FirstOrDefault(y => y.YearName == requestedAcademicYear);
+        if (selectedAcademicYear is null)
+        {
+            throw new InvalidOperationException($"سال تعلیمی {requestedAcademicYear} یافت نشد.");
+        }
+
         var student = await studentRepository.GetStudentByIdAsync(studentId, cancellationToken);
         if (student is null)
         {
             throw new InvalidOperationException($"شاگرد با آیدی {studentId} یافت نشد.");
         }
 
-        var classes = await classSubjectRepository.GetClassesAsync(cancellationToken);
-        var schoolClass = classes.FirstOrDefault(c => c.ClassId == student.ClassId);
-        var className = schoolClass?.GradeName ?? $"صنف {student.ClassId}";
+        var academicYearId = selectedAcademicYear.AcademicYearId;
+        var classId = student.ClassId;
+        var rollNumber = student.RollNumber;
 
-        var subjects = await classSubjectRepository.GetSubjectsByClassAsync(student.ClassId, cancellationToken);
-        var marks = await markRepository.GetMarksByStudentAsync(studentId, cancellationToken);
+        if (enrollmentRepository is not null)
+        {
+            var enrollment = await enrollmentRepository.GetByStudentAndAcademicYearAsync(
+                studentId,
+                academicYearId,
+                cancellationToken);
+
+            if (enrollment is null)
+            {
+                throw new InvalidOperationException(
+                    $"برای شاگرد {studentId} در سال تعلیمی {requestedAcademicYear} ثبت‌نام صنفی یافت نشد.");
+            }
+
+            classId = enrollment.ClassId;
+            rollNumber = enrollment.RollNumber;
+        }
+
+        var classes = await classSubjectRepository.GetClassesAsync(cancellationToken);
+        var schoolClass = classes.FirstOrDefault(c => c.ClassId == classId);
+        var className = schoolClass?.GradeName ?? $"صنف {classId}";
+
+        var subjects = await classSubjectRepository.GetSubjectsByClassAsync(classId, cancellationToken);
+        var marks = await markRepository.GetMarksByStudentAndYearAsync(
+            studentId,
+            academicYearId,
+            cancellationToken);
         var markMap = marks.ToDictionary(m => m.SubjectId);
 
         var subjectReports = new List<SubjectMarkReportDto>();
@@ -62,7 +100,7 @@ public sealed class ReportCardService(
         var avgPercentage = totalMaxScore > 0 ? Math.Round((totalObtained / totalMaxScore) * 100m, 2) : 0m;
         var overallGrade = GradingPolicy.ResolveLetterGrade(avgPercentage);
 
-        var absenceDays = await attendanceService.GetStudentAbsenceDaysAsync(studentId, academicYear, cancellationToken);
+        var absenceDays = await attendanceService.GetStudentAbsenceDaysAsync(studentId, requestedAcademicYear, cancellationToken);
 
         var outcome = PromotionPolicy.GetPromotionOutcome(avgPercentage, failedCount, absenceDays);
         string promoText;
@@ -77,7 +115,7 @@ public sealed class ReportCardService(
                 promoText = "مشروط (CONDITIONAL)";
                 failureReason = "عدم تکمیل معیار قبولی در برخی مضامین";
                 break;
-            default: // Repeat
+            default:
                 promoText = "تکرار صنف (REPEAT)";
                 if (absenceDays > PromotionPolicy.MaxAllowedAbsenceDays)
                     failureReason = $"بیش از {PromotionPolicy.MaxAllowedAbsenceDays} روز غیرحاضری ({absenceDays} روز)";
@@ -88,16 +126,18 @@ public sealed class ReportCardService(
                 break;
         }
 
+        var schoolSettings = await schoolSettingsService.GetSettingsAsync(cancellationToken);
+
         return new StudentReportCardDto
         {
             StudentId = student.StudentId,
             FirstName = student.FirstName,
             LastName = student.LastName,
             FatherName = student.FatherName,
-            RollNumber = student.RollNumber,
-            ClassId = student.ClassId,
+            RollNumber = rollNumber,
+            ClassId = classId,
             ClassName = className,
-            AcademicYear = string.IsNullOrWhiteSpace(academicYear) ? AcademicYearProvider.GetCurrentAcademicYear() : academicYear.Trim(),
+            AcademicYear = requestedAcademicYear,
             IssueDate = DateTime.Now.ToString("yyyy/MM/dd"),
             SubjectMarks = subjectReports,
             TotalObtainedScore = totalObtained,
@@ -109,7 +149,12 @@ public sealed class ReportCardService(
             AbsenceDays = absenceDays,
             PromotionOutcome = outcome,
             PromotionStatusText = promoText,
-            FailureReason = failureReason
+            FailureReason = failureReason,
+            ReportType = ReportCardType.Annual,
+            GovernmentTitle = schoolSettings.GovernmentTitle,
+            ProvincialEducationHeader = schoolSettings.ProvincialEducationHeader,
+            DistrictEducationHeader = schoolSettings.DistrictEducationHeader,
+            SchoolLogoPath = schoolSettings.LogoPath ?? string.Empty
         };
     }
 
@@ -120,34 +165,59 @@ public sealed class ReportCardService(
     {
         if (classId <= 0) throw new ArgumentOutOfRangeException(nameof(classId));
 
-        var students = await studentRepository.GetStudentsByClassAsync(classId, cancellationToken);
-        var list = new List<StudentReportCardDto>();
+        var students = enrollmentRepository is not null
+            ? (await ResolveClassStudentIdsAsync(classId, academicYear, cancellationToken))
+                .Select(id => id)
+                .ToList()
+            : (await studentRepository.GetStudentsByClassAsync(classId, cancellationToken))
+                .Select(s => s.StudentId)
+                .ToList();
 
-        foreach (var student in students)
+        var list = new List<StudentReportCardDto>();
+        foreach (var studentId in students)
         {
-            var data = await GetStudentReportCardDataAsync(student.StudentId, academicYear, cancellationToken);
+            var data = await GetStudentReportCardDataAsync(studentId, academicYear, cancellationToken);
             list.Add(data);
         }
 
         return list;
     }
 
+    private async Task<IReadOnlyList<int>> ResolveClassStudentIdsAsync(
+        int classId,
+        string academicYear,
+        CancellationToken cancellationToken)
+    {
+        var years = await academicYearRepository.GetAllAsync(cancellationToken);
+        var selectedYear = years.FirstOrDefault(y => y.YearName == academicYear.Trim());
+        if (selectedYear is null)
+            throw new InvalidOperationException($"سال تعلیمی {academicYear} یافت نشد.");
+
+        var enrollments = await enrollmentRepository!.GetByClassAndAcademicYearAsync(
+            classId,
+            selectedYear.AcademicYearId,
+            cancellationToken);
+
+        return enrollments.Select(e => e.StudentId).ToList();
+    }
+
     public async Task<string> GenerateStudentReportCardPdfAsync(
         int studentId,
         string academicYear,
         string outputDirectory,
-        ReportCardTemplateType templateType,
+        ReportCardType reportType = ReportCardType.Annual,
         CancellationToken cancellationToken = default)
     {
         var data = await GetStudentReportCardDataAsync(studentId, academicYear, cancellationToken);
+        data.ReportType = reportType;
         Directory.CreateDirectory(outputDirectory);
 
         var safeYear = data.AcademicYear.Replace(" ", "").Replace("-", "_").Replace("/", "_");
         var safeName = $"{data.FirstName}_{data.LastName}".Replace(" ", "_");
-        var fileName = $"{safeName}_{data.StudentId:D4}_{safeYear}.pdf";
+        var fileName = $"{safeName}_{data.StudentId:D4}_{safeYear}_{reportType}.pdf";
         var filePath = Path.Combine(outputDirectory, fileName);
 
-        await pdfGenerator.GeneratePdfReportAsync(data, filePath, templateType, cancellationToken);
+        await pdfGenerator.GeneratePdfReportAsync(data, filePath, reportType, cancellationToken);
         return filePath;
     }
 
@@ -155,7 +225,7 @@ public sealed class ReportCardService(
         int classId,
         string academicYear,
         string outputDirectory,
-        ReportCardTemplateType templateType,
+        ReportCardType reportType = ReportCardType.Annual,
         CancellationToken cancellationToken = default)
     {
         var reports = await GetClassReportCardsDataAsync(classId, academicYear, cancellationToken);
@@ -164,12 +234,13 @@ public sealed class ReportCardService(
         var generatedPaths = new List<string>();
         foreach (var data in reports)
         {
+            data.ReportType = reportType;
             var safeYear = data.AcademicYear.Replace(" ", "").Replace("-", "_").Replace("/", "_");
             var safeName = $"{data.FirstName}_{data.LastName}".Replace(" ", "_");
-            var fileName = $"{safeName}_{data.StudentId:D4}_{safeYear}.pdf";
+            var fileName = $"{safeName}_{data.StudentId:D4}_{safeYear}_{reportType}.pdf";
             var filePath = Path.Combine(outputDirectory, fileName);
 
-            await pdfGenerator.GeneratePdfReportAsync(data, filePath, templateType, cancellationToken);
+            await pdfGenerator.GeneratePdfReportAsync(data, filePath, reportType, cancellationToken);
             generatedPaths.Add(filePath);
         }
 

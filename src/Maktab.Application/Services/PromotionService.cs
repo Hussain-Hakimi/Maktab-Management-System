@@ -10,7 +10,9 @@ public sealed class PromotionService(
     IClassSubjectRepository classSubjectRepository,
     IExamMarkRepository examMarkRepository,
     IAttendanceRepository attendanceRepository,
-    IStudentPromotionHistoryRepository historyRepository) : IPromotionService
+    IStudentPromotionHistoryRepository historyRepository,
+    IPromotionTransactionRepository? promotionTransactionRepository = null,
+    IAcademicYearRepository? academicYearRepository = null) : IPromotionService
 {
     public async Task<PromotionResultDto> RunPromotionForYearAsync(int academicYearId, CancellationToken cancellationToken = default)
     {
@@ -20,12 +22,28 @@ public sealed class PromotionService(
         var result = new PromotionResultDto();
         var classes = await classSubjectRepository.GetClassesAsync(cancellationToken);
         var classIds = classes.OrderBy(c => c.ClassId).Select(c => c.ClassId).ToList();
+        var processedStudentIds = new HashSet<int>();
+
+        AcademicYear? nextAcademicYear = null;
+        if (academicYearRepository != null)
+        {
+            var sourceYear = await academicYearRepository.GetByIdAsync(academicYearId, cancellationToken)
+                ?? throw new InvalidOperationException($"Academic year {academicYearId} was not found.");
+
+            nextAcademicYear = (await academicYearRepository.GetAllAsync(cancellationToken))
+                .Where(y => y.StartDate > sourceYear.EndDate)
+                .OrderBy(y => y.StartDate)
+                .FirstOrDefault();
+        }
 
         foreach (var classId in classIds)
         {
             var students = await studentRepository.GetStudentsByClassAsync(classId, cancellationToken);
             foreach (var student in students)
             {
+                if (!processedStudentIds.Add(student.StudentId))
+                    continue;
+
                 try
                 {
                     var outcome = await DeterminePromotionAsync(student, classId, academicYearId, cancellationToken);
@@ -38,19 +56,6 @@ public sealed class PromotionService(
                             var nextClassId = classIds.FirstOrDefault(id => id > classId);
                             toClassId = nextClassId > 0 ? nextClassId : null;
                             resultText = "Promoted";
-                            if (toClassId != null)
-                            {
-                                await studentRepository.UpdateStudentAsync(new Student
-                                {
-                                    StudentId = student.StudentId,
-                                    FirstName = student.FirstName,
-                                    LastName = student.LastName,
-                                    FatherName = student.FatherName,
-                                    ClassId = toClassId.Value,
-                                    RollNumber = student.RollNumber,
-                                    RegistrationDate = student.RegistrationDate
-                                }, cancellationToken);
-                            }
                             result.PromotedCount++;
                             break;
                         case PromotionOutcome.Conditional:
@@ -63,7 +68,19 @@ public sealed class PromotionService(
                             break;
                     }
 
-                    await historyRepository.AddAsync(new StudentPromotionHistory
+                    var resultingClassId = toClassId ?? classId;
+                    var updatedStudent = new Student
+                    {
+                        StudentId = student.StudentId,
+                        FirstName = student.FirstName,
+                        LastName = student.LastName,
+                        FatherName = student.FatherName,
+                        ClassId = resultingClassId,
+                        RollNumber = student.RollNumber,
+                        RegistrationDate = student.RegistrationDate
+                    };
+
+                    var history = new StudentPromotionHistory
                     {
                         StudentId = student.StudentId,
                         FromClassId = classId,
@@ -71,7 +88,39 @@ public sealed class PromotionService(
                         AcademicYearId = academicYearId,
                         Result = resultText,
                         PromotionDate = DateTime.Now
-                    }, cancellationToken);
+                    };
+
+                    StudentAcademicEnrollment? targetEnrollment = null;
+                    if (nextAcademicYear != null)
+                    {
+                        targetEnrollment = new StudentAcademicEnrollment
+                        {
+                            StudentId = student.StudentId,
+                            AcademicYearId = nextAcademicYear.AcademicYearId,
+                            ClassId = resultingClassId,
+                            RollNumber = student.RollNumber,
+                            EnrollmentDate = nextAcademicYear.StartDate,
+                            // Repeating students remain active in the next academic year;
+                            // the promotion history stores the specific Repeat outcome.
+                            Status = "Active"
+                        };
+                    }
+
+                    if (promotionTransactionRepository != null)
+                    {
+                        await promotionTransactionRepository.ApplyAsync(
+                            updatedStudent,
+                            history,
+                            targetEnrollment,
+                            cancellationToken);
+                    }
+                    else
+                    {
+                        // Compatibility fallback for older callers/tests. Production DI registers
+                        // IPromotionTransactionRepository, so real promotion uses one transaction.
+                        await studentRepository.UpdateStudentAsync(updatedStudent, cancellationToken);
+                        await historyRepository.AddAsync(history, cancellationToken);
+                    }
 
                     result.TotalStudents++;
                 }

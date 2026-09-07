@@ -13,6 +13,7 @@ public partial class TeacherAssignmentView : UserControl
     private readonly IClassSubjectService _classSubjectService;
     private readonly IAuditService _auditService;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IAppLogger _logger;
 
     private readonly ObservableCollection<TeacherSubjectAssignmentDto> _teacherSubjects = [];
     private readonly ObservableCollection<ClassGuardianDto> _guardians = [];
@@ -23,13 +24,15 @@ public partial class TeacherAssignmentView : UserControl
         IUserService userService,
         IClassSubjectService classSubjectService,
         IAuditService auditService,
-        ICurrentUserService currentUserService)
+        ICurrentUserService currentUserService,
+        IAppLogger logger)
     {
         _assignmentService = assignmentService;
         _userService = userService;
         _classSubjectService = classSubjectService;
         _auditService = auditService;
         _currentUserService = currentUserService;
+        _logger = logger;
 
         InitializeComponent();
         TeacherSubjectsDataGrid.ItemsSource = _teacherSubjects;
@@ -213,9 +216,9 @@ public partial class TeacherAssignmentView : UserControl
             var userName = _currentUserService.CurrentUser?.Username ?? "Unknown";
             await _auditService.LogAsync(userName, action);
         }
-        catch
+        catch (Exception ex)
         {
-            // ignore
+            _logger.LogError($"Failed to write teacher-assignment audit entry for action '{action}'.", ex);
         }
     }
 }

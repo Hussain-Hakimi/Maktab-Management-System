@@ -8,12 +8,14 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
     <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.0.0" />
+    <PackageReference Include="ClosedXML" Version="0.104.2" />
+
   </ItemGroup>
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
-    <Version>1.6.0</Version>
+    <Version>1.9.1</Version>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>

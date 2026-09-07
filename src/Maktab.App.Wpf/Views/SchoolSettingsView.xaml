@@ -24,28 +24,46 @@
                 <StackPanel>
                     <TextBlock Text="اطلاعات عمومی" FontSize="18" FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,20" />
 
-                    <TextBlock Text="نام مکتب *" FontWeight="SemiBold" Margin="0,0,0,6" />
-                    <TextBox x:Name="SchoolNameTextBox" Height="36" Margin="0,0,0,16" FontSize="14" Padding="8,6" />
+                    <!-- Government Title -->
+                    <TextBlock Text="عنوان دولت / حکومت" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <TextBox x:Name="GovernmentTitleTextBox" Height="34" Margin="0,0,0,12" />
 
-                    <TextBlock Text="آدرس مکتب" FontWeight="SemiBold" Margin="0,0,0,6" />
-                    <TextBox x:Name="SchoolAddressTextBox" Height="36" Margin="0,0,0,16" FontSize="14" Padding="8,6" />
+                    <!-- Provincial Education -->
+                    <TextBlock Text="ریاست معارف ولایت (مثال: ریاست معارف ولایت غزنی)" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <TextBox x:Name="ProvincialEducationHeaderTextBox" Height="34" Margin="0,0,0,12" />
 
-                    <TextBlock Text="شماره تماس" FontWeight="SemiBold" Margin="0,0,0,6" />
-                    <TextBox x:Name="PhoneNumberTextBox" Height="36" Margin="0,0,0,16" FontSize="14" Padding="8,6" />
+                    <!-- District Education -->
+                    <TextBlock Text="مدیریت معارف ولسوالی" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <TextBox x:Name="DistrictEducationHeaderTextBox" Height="34" Margin="0,0,0,12" />
 
-                    <TextBlock Text="سال تعلیمی" FontWeight="SemiBold" Margin="0,0,0,6" />
-                    <TextBox x:Name="AcademicYearTextBox" Height="36" Margin="0,0,0,16" FontSize="14" Padding="8,6" />
+                    <!-- School Name -->
+                    <TextBlock Text="نام مکتب *" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <TextBox x:Name="SchoolNameTextBox" Height="34" Margin="0,0,0,12" />
 
-                    <TextBlock Text="لوگوی مکتب" FontWeight="SemiBold" Margin="0,0,0,6" />
-                    <Grid Margin="0,0,0,16">
+                    <!-- School Address -->
+                    <TextBlock Text="آدرس مکتب" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <TextBox x:Name="SchoolAddressTextBox" Height="34" Margin="0,0,0,12" />
+
+                    <!-- Phone -->
+                    <TextBlock Text="شماره تماس" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <TextBox x:Name="PhoneNumberTextBox" Height="34" Margin="0,0,0,12" />
+
+                    <!-- Academic Year -->
+                    <TextBlock Text="سال تعلیمی" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <TextBox x:Name="AcademicYearTextBox" Height="34" Margin="0,0,0,16" />
+
+                    <!-- School Logo -->
+                    <TextBlock Text="لوگو / مهر مکتب" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <Grid Margin="0,0,0,8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="8" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBox x:Name="LogoPathTextBox" Height="36" FontSize="14" Padding="8,6" IsReadOnly="True" VerticalContentAlignment="Center" />
-                        <Button Grid.Column="1" Content="📁 انتخاب تصویر" Height="36" Margin="8,0,0,0" Padding="12,0"
-                                Background="#3B82F6" Foreground="White" FontWeight="SemiBold" Click="BrowseLogoButton_Click" />
+                        <TextBox x:Name="SchoolLogoPathTextBox" Grid.Column="0" Height="34" IsReadOnly="True" />
+                        <Button Grid.Column="2" Content="📁 انتخاب تصویر" Height="34" Padding="10,0" Click="BrowseLogoButton_Click" />
                     </Grid>
+                    <Image x:Name="LogoPreviewImage" MaxHeight="80" MaxWidth="160" Stretch="Uniform" HorizontalAlignment="Right" Margin="0,0,0,16" />
 
                     <Button Height="40" Content="💾 ذخیره تنظیمات" Background="#16A34A" Foreground="White" FontWeight="Bold" FontSize="15"
                             BorderThickness="0" Cursor="Hand" Click="SaveButton_Click" HorizontalAlignment="Left" Padding="20,0" />
