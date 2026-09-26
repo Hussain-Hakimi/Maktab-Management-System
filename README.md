@@ -14,7 +14,7 @@
 
 ## ✨ Overview
 
-**Maktab** (Dari: *School*) is a complete school management solution designed specifically for Afghan educational institutions. Built for reliability and offline operation, it handles everything from student records to grades, attendance, library management, and financial tracking—all without requiring an internet connection.
+**Maktab** (Dari: *School*) is an offline school management solution designed specifically for Afghan educational institutions. Built for reliability, it manages student records, classes, subjects, grades, attendance, and academic reporting without requiring an internet connection.
 
 ### Why Maktab?
 
@@ -81,35 +81,17 @@ dotnet run --project src/Maktab.App.Wpf/Maktab.App.Wpf.csproj
 ### 👥 Student & Staff Management
 
 - **Attendance Tracking** — Daily entry with statuses (Present, Absent, Ill, Permission)
-- **User Accounts** — Role-based access (Admin, Teacher, Librarian, Accountant)
+- **User Accounts** — Role-based access for administrators and teachers
 - **Secure Authentication** — PBKDF2 password hashing
 - **Authorization** — Application-level role and teacher-assignment checks for protected operations
 - **Audit Logging** — Complete audit trail of user actions
 - **School Settings** — Name, address, phone, logo, academic year
 
-### 📚 Library Management
-
-- **Book Inventory** — Track all library holdings
-- **Issue/Return System** — Manage borrowing with due dates
-- **Overdue Alerts** — Automatic tracking of late returns
-
-### 📦 Textbook Distribution
-
-- **Inventory Management** — Track textbook stock
-- **Student Distribution** — Issue books to students
-- **Return Tracking** — Manage returns and accountability
-
-### 💰 Financial Management
-
-- **Fee Management** — Record and track student fees
-- **Payment Tracking** — Outstanding balances and payment history
-- **Fee Alerts** — Outstanding fee notifications
-
 ### 📊 Reports & Data Export
 
 - **Grade Distribution Reports** — Analyze academic performance
 - **Attendance Reports** — Track attendance trends
-- **Excel Export** — Export students, marks, attendance, fees
+- **Excel Export** — Export students, marks, and attendance
 - **Excel/CSV Bulk Import** — High-speed import for students, single-subject marks, attendance, and multi-subject marks
 - **Downloadable Excel Templates** — 1-click template file generation (`.xlsx`) with sample data and guidance sheets
 - **Bulk Class Creation Wizard** — Rapid 1-click creation of Grade 1 to 12 classes (`BulkCreateClassesDialog`)
@@ -118,8 +100,6 @@ dotnet run --project src/Maktab.App.Wpf/Maktab.App.Wpf.csproj
 
 ### 🔔 Smart Alerts
 
-- **Overdue Books** — Library overdue notifications
-- **Outstanding Fees** — Payment reminders
 - **Attendance Alerts** — High absence rate notifications
 - **Alerts Dashboard** — Centralized alerts center
 

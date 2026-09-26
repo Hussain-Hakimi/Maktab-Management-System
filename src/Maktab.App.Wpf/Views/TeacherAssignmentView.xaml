@@ -40,10 +40,11 @@
                             <ComboBox x:Name="TeacherComboBox" Height="32" Margin="0,0,0,10" DisplayMemberPath="FullName" SelectedValuePath="UserId" />
 
                             <TextBlock Text="صنف *" FontWeight="SemiBold" Margin="0,0,0,4" />
-                            <ComboBox x:Name="ClassComboBox" Height="32" Margin="0,0,0,10" DisplayMemberPath="GradeName" SelectedValuePath="ClassId" />
+                            <ComboBox x:Name="ClassComboBox" Height="32" Margin="0,0,0,10" DisplayMemberPath="GradeName" SelectedValuePath="ClassId" SelectionChanged="ClassComboBox_SelectionChanged" />
 
                             <TextBlock Text="مضمون *" FontWeight="SemiBold" Margin="0,0,0,4" />
                             <ComboBox x:Name="SubjectComboBox" Height="32" Margin="0,0,0,16" DisplayMemberPath="SubjectName" SelectedValuePath="SubjectId" />
+                            <TextBlock x:Name="SubjectStatusTextBlock" Foreground="#64748B" FontSize="12" Margin="0,-10,0,10" TextWrapping="Wrap" />
 
                             <Button Height="36" Content="➕ تخصیص" Background="#16A34A" Foreground="White" FontWeight="Bold" Click="AddTeacherSubjectButton_Click" />
                         </StackPanel>

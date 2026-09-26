@@ -7,12 +7,14 @@ namespace Maktab.App.Wpf.Views;
 public partial class LoginWindow : Window
 {
     private readonly IUserService _userService;
+    private readonly IAppLogger _logger;
 
     public UserDto? AuthenticatedUser { get; private set; }
 
-    public LoginWindow(IUserService userService)
+    public LoginWindow(IUserService userService, IAppLogger logger)
     {
         _userService = userService;
+        _logger = logger;
         InitializeComponent();
     }
 
@@ -21,8 +23,24 @@ public partial class LoginWindow : Window
         var username = UsernameTextBox.Text.Trim();
         var password = GetCurrentPassword();
 
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            StatusTextBlock.Text = "لطفاً نام کاربری را وارد کنید.";
+            UsernameTextBox.Focus();
+            return;
+        }
+
+        if (string.IsNullOrEmpty(password))
+        {
+            StatusTextBlock.Text = "لطفاً رمز عبور را وارد کنید.";
+            PasswordBox.Focus();
+            return;
+        }
+
         try
         {
+            LoginButton.IsEnabled = false;
+            StatusTextBlock.Text = "در حال بررسی اطلاعات ورود...";
             var user = await _userService.AuthenticateAsync(new LoginDto(username, password));
             if (user is null || !user.IsActive)
             {
@@ -31,12 +49,18 @@ public partial class LoginWindow : Window
             }
 
             AuthenticatedUser = user;
+            MessageBox.Show("ورود با موفقیت انجام شد.", "ورود موفق", MessageBoxButton.OK, MessageBoxImage.Information);
             DialogResult = true;
             Close();
         }
         catch (Exception ex)
         {
-            StatusTextBlock.Text = $"خطا: {ex.Message}";
+            _logger.LogError("Login failed because of an unexpected error.", ex);
+            StatusTextBlock.Text = "در هنگام ورود خطایی رخ داد. لطفاً دوباره تلاش کنید.";
+        }
+        finally
+        {
+            LoginButton.IsEnabled = true;
         }
     }
 

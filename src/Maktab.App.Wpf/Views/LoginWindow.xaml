@@ -47,8 +47,8 @@
                          FontSize="14"
                          Padding="10,8"
                          VerticalContentAlignment="Center"
-                         TextAlignment="Right"
-                         FlowDirection="RightToLeft"
+                         TextAlignment="Left"
+                         FlowDirection="LeftToRight"
                          InputMethod.IsInputMethodEnabled="True" />
 
                 <!-- Password -->
@@ -71,7 +71,8 @@
                                  FontSize="14"
                                  Padding="10,8"
                                  VerticalContentAlignment="Center"
-                                 PasswordChar="●" />
+                                 PasswordChar="●"
+                                 FlowDirection="LeftToRight" />
 
                     <!-- Plain text password (hidden by default) -->
                     <TextBox x:Name="PasswordTextBox"
@@ -80,7 +81,8 @@
                              FontSize="14"
                              Padding="10,8"
                              VerticalContentAlignment="Center"
-                             TextAlignment="Right"
+                             TextAlignment="Left"
+                             FlowDirection="LeftToRight"
                              Visibility="Collapsed" />
 
                     <Button Grid.Column="2"

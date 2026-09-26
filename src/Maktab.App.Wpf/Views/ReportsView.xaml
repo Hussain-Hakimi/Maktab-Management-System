@@ -44,7 +44,6 @@
                     <Button Height="36" Content="👨‍🎓 خروجی شاگردان" Background="#16A34A" Foreground="White" FontWeight="Bold" Margin="0,0,0,8" Click="ExportStudentsButton_Click" />
                     <Button Height="36" Content="📝 خروجی نمرات" Background="#16A34A" Foreground="White" FontWeight="Bold" Margin="0,0,0,8" Click="ExportMarksButton_Click" />
                     <Button Height="36" Content="🗓️ خروجی حاضری" Background="#16A34A" Foreground="White" FontWeight="Bold" Margin="0,0,0,8" Click="ExportAttendanceButton_Click" />
-                    <Button Height="36" Content="💰 خروجی فیس‌ها" Background="#16A34A" Foreground="White" FontWeight="Bold" Click="ExportFeesButton_Click" />
                 </StackPanel>
             </Border>
 

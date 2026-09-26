@@ -28,9 +28,6 @@ public partial class MainWindow : Window
     private readonly StudentGradesView _studentGradesView;
     private readonly AttendanceView _attendanceView;
     private readonly AttendanceReportsView _attendanceReportsView;
-    private readonly LibraryView _libraryView;
-    private readonly TextbookView _textbookView;
-    private readonly FeesView _feesView;
     private readonly ReportCardsView _reportCardsView;
     private readonly ReportsView _reportsView;
     private readonly BackupSettingsView _backupSettingsView;
@@ -54,9 +51,6 @@ public partial class MainWindow : Window
         StudentGradesView studentGradesView,
         AttendanceView attendanceView,
         AttendanceReportsView attendanceReportsView,
-        LibraryView libraryView,
-        TextbookView textbookView,
-        FeesView feesView,
         ReportCardsView reportCardsView,
         ReportsView reportsView,
         BackupSettingsView backupSettingsView,
@@ -86,9 +80,6 @@ public partial class MainWindow : Window
         _studentGradesView = studentGradesView;
         _attendanceView = attendanceView;
         _attendanceReportsView = attendanceReportsView;
-        _libraryView = libraryView;
-        _textbookView = textbookView;
-        _feesView = feesView;
         _reportCardsView = reportCardsView;
         _reportsView = reportsView;
         _backupSettingsView = backupSettingsView;
@@ -131,13 +122,11 @@ public partial class MainWindow : Window
 
         bool isAdmin = _currentUser.Role == UserRole.Admin;
         bool isTeacher = _currentUser.Role == UserRole.Teacher;
-        bool isLibrarian = _currentUser.Role == UserRole.Librarian;
-        bool isAccountant = _currentUser.Role == UserRole.Accountant;
 
         DashboardTab.Visibility = Visibility.Visible;
         AcademicTab.Visibility = (isAdmin || isTeacher) ? Visibility.Visible : Visibility.Collapsed;
         AttendanceTab.Visibility = (isAdmin || isTeacher) ? Visibility.Visible : Visibility.Collapsed;
-        OperationsTab.Visibility = (isAdmin || isLibrarian || isAccountant) ? Visibility.Visible : Visibility.Collapsed;
+        OperationsTab.Visibility = Visibility.Collapsed;
         AdminTab.Visibility = isAdmin ? Visibility.Visible : Visibility.Collapsed;
 
         if (MainTabs.SelectedItem is TabItem selectedTab && selectedTab.Visibility != Visibility.Visible)
@@ -223,16 +212,7 @@ public partial class MainWindow : Window
         }
         else if (tabName == "OperationsTab")
         {
-            if (_currentUser?.Role == UserRole.Admin || _currentUser?.Role == UserRole.Librarian)
-            {
-                SubMenuListBox.Items.Add(new ListBoxItem { Content = "📚 کتابخانه", Tag = "Library" });
-                SubMenuListBox.Items.Add(new ListBoxItem { Content = "📦 کتاب‌های درسی", Tag = "Textbooks" });
-            }
-            if (_currentUser?.Role == UserRole.Admin || _currentUser?.Role == UserRole.Accountant)
-            {
-                SubMenuListBox.Items.Add(new ListBoxItem { Content = "💰 فیس‌ها", Tag = "Fees" });
-            }
-            SubMenuListBox.SelectedIndex = SubMenuListBox.Items.Count > 0 ? 0 : -1;
+            SubMenuListBox.SelectedIndex = -1;
         }
         else if (tabName == "AdminTab")
         {
@@ -271,9 +251,6 @@ public partial class MainWindow : Window
             case "PromotionHistory": _navigationService.Navigate(_promotionHistoryView); break;
             case "Attendance": _navigationService.Navigate(_attendanceView); break;
             case "AttendanceReports": _navigationService.Navigate(_attendanceReportsView); break;
-            case "Library": _navigationService.Navigate(_libraryView); break;
-            case "Textbooks": _navigationService.Navigate(_textbookView); break;
-            case "Fees": _navigationService.Navigate(_feesView); break;
             case "UserManagement": _navigationService.Navigate(_userManagementView); break;
             case "TeacherAssignment": _navigationService.Navigate(_teacherAssignmentView); break;
             case "PromotionSettings": _navigationService.Navigate(_promotionSettingsView); break;

@@ -152,22 +152,6 @@ WHERE StudentID = $studentId;";
         await using var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken);
         try
         {
-            await using (var checkBooksCmd = connection.CreateCommand())
-            {
-                checkBooksCmd.Transaction = transaction;
-                checkBooksCmd.CommandText = "SELECT COUNT(1) FROM tbl_BookIssues WHERE StudentID = $studentId;";
-                checkBooksCmd.Parameters.AddWithValue("$studentId", studentId);
-                if (Convert.ToInt32(await checkBooksCmd.ExecuteScalarAsync(cancellationToken)) > 0)
-                    throw new InvalidOperationException("این شاگرد دارای سوابق امانت‌دهی کتاب در کتابخانه است و قابل حذف نیست. ابتدا باید سوابق امانت‌دهی وی را بررسی یا حذف کنید.");
-            }
-            await using (var checkTextbooksCmd = connection.CreateCommand())
-            {
-                checkTextbooksCmd.Transaction = transaction;
-                checkTextbooksCmd.CommandText = "SELECT COUNT(1) FROM tbl_TextbookIssues WHERE StudentID = $studentId;";
-                checkTextbooksCmd.Parameters.AddWithValue("$studentId", studentId);
-                if (Convert.ToInt32(await checkTextbooksCmd.ExecuteScalarAsync(cancellationToken)) > 0)
-                    throw new InvalidOperationException("این شاگرد دارای سوابق دریافت کتاب‌های درسی است و قابل حذف نیست. ابتدا باید سوابق کتاب‌های درسی وی را بررسی یا حذف کنید.");
-            }
             await using var command = connection.CreateCommand();
             command.Transaction = transaction;
             command.CommandText = "DELETE FROM tbl_Students WHERE StudentID = $studentId;";

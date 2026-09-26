@@ -37,9 +37,6 @@ public partial class App : System.Windows.Application
                     services.AddSingleton<StudentGradesView>();
                     services.AddSingleton<AttendanceView>();
                     services.AddSingleton<AttendanceReportsView>();
-                    services.AddSingleton<LibraryView>();
-                    services.AddSingleton<TextbookView>();
-                    services.AddSingleton<FeesView>();
                     services.AddSingleton<ReportCardsView>();
                     services.AddSingleton<ReportsView>();
                     services.AddSingleton<BackupSettingsView>();
@@ -82,7 +79,9 @@ public partial class App : System.Windows.Application
                 }
             }
 
-            var loginWindow = new LoginWindow(userService);
+            var loginWindow = new LoginWindow(
+                userService,
+                _host.Services.GetRequiredService<IAppLogger>());
             var loginResult = loginWindow.ShowDialog();
             if (loginResult != true || loginWindow.AuthenticatedUser is null)
             {

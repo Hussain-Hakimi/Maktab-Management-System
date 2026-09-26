@@ -10,7 +10,6 @@ public sealed class ReportService(
     IClassSubjectRepository classSubjectRepository,
     IExamMarkRepository examMarkRepository,
     IAttendanceRepository attendanceRepository,
-    IFeeRepository feeRepository,
     IAcademicYearRepository academicYearRepository) : IReportService
 {
     public async Task<ClassPerformanceReportDto> GetClassPerformanceAsync(int classId, int academicYearId, CancellationToken cancellationToken = default)
@@ -168,26 +167,4 @@ public sealed class ReportService(
         return result;
     }
 
-    public async Task<IReadOnlyList<FeeExportRowDto>> GetFeeExportDataAsync(int classId, int academicYearId, CancellationToken cancellationToken = default)
-    {
-        var students = await studentRepository.GetStudentsByClassAsync(classId, cancellationToken);
-        var fees = await feeRepository.GetFeesAsync(cancellationToken);
-        var result = new List<FeeExportRowDto>();
-
-        foreach (var fee in fees.Where(f => f.AcademicYearId == academicYearId && students.Any(s => s.StudentId == f.StudentId)))
-        {
-            result.Add(new FeeExportRowDto
-            {
-                StudentName = fee.StudentName,
-                RollNumber = fee.RollNumber,
-                FeeType = fee.FeeType,
-                Amount = fee.Amount,
-                TotalPaid = fee.TotalPaid,
-                Outstanding = fee.Outstanding,
-                Status = fee.Status.ToString()
-            });
-        }
-
-        return result;
-    }
 }

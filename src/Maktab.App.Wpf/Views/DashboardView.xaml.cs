@@ -10,8 +10,6 @@ public partial class DashboardView : UserControl
     private readonly IStudentService _studentService;
     private readonly IClassSubjectService _classSubjectService;
     private readonly IAttendanceService _attendanceService;
-    private readonly IFeeService _feeService;
-    private readonly IBookService _bookService;
     private readonly IAuditService _auditService;
     private readonly ICurrentUserService _currentUserService;
     private readonly IAlertService _alertService;
@@ -21,8 +19,6 @@ public partial class DashboardView : UserControl
         IStudentService studentService,
         IClassSubjectService classSubjectService,
         IAttendanceService attendanceService,
-        IFeeService feeService,
-        IBookService bookService,
         IAuditService auditService,
         ICurrentUserService currentUserService,
         IAlertService alertService,
@@ -31,8 +27,6 @@ public partial class DashboardView : UserControl
         _studentService = studentService;
         _classSubjectService = classSubjectService;
         _attendanceService = attendanceService;
-        _feeService = feeService;
-        _bookService = bookService;
         _auditService = auditService;
         _currentUserService = currentUserService;
         _alertService = alertService;
@@ -81,46 +75,6 @@ public partial class DashboardView : UserControl
                 _logger.LogError("Failed to load dashboard attendance summary.", ex);
                 TodayAttendanceTextBlock.Text = "نامشخص";
                 TodayAbsenceRateTextBlock.Text = "غیبت: نامشخص";
-            }
-
-            try
-            {
-                var fees = await _feeService.GetFeesAsync();
-                decimal totalAmount = fees.Sum(f => f.Amount);
-                decimal totalPaid = fees.Sum(f => f.TotalPaid);
-                decimal outstanding = totalAmount - totalPaid;
-
-                OutstandingFeesTextBlock.Text = outstanding.ToString("N0");
-
-                if (totalAmount > 0)
-                {
-                    double progress = (double)(totalPaid / totalAmount * 100);
-                    FeeProgressBar.Value = progress;
-                    FeeCollectionRateTextBlock.Text = $"وصول: {progress:F1}%";
-                }
-                else
-                {
-                    FeeProgressBar.Value = 0;
-                    FeeCollectionRateTextBlock.Text = "وصول: ۰%";
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Failed to load dashboard fee summary.", ex);
-                OutstandingFeesTextBlock.Text = "نامشخص";
-                FeeProgressBar.Value = 0;
-                FeeCollectionRateTextBlock.Text = "وصول: نامشخص";
-            }
-
-            try
-            {
-                var overdue = await _bookService.GetOverdueIssuesAsync();
-                OverdueBooksTextBlock.Text = overdue.Count.ToString();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Failed to load dashboard overdue books summary.", ex);
-                OverdueBooksTextBlock.Text = "نامشخص";
             }
 
             try

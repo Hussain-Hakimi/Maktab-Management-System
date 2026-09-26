@@ -35,6 +35,7 @@ public partial class ChangePasswordWindow : Window
 
         try
         {
+            SaveButton.IsEnabled = false;
             await _userService.ChangePasswordAsync(_currentUser.UserId, oldPassword, newPassword);
             DialogResult = true;
             Close();
@@ -42,6 +43,7 @@ public partial class ChangePasswordWindow : Window
         catch (Exception ex)
         {
             ErrorTextBlock.Text = ex.Message;
+            SaveButton.IsEnabled = true;
         }
     }
 }
