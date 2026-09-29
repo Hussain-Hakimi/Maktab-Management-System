@@ -99,38 +99,44 @@ public partial class TeacherAssignmentView : UserControl
 
     private async void ClassComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (ClassComboBox.SelectedValue is int classId && classId > 0)
+        if (TryGetSelectedId(ClassComboBox, out var classId))
         {
             try
             {
                 var subjects = await _classSubjectService.GetSubjectsByClassAsync(classId);
                 SubjectComboBox.ItemsSource = subjects;
-                if (subjects.Count > 0) SubjectComboBox.SelectedIndex = 0;
+                SubjectComboBox.SelectedIndex = subjects.Count > 0 ? 0 : -1;
+                SubjectStatusTextBlock.Text = subjects.Count > 0
+                    ? string.Empty
+                    : "برای این صنف هنوز مضمونی ثبت نشده است.";
             }
             catch (Exception ex)
             {
+                SubjectComboBox.ItemsSource = null;
+                SubjectStatusTextBlock.Text = "بارگذاری مضامین انجام نشد.";
                 MessageBox.Show($"خطا در بارگذاری مضامین:\n{ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
         else
         {
             SubjectComboBox.ItemsSource = null;
+            SubjectStatusTextBlock.Text = "ابتدا یک صنف را انتخاب کنید.";
         }
     }
 
     private async void AddTeacherSubjectButton_Click(object sender, RoutedEventArgs e)
     {
-        if (TeacherComboBox.SelectedValue is not int teacherId || teacherId <= 0)
+        if (!TryGetSelectedId(TeacherComboBox, out var teacherId))
         {
             MessageBox.Show("لطفاً استاد را انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
-        if (ClassComboBox.SelectedValue is not int classId || classId <= 0)
+        if (!TryGetSelectedId(ClassComboBox, out var classId))
         {
             MessageBox.Show("لطفاً صنف را انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
-        if (SubjectComboBox.SelectedValue is not int subjectId || subjectId <= 0)
+        if (!TryGetSelectedId(SubjectComboBox, out var subjectId))
         {
             MessageBox.Show("لطفاً مضمون را انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
@@ -168,12 +174,12 @@ public partial class TeacherAssignmentView : UserControl
 
     private async void AddGuardianButton_Click(object sender, RoutedEventArgs e)
     {
-        if (GuardianTeacherComboBox.SelectedValue is not int teacherId || teacherId <= 0)
+        if (!TryGetSelectedId(GuardianTeacherComboBox, out var teacherId))
         {
             MessageBox.Show("لطفاً استاد را انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
-        if (GuardianClassComboBox.SelectedValue is not int classId || classId <= 0)
+        if (!TryGetSelectedId(GuardianClassComboBox, out var classId))
         {
             MessageBox.Show("لطفاً صنف را انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
@@ -220,5 +226,16 @@ public partial class TeacherAssignmentView : UserControl
         {
             _logger.LogError($"Failed to write teacher-assignment audit entry for action '{action}'.", ex);
         }
+    }
+
+    private static bool TryGetSelectedId(ComboBox comboBox, out int id)
+    {
+        id = 0;
+        if (comboBox.SelectedValue is null)
+        {
+            return false;
+        }
+
+        return int.TryParse(comboBox.SelectedValue.ToString(), out id) && id > 0;
     }
 }

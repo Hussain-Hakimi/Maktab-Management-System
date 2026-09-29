@@ -55,6 +55,12 @@ public sealed class TeacherAssignmentService(
         if (teacherUserId <= 0) throw new ArgumentOutOfRangeException(nameof(teacherUserId));
         if (classId <= 0) throw new ArgumentOutOfRangeException(nameof(classId));
 
+        var existingAssignments = await repository.GetClassGuardiansAsync(teacherUserId, cancellationToken);
+        if (existingAssignments.Any(existing => existing.ClassId != classId))
+        {
+            throw new InvalidOperationException("این استاد قبلاً نگران صنف دیگری تعیین شده است.");
+        }
+
         var guardian = new ClassGuardian
         {
             TeacherUserId = teacherUserId,

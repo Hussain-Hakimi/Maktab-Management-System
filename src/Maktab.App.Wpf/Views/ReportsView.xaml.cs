@@ -173,14 +173,4 @@ public partial class ReportsView : UserControl
         catch (Exception ex) { MessageBox.Show(ex.Message, "خطا", MessageBoxButton.OK, MessageBoxImage.Warning); }
     }
 
-    private async void ExportFeesButton_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            var (classId, yearId) = await GetSelectedFiltersAsync();
-            var data = await _reportService.GetFeeExportDataAsync(classId, yearId);
-            await ExportAsync(data, "Fees", "Fees.xlsx");
-        }
-        catch (Exception ex) { MessageBox.Show(ex.Message, "خطا", MessageBoxButton.OK, MessageBoxImage.Warning); }
-    }
 }

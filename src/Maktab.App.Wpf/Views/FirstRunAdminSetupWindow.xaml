@@ -46,7 +46,8 @@
                              FontSize="15"
                              Padding="10,8"
                              Margin="0,0,0,16"
-                             TextAlignment="Right" />
+                             TextAlignment="Left"
+                             FlowDirection="LeftToRight" />
 
                     <TextBlock Text="نام کاربری:"
                                FontWeight="SemiBold"
@@ -68,7 +69,8 @@
                                  FontSize="15"
                                  Padding="10,8"
                                  Margin="0,0,0,16"
-                                 PasswordChar="●" />
+                                 PasswordChar="●"
+                                 FlowDirection="LeftToRight" />
 
                     <TextBlock Text="تکرار رمز عبور:"
                                FontWeight="SemiBold"
@@ -79,7 +81,8 @@
                                  FontSize="15"
                                  Padding="10,8"
                                  Margin="0,0,0,22"
-                                 PasswordChar="●" />
+                                 PasswordChar="●"
+                                 FlowDirection="LeftToRight" />
 
                     <Button x:Name="CreateButton"
                             Content="ایجاد حساب مدیر"

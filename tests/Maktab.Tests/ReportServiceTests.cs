@@ -62,18 +62,6 @@ public class ReportServiceTests
         public Task<IReadOnlyList<AttendanceRecord>> GetByClassAndYearAsync(int classId, int academicYearId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
-    private sealed class InMemoryFeeRepository : IFeeRepository
-    {
-        public List<FeeDto> Fees { get; } = [];
-        public Task<IReadOnlyList<FeeDto>> GetFeesAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<FeeDto>>(Fees);
-        public Task<Fee?> GetFeeByIdAsync(int feeId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-        public Task<int> CreateFeeAsync(Fee fee, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-        public Task DeleteFeeAsync(int feeId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-        public Task<IReadOnlyList<FeePaymentDto>> GetPaymentsAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
-        public Task<decimal> GetTotalPaidByFeeAsync(int feeId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-        public Task<int> RecordPaymentAsync(FeePayment payment, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-    }
-
     private sealed class InMemoryAcademicYearRepository : IAcademicYearRepository
     {
         public List<AcademicYear> Years { get; } = [];
@@ -91,7 +79,6 @@ public class ReportServiceTests
         var classRepo = new InMemoryClassSubjectRepository();
         var markRepo = new InMemoryExamMarkRepository();
         var attendanceRepo = new InMemoryAttendanceRepository();
-        var feeRepo = new InMemoryFeeRepository();
         var yearRepo = new InMemoryAcademicYearRepository();
         yearRepo.Years.Add(new AcademicYear { AcademicYearId = 1, YearName = "۱۴۰۴ - ۱۴۰۵", IsActive = true });
         classRepo.Classes.Add(new SchoolClass { ClassId = 1, GradeName = "Grade 1", NumberOfSubjects = 2 });
@@ -103,7 +90,7 @@ public class ReportServiceTests
         markRepo.Marks.Add(new ExamMark { StudentId = 1, SubjectId = 2, MidtermScore = 30m, FinalScore = 40m, AcademicYearId = 1 });
         markRepo.Marks.Add(new ExamMark { StudentId = 2, SubjectId = 1, MidtermScore = 20m, FinalScore = 30m, AcademicYearId = 1 });
         markRepo.Marks.Add(new ExamMark { StudentId = 2, SubjectId = 2, MidtermScore = 25m, FinalScore = 35m, AcademicYearId = 1 });
-        var service = new ReportService(studentRepo, classRepo, markRepo, attendanceRepo, feeRepo, yearRepo);
+        var service = new ReportService(studentRepo, classRepo, markRepo, attendanceRepo, yearRepo);
         var result = await service.GetClassPerformanceAsync(1, 1);
         Assert.Equal(2, result.TotalStudents);
         Assert.Equal(2, result.SubjectPerformances.Count);
@@ -117,7 +104,6 @@ public class ReportServiceTests
         var classRepo = new InMemoryClassSubjectRepository();
         var markRepo = new InMemoryExamMarkRepository();
         var attendanceRepo = new InMemoryAttendanceRepository();
-        var feeRepo = new InMemoryFeeRepository();
         var yearRepo = new InMemoryAcademicYearRepository();
         yearRepo.Years.Add(new AcademicYear { AcademicYearId = 1, YearName = "۱۴۰۴ - ۱۴۰۵", IsActive = true });
         classRepo.Classes.Add(new SchoolClass { ClassId = 1, GradeName = "Grade 1", NumberOfSubjects = 2 });
@@ -126,7 +112,7 @@ public class ReportServiceTests
         studentRepo.Students.Add(new Student { StudentId = 1, FirstName = "A", LastName = "B", FatherName = "C", ClassId = 1, RollNumber = "1" });
         markRepo.Marks.Add(new ExamMark { StudentId = 1, SubjectId = 1, MidtermScore = 35m, FinalScore = 50m, AcademicYearId = 1 });
         markRepo.Marks.Add(new ExamMark { StudentId = 1, SubjectId = 2, MidtermScore = 30m, FinalScore = 40m, AcademicYearId = 1 });
-        var service = new ReportService(studentRepo, classRepo, markRepo, attendanceRepo, feeRepo, yearRepo);
+        var service = new ReportService(studentRepo, classRepo, markRepo, attendanceRepo, yearRepo);
         var result = await service.GetGradeDistributionAsync(1, 1);
         Assert.Equal(1, result.CountC);
         Assert.Equal(0, result.CountA);

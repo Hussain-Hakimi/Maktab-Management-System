@@ -66,7 +66,7 @@ public partial class ClassSubjectView : UserControl
 
     private static int ParseNonNegativeInt(string rawValue, string fieldName)
     {
-        if (!int.TryParse(rawValue, out var value) || value < 0)
+        if (!LocalizedNumberParser.TryParseInt(rawValue, out var value) || value < 0)
         {
             throw new InvalidOperationException($"{fieldName} باید یک عدد مثبت باشد.");
         }

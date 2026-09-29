@@ -108,10 +108,6 @@ SELECT last_insert_rowid();";
         updateAttendance.Parameters.AddWithValue("$id", yearId);
         await updateAttendance.ExecuteNonQueryAsync(cancellationToken);
 
-        await using var updateFees = connection.CreateCommand();
-        updateFees.CommandText = "UPDATE tbl_Fees SET AcademicYearId = $id WHERE AcademicYearId = 0;";
-        updateFees.Parameters.AddWithValue("$id", yearId);
-        await updateFees.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private static async Task BackfillCurrentStudentEnrollmentsAsync(

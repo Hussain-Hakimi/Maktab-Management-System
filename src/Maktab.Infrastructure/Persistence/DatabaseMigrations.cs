@@ -189,6 +189,28 @@ ON tbl_FeePayments(ReceiptNumber);
 CREATE INDEX IF NOT EXISTS idx_fees_academic_year
 ON tbl_Fees(AcademicYearId);
 ")
+            ,new(14, @"
+BEGIN TRANSACTION;
+
+DELETE FROM tbl_ClassGuardians
+WHERE ClassGuardianID NOT IN (
+    SELECT MIN(ClassGuardianID)
+    FROM tbl_ClassGuardians
+    GROUP BY TeacherUserID
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_class_guardians_teacher
+ON tbl_ClassGuardians(TeacherUserID);
+
+DROP TABLE IF EXISTS tbl_BookIssues;
+DROP TABLE IF EXISTS tbl_Books;
+DROP TABLE IF EXISTS tbl_TextbookIssues;
+DROP TABLE IF EXISTS tbl_Textbooks;
+DROP TABLE IF EXISTS tbl_FeePayments;
+DROP TABLE IF EXISTS tbl_Fees;
+
+COMMIT;
+")
         };
     }
 }

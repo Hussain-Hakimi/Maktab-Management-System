@@ -29,7 +29,7 @@ public partial class BulkCreateClassesDialog : Window
             return;
         }
 
-        if (!int.TryParse(NumberOfSubjectsTextBox.Text.Trim(), out var numberOfSubjects) || numberOfSubjects < 1 || numberOfSubjects > 30)
+        if (!LocalizedNumberParser.TryParseInt(NumberOfSubjectsTextBox.Text, out var numberOfSubjects) || numberOfSubjects < 1 || numberOfSubjects > 30)
         {
             MessageBox.Show("تعداد مضامین باید یک عدد بین ۱ و ۳۰ باشد.", "ورودی نامعتبر", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;

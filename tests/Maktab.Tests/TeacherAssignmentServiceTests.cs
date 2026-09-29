@@ -158,6 +158,32 @@ public class TeacherAssignmentServiceTests
     }
 
     [Fact]
+    public async Task AssignClassGuardian_RejectsTeacherAlreadyAssignedToAnotherClass()
+    {
+        var repo = new InMemoryTeacherAssignmentRepository();
+        var service = new TeacherAssignmentService(repo);
+
+        await service.AssignClassGuardianAsync(teacherUserId: 1, classId: 2);
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.AssignClassGuardianAsync(teacherUserId: 1, classId: 3));
+
+        Assert.Contains("نگران صنف دیگری", exception.Message);
+    }
+
+    [Fact]
+    public async Task AssignClassGuardian_AllowsDifferentTeachersForDifferentClasses()
+    {
+        var repo = new InMemoryTeacherAssignmentRepository();
+        var service = new TeacherAssignmentService(repo);
+
+        await service.AssignClassGuardianAsync(teacherUserId: 1, classId: 2);
+        await service.AssignClassGuardianAsync(teacherUserId: 3, classId: 3);
+
+        Assert.Equal(2, (await service.GetClassGuardiansAsync()).Count);
+    }
+
+    [Fact]
     public async Task RemoveTeacherSubjectAssignment_RemovesCorrectly()
     {
         var repo = new InMemoryTeacherAssignmentRepository();

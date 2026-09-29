@@ -5,7 +5,7 @@ namespace Maktab.Tests;
 
 public class DatabaseMigrationTests : IDisposable
 {
-    private const int LatestSchemaVersion = 13;
+    private const int LatestSchemaVersion = 14;
 
     private readonly string _tempDir;
     private readonly AppFolders _folders;
@@ -50,12 +50,6 @@ public class DatabaseMigrationTests : IDisposable
             "tbl_Students",
             "tbl_ExamMarks",
             "tbl_Attendance",
-            "tbl_Books",
-            "tbl_BookIssues",
-            "tbl_Textbooks",
-            "tbl_TextbookIssues",
-            "tbl_Fees",
-            "tbl_FeePayments",
             "tbl_Users",
             "tbl_Settings",
             "tbl_AcademicYears",
@@ -74,8 +68,13 @@ public class DatabaseMigrationTests : IDisposable
 
         Assert.True(await ColumnExistsAsync(connection, "tbl_Students", "AdmissionNumber"));
         Assert.True(await SchemaObjectExistsAsync(connection, "index", "ux_students_admission_number"));
-        Assert.True(await SchemaObjectExistsAsync(connection, "index", "ux_fee_payments_receipt_number"));
-        Assert.True(await SchemaObjectExistsAsync(connection, "index", "idx_fees_academic_year"));
+        Assert.False(await SchemaObjectExistsAsync(connection, "table", "tbl_Books"));
+        Assert.False(await SchemaObjectExistsAsync(connection, "table", "tbl_BookIssues"));
+        Assert.False(await SchemaObjectExistsAsync(connection, "table", "tbl_Textbooks"));
+        Assert.False(await SchemaObjectExistsAsync(connection, "table", "tbl_TextbookIssues"));
+        Assert.False(await SchemaObjectExistsAsync(connection, "table", "tbl_Fees"));
+        Assert.False(await SchemaObjectExistsAsync(connection, "table", "tbl_FeePayments"));
+        Assert.True(await SchemaObjectExistsAsync(connection, "index", "ux_class_guardians_teacher"));
     }
 
     [Fact]
@@ -97,75 +96,32 @@ public class DatabaseMigrationTests : IDisposable
     }
 
     [Fact]
-    public async Task InitializeAsync_FromVersion12WithThreeDuplicateReceipts_NormalizesAllAndCreatesUniqueIndex()
+    public async Task InitializeAsync_EnforcesOneGuardianClassPerTeacher()
     {
         var initializer = new SqliteDatabaseInitializer(_connectionStringProvider);
         await initializer.InitializeAsync();
 
-        await using (var connection = new SqliteConnection(_connectionStringProvider.GetConnectionString()))
-        {
-            await connection.OpenAsync();
-
-            await ExecuteNonQueryAsync(connection, "DROP INDEX ux_fee_payments_receipt_number;");
-            await SeedThreeDuplicateReceiptsAsync(connection);
-            await ExecuteNonQueryAsync(connection, "PRAGMA user_version = 12;");
-        }
-
-        await initializer.InitializeAsync();
-
-        await using var verificationConnection = new SqliteConnection(_connectionStringProvider.GetConnectionString());
-        await verificationConnection.OpenAsync();
-
-        Assert.Equal(LatestSchemaVersion, await GetUserVersionAsync(verificationConnection));
-        Assert.True(await SchemaObjectExistsAsync(verificationConnection, "index", "ux_fee_payments_receipt_number"));
-
-        await using var cmd = verificationConnection.CreateCommand();
-        cmd.CommandText = @"
-SELECT COUNT(*), COUNT(DISTINCT ReceiptNumber)
-FROM tbl_FeePayments
-WHERE ReceiptNumber LIKE 'LEGACY-DUPLICATE%';";
-
-        await using var reader = await cmd.ExecuteReaderAsync();
-        Assert.True(await reader.ReadAsync());
-        Assert.Equal(3, reader.GetInt32(0));
-        Assert.Equal(3, reader.GetInt32(1));
-    }
-
-    private static async Task SeedThreeDuplicateReceiptsAsync(SqliteConnection connection)
-    {
+        await using var connection = new SqliteConnection(_connectionStringProvider.GetConnectionString());
+        await connection.OpenAsync();
         await ExecuteNonQueryAsync(connection, @"
-INSERT INTO tbl_Classes (GradeName, NumberOfSubjects) VALUES ('Migration Test Class', 0);
-INSERT INTO tbl_Students (FirstName, LastName, FatherName, ClassID, RollNumber, RegistrationDate, AdmissionNumber)
-VALUES ('Test', 'Student', 'Father', last_insert_rowid(), '1', '2026-01-01', 'ADM-MIGRATION-TEST');
-INSERT INTO tbl_Fees (StudentID, FeeType, Amount, DueDate, CreatedDate, AcademicYearId)
-VALUES (last_insert_rowid(), 'Tuition', 300, '2026-12-31', '2026-01-01', 0);
+INSERT INTO tbl_Users (Username, PasswordHash, FullName, Role, IsActive)
+VALUES ('guardian-test', 'hash', 'Guardian Test', 'Teacher', 1);
+INSERT INTO tbl_Classes (GradeName, NumberOfSubjects) VALUES ('Guardian Class 1', 0);
+INSERT INTO tbl_Classes (GradeName, NumberOfSubjects) VALUES ('Guardian Class 2', 0);
+INSERT INTO tbl_ClassGuardians (TeacherUserID, ClassID)
+VALUES ((SELECT UserID FROM tbl_Users WHERE Username = 'guardian-test'),
+    (SELECT ClassID FROM tbl_Classes WHERE GradeName = 'Guardian Class 1'));
 ");
 
-        await using var idsCommand = connection.CreateCommand();
-        idsCommand.CommandText = @"
-SELECT f.FeeID, f.StudentID
-FROM tbl_Fees f
-WHERE f.FeeType = 'Tuition'
-ORDER BY f.FeeID DESC
-LIMIT 1;";
+        await using var duplicateCommand = connection.CreateCommand();
+        duplicateCommand.CommandText = @"
+INSERT INTO tbl_ClassGuardians (TeacherUserID, ClassID)
+VALUES ((SELECT UserID FROM tbl_Users WHERE Username = 'guardian-test'),
+        (SELECT ClassID FROM tbl_Classes WHERE GradeName = 'Guardian Class 2'));";
 
-        await using var reader = await idsCommand.ExecuteReaderAsync();
-        Assert.True(await reader.ReadAsync());
-        var feeId = reader.GetInt32(0);
-        var studentId = reader.GetInt32(1);
-        await reader.DisposeAsync();
-
-        for (var i = 0; i < 3; i++)
-        {
-            await using var paymentCommand = connection.CreateCommand();
-            paymentCommand.CommandText = @"
-INSERT INTO tbl_FeePayments (FeeID, StudentID, Amount, PaymentDate, ReceiptNumber)
-VALUES ($feeId, $studentId, 50, '2026-01-02', 'LEGACY-DUPLICATE');";
-            paymentCommand.Parameters.AddWithValue("$feeId", feeId);
-            paymentCommand.Parameters.AddWithValue("$studentId", studentId);
-            await paymentCommand.ExecuteNonQueryAsync();
-        }
+        await Assert.ThrowsAsync<SqliteException>(() => duplicateCommand.ExecuteNonQueryAsync());
     }
+
 
     private static async Task<int> GetUserVersionAsync(SqliteConnection connection)
     {

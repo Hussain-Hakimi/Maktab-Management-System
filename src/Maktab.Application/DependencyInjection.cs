@@ -13,9 +13,6 @@ public static class DependencyInjection
         services.AddSingleton<IExamMarkService, ExamMarkService>();
         services.AddSingleton<IReportCardService, ReportCardService>();
         services.AddSingleton<IAttendanceService, AttendanceService>();
-        services.AddSingleton<IBookService, BookService>();
-        services.AddSingleton<ITextbookService, TextbookService>();
-        services.AddSingleton<IFeeService, FeeService>();
         services.AddSingleton<IUserService, UserService>();
         services.AddSingleton<IAuditService, AuditService>();
         services.AddSingleton<ICurrentUserService, CurrentUserService>();
